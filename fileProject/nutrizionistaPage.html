@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Nutrizionista - YourWeek</title>
+    <link rel="stylesheet" href="nutrizionistaPage.css">
+</head>
+</head>
+<body>
+    <div class="background-animation"></div>
+
+    <div class="back-to-login">
+        <a href="loginPage.html">
+            <i class="fas fa-arrow-left"></i>
+            Torna al Login
+        </a>
+    </div>
+
+    <header class="dashboard-header">
+        <div class="logo">
+            <h1>yourweek</h1>
+        </div>
+        <div class="user-info">
+            <div class="user-avatar">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div class="user-details">
+                <h3>Dott. Marco Rossi</h3>
+                <p>Nutrizionista Specialista</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-content">
+        <div class="welcome-section">
+            <h2>Benvenuto nella Tua Dashboard</h2>
+            <p>Gestisci i tuoi pazienti, crea piani alimentari personalizzati e monitora i progressi con strumenti avanzati</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">24</div>
+                <p>Pazienti Attivi</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-number">8</div>
+                <p>Nuovi Questo Mese</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-number">15</div>
+                <p>Appuntamenti Settimana</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-number">92%</div>
+                <p>Soddisfazione Pazienti</p>
+            </div>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card" onclick="location.href='pazienti.html'">
+                <div class="feature-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Gestione Pazienti</h3>
+                <p>Visualizza e gestisci tutti i tuoi pazienti, schede cliniche e storico progressi con strumenti avanzati di monitoraggio</p>
+                <span class="feature-badge">24 Pazienti</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='piani-dietetici.html'">
+                <div class="feature-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h3>Piani Dietetici</h3>
+                <p>Crea e personalizza piani alimentari unici per ogni paziente con il nostro editor avanzato e database ricette</p>
+                <span class="feature-badge">45 Piani Attivi</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='calendario.html'">
+                <div class="feature-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <h3>Calendario Smart</h3>
+                <p>Organizza appuntamenti, controlli e follow-up con sistema di promemoria automatico e integrazione calendar</p>
+                <span class="feature-badge">15 Appuntamenti</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='messaggi.html'">
+                <div class="feature-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>Comunicazioni</h3>
+                <p>Messaggistica sicura con i pazienti, notifiche automatiche e sistema di promemoria per follow-up</p>
+                <span class="feature-badge">12 Nuovi Messaggi</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='report.html'">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Analisi e Report</h3>
+                <p>Dashboard avanzata con grafici interattivi, statistiche dettagliate e report personalizzabili</p>
+                <span class="feature-badge">Analisi in Tempo Reale</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='ricette.html'">
+                <div class="feature-icon">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <h3>Area Personale</h3>
+                <p>Gestisci i tuoi appunti, documenti e immagini necessari per lo svolgimento della tua attività</p>
+                <span class="feature-badge">Appunti personali</span>
+            </div>
+        </div>
+
+        <div class="recent-activity">
+            <h3>Attività Recenti</h3>
+            <ul class="activity-list">
+                <li>
+                    <div class="activity-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <strong>Nuovo Paziente Registrato</strong>
+                        <p>Maria Bianchi • Ieri alle 14:30 • Prima visita programmata</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="activity-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="activity-content">
+                        <strong>Piano Dietetico Aggiornato</strong>
+                        <p>Luca Verdi • Oggi alle 09:15 • Aggiunti nuovi alimenti</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="activity-icon">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <div class="activity-content">
+                        <strong>Nuovo Appuntamento</strong>
+                        <p>Giulia Neri • Domani alle 11:00 • Controllo mensile</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="activity-icon">
+                        <i class="fas fa-comment-medical"></i>
+                    </div>
+                    <div class="activity-content">
+                        <strong>Messaggio Importante</strong>
+                        <p>Paolo Russo • 2 ore fa • Richiesta modifica piano urgente</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <script>
+        // Animazioni aggiuntive
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animazione di entrata per le card
+            const cards = document.querySelectorAll('.stat-card, .feature-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>
