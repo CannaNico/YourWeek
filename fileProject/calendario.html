@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Smart - YourWeek</title>
+    <link rel="stylesheet" href="calendario.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="back-button">
+        <a href="nutrizionistaPage.html">
+            <i class="fas fa-arrow-left"></i>
+            Torna alla Dashboard
+        </a>
+    </div>
+
+    <header class="dashboard-header">
+        <div class="logo">
+            <h1>yourweek</h1>
+        </div>
+        <div class="user-info">
+            <h3>Calendario Smart</h3>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-title">
+            <h2>Gestione Appuntamenti</h2>
+            <p>Organizza appuntamenti, controlli e follow-up con sistema di promemoria automatico</p>
+        </div>
+
+        <div class="calendar-controls">
+            <button class="control-btn" id="prevMonth">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <h3 class="current-month" id="currentMonth">Dicembre 2024</h3>
+            <button class="control-btn" id="nextMonth">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <div class="calendar-wrapper">
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Il calendario verrà generato dinamicamente -->
+            </div>
+
+            <div class="appointments-sidebar">
+                <div class="sidebar-header">
+                    <h3>Appuntamenti</h3>
+                    <button class="add-appointment-btn" onclick="openAddAppointmentModal()">
+                        <i class="fas fa-plus"></i> Nuovo
+                    </button>
+                </div>
+
+                <div class="upcoming-appointments" id="upcomingAppointments">
+                    <!-- Gli appuntamenti verranno generati dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per aggiungere/modificare appuntamento -->
+    <div class="modal" id="appointmentModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeAppointmentModal()">&times;</button>
+            <h2 class="modal-title">Nuovo Appuntamento</h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Paziente</label>
+                    <select class="input-field" id="appointmentPatient">
+                        <option value="">Seleziona paziente</option>
+                        <option value="1">Mario Rossi</option>
+                        <option value="2">Laura Bianchi</option>
+                        <option value="3">Giulia Neri</option>
+                        <option value="4">Paolo Russo</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" class="input-field" id="appointmentDate">
+                </div>
+
+                <div class="form-group">
+                    <label>Ora Inizio</label>
+                    <input type="time" class="input-field" id="appointmentTime">
+                </div>
+
+                <div class="form-group">
+                    <label>Durata (minuti)</label>
+                    <select class="input-field" id="appointmentDuration">
+                        <option value="30">30 minuti</option>
+                        <option value="45">45 minuti</option>
+                        <option value="60" selected>60 minuti</option>
+                        <option value="90">90 minuti</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Tipo Visita</label>
+                    <select class="input-field" id="appointmentType">
+                        <option value="prima">Prima Visita</option>
+                        <option value="controllo">Controllo Mensile</option>
+                        <option value="followup">Follow-up</option>
+                        <option value="urgente">Visita Urgente</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Note</label>
+                    <textarea class="input-field" id="appointmentNotes" rows="3" placeholder="Aggiungi note sull'appuntamento..."></textarea>
+                </div>
+
+                <div class="form-group full-width">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="appointmentReminder" checked>
+                        <span>Invia promemoria automatico</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeAppointmentModal()">Annulla</button>
+                <button class="save-btn" onclick="saveAppointment()">Salva Appuntamento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal dettagli appuntamento -->
+    <div class="modal" id="detailsModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeDetailsModal()">&times;</button>
+            <div id="appointmentDetails">
+                <!-- I dettagli verranno popolati dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dati degli appuntamenti
+        let appointments = JSON.parse(localStorage.getItem('appointments')) || [
+            {
+                id: 1,
+                patientId: 1,
+                patientName: "Mario Rossi",
+                date: "2024-12-20",
+                time: "09:00",
+                duration: 60,
+                type: "controllo",
+                typeLabel: "Controllo Mensile",
+                notes: "Verifica progressi dieta dimagrimento",
+                reminder: true
+            },
+            {
+                id: 2,
+                patientId: 3,
+                patientName: "Giulia Neri",
+                date: "2024-12-20",
+                time: "11:00",
+                duration: 60,
+                type: "controllo",
+                typeLabel: "Controllo Mensile",
+                notes: "Controllo mensile routine",
+                reminder: true
+            },
+            {
+                id: 3,
+                patientId: 2,
+                patientName: "Laura Bianchi",
+                date: "2024-12-18",
+                time: "15:00",
+                duration: 45,
+                type: "followup",
+                typeLabel: "Follow-up",
+                notes: "Valutazione nuovo piano proteico",
+                reminder: true
+            }
+        ];
+
+        let currentDate = new Date();
+        let selectedDate = null;
+        let editingAppointment = null;
+
+        // Genera il calendario
+        function generateCalendar(year, month) {
+            const calendarGrid = document.getElementById('calendarGrid');
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startDay = firstDay.getDay();
+
+            // Aggiorna il titolo del mese
+            const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+                              'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+            document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
+
+            let html = '';
+
+            // Header giorni della settimana
+            const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+            dayNames.forEach(day => {
+                html += `<div class="calendar-day-header">${day}</div>`;
+            });
+
+            // Giorni vuoti prima del primo giorno del mese
+            for (let i = 0; i < startDay; i++) {
+                html += `<div class="calendar-day empty"></div>`;
+            }
+
+            // Giorni del mese
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayAppointments = appointments.filter(apt => apt.date === dateStr);
+                const isToday = isSameDay(new Date(year, month, day), new Date());
+                const isPast = new Date(year, month, day) < new Date().setHours(0, 0, 0, 0);
+
+                html += `
+                    <div class="calendar-day ${isToday ? 'today' : ''} ${isPast ? 'past' : ''}" 
+                         onclick="selectDate('${dateStr}')">
+                        <div class="day-number">${day}</div>
+                        ${dayAppointments.length > 0 ? `
+                            <div class="appointments-indicator">
+                                ${dayAppointments.map(apt => `
+                                    <div class="appointment-dot ${apt.type}" title="${apt.patientName} - ${apt.time}"></div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            calendarGrid.innerHTML = html;
+            renderUpcomingAppointments();
+        }
+
+        // Verifica se due date sono lo stesso giorno
+        function isSameDay(date1, date2) {
+            return date1.getDate() === date2.getDate() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getFullYear() === date2.getFullYear();
+        }
+
+        // Seleziona una data
+        function selectDate(dateStr) {
+            selectedDate = dateStr;
+            openAddAppointmentModal();
+            document.getElementById('appointmentDate').value = dateStr;
+        }
+
+        // Rendering appuntamenti prossimi
+        function renderUpcomingAppointments() {
+            const container = document.getElementById('upcomingAppointments');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const upcoming = appointments
+                .filter(apt => new Date(apt.date) >= today)
+                .sort((a, b) => {
+                    const dateA = new Date(`${a.date}T${a.time}`);
+                    const dateB = new Date(`${b.date}T${b.time}`);
+                    return dateA - dateB;
+                });
+
+            if (upcoming.length === 0) {
+                container.innerHTML = '<div class="no-appointments">Nessun appuntamento in programma</div>';
+                return;
+            }
+
+            container.innerHTML = upcoming.map(apt => {
+                const aptDate = new Date(apt.date);
+                const dateStr = aptDate.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+                
+                return `
+                    <div class="appointment-card ${apt.type}" onclick="showAppointmentDetails(${apt.id})">
+                        <div class="appointment-header">
+                            <div class="appointment-patient">
+                                <i class="fas fa-user-circle"></i>
+                                ${apt.patientName}
+                            </div>
+                            <div class="appointment-type-badge">${apt.typeLabel}</div>
+                        </div>
+                        <div class="appointment-info">
+                            <div class="info-item">
+                                <i class="fas fa-calendar"></i>
+                                ${dateStr}
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-clock"></i>
+                                ${apt.time} (${apt.duration} min)
+                            </div>
+                        </div>
+                        ${apt.notes ? `<div class="appointment-notes">${apt.notes}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Mostra dettagli appuntamento
+        function showAppointmentDetails(id) {
+            const appointment = appointments.find(apt => apt.id === id);
+            if (!appointment) return;
+
+            const modal = document.getElementById('detailsModal');
+            const container = document.getElementById('appointmentDetails');
+
+            const aptDate = new Date(appointment.date);
+            const dateStr = aptDate.toLocaleDateString('it-IT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            container.innerHTML = `
+                <h2 class="modal-title">Dettagli Appuntamento</h2>
+                
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="fas fa-user"></i> Paziente
+                        </div>
+                        <div class="detail-value">${appointment.patientName}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="fas fa-calendar"></i> Data
+                        </div>
+                        <div class="detail-value">${dateStr}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="fas fa-clock"></i> Orario
+                        </div>
+                        <div class="detail-value">${appointment.time}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="fas fa-hourglass-half"></i> Durata
+                        </div>
+                        <div class="detail-value">${appointment.duration} minuti</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="fas fa-stethoscope"></i> Tipo Visita
+                        </div>
+                        <div class="detail-value">${appointment.typeLabel}</div>
+                    </div>
+
+                    <div class="detail-item">
+                        <div class="detail-label">
+                            <i class="fas fa-bell"></i> Promemoria
+                        </div>
+                        <div class="detail-value">${appointment.reminder ? 'Attivo' : 'Non attivo'}</div>
+                    </div>
+
+                    ${appointment.notes ? `
+                        <div class="detail-item full-width">
+                            <div class="detail-label">
+                                <i class="fas fa-sticky-note"></i> Note
+                            </div>
+                            <div class="detail-value">${appointment.notes}</div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <div class="modal-actions">
+                    <button class="cancel-btn" onclick="deleteAppointment(${appointment.id})">
+                        <i class="fas fa-trash"></i> Elimina
+                    </button>
+                    <button class="save-btn" onclick="editAppointment(${appointment.id})">
+                        <i class="fas fa-edit"></i> Modifica
+                    </button>
+                </div>
+            `;
+
+            modal.style.display = 'block';
+        }
+
+        // Apri modal nuovo appuntamento
+        function openAddAppointmentModal() {
+            editingAppointment = null;
+            document.getElementById('appointmentModal').style.display = 'block';
+            document.querySelector('.modal-title').textContent = 'Nuovo Appuntamento';
+            
+            // Reset form
+            document.getElementById('appointmentPatient').value = '';
+            document.getElementById('appointmentDate').value = selectedDate || '';
+            document.getElementById('appointmentTime').value = '';
+            document.getElementById('appointmentDuration').value = '60';
+            document.getElementById('appointmentType').value = 'prima';
+            document.getElementById('appointmentNotes').value = '';
+            document.getElementById('appointmentReminder').checked = true;
+        }
+
+        // Chiudi modal
+        function closeAppointmentModal() {
+            document.getElementById('appointmentModal').style.display = 'none';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        // Salva appuntamento
+        function saveAppointment() {
+            const patientId = document.getElementById('appointmentPatient').value;
+            const patientName = document.getElementById('appointmentPatient').selectedOptions[0].text;
+            const date = document.getElementById('appointmentDate').value;
+            const time = document.getElementById('appointmentTime').value;
+            const duration = parseInt(document.getElementById('appointmentDuration').value);
+            const type = document.getElementById('appointmentType').value;
+            const typeLabel = document.getElementById('appointmentType').selectedOptions[0].text;
+            const notes = document.getElementById('appointmentNotes').value;
+            const reminder = document.getElementById('appointmentReminder').checked;
+
+            if (!patientId || !date || !time) {
+                alert('Compila tutti i campi obbligatori');
+                return;
+            }
+
+            const appointment = {
+                id: editingAppointment ? editingAppointment.id : Date.now(),
+                patientId: parseInt(patientId),
+                patientName,
+                date,
+                time,
+                duration,
+                type,
+                typeLabel,
+                notes,
+                reminder
+            };
+
+            if (editingAppointment) {
+                const index = appointments.findIndex(apt => apt.id === editingAppointment.id);
+                appointments[index] = appointment;
+            } else {
+                appointments.push(appointment);
+            }
+
+            localStorage.setItem('appointments', JSON.stringify(appointments));
+            
+            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+            closeAppointmentModal();
+            alert('Appuntamento salvato con successo!');
+        }
+
+        // Modifica appuntamento
+        function editAppointment(id) {
+            closeDetailsModal();
+            editingAppointment = appointments.find(apt => apt.id === id);
+            
+            document.getElementById('appointmentModal').style.display = 'block';
+            document.querySelector('.modal-title').textContent = 'Modifica Appuntamento';
+            
+            document.getElementById('appointmentPatient').value = editingAppointment.patientId;
+            document.getElementById('appointmentDate').value = editingAppointment.date;
+            document.getElementById('appointmentTime').value = editingAppointment.time;
+            document.getElementById('appointmentDuration').value = editingAppointment.duration;
+            document.getElementById('appointmentType').value = editingAppointment.type;
+            document.getElementById('appointmentNotes').value = editingAppointment.notes;
+            document.getElementById('appointmentReminder').checked = editingAppointment.reminder;
+        }
+
+        // Elimina appuntamento
+        function deleteAppointment(id) {
+            if (confirm('Sei sicuro di voler eliminare questo appuntamento?')) {
+                appointments = appointments.filter(apt => apt.id !== id);
+                localStorage.setItem('appointments', JSON.stringify(appointments));
+                generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+                closeDetailsModal();
+                alert('Appuntamento eliminato');
+            }
+        }
+
+        // Navigation
+        document.getElementById('prevMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        });
+
+        // Chiudi modal cliccando fuori
+        window.onclick = function(event) {
+            const appointmentModal = document.getElementById('appointmentModal');
+            const detailsModal = document.getElementById('detailsModal');
+            
+            if (event.target === appointmentModal) {
+                closeAppointmentModal();
+            }
+            if (event.target === detailsModal) {
+                closeDetailsModal();
+            }
+        }
+
+        // Inizializza
+        document.addEventListener('DOMContentLoaded', () => {
+            generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+        });
+    </script>
+</body>
+</html>
