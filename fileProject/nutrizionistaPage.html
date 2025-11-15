@@ -39,11 +39,11 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" id="active-patients-card">
                 <div class="stat-icon">
                     <i class="fas fa-users"></i>
                 </div>
-                <div class="stat-number">24</div>
+                <div class="stat-number" id="active-patients-count">24</div>
                 <p>Pazienti Attivi</p>
             </div>
             <div class="stat-card">
@@ -70,7 +70,7 @@
         </div>
 
         <div class="features-grid">
-            <div class="feature-card" onclick="location.href='pazienti.html'">
+            <div class="feature-card" onclick="location.href='gestionePazienti.html'">
                 <div class="feature-icon">
                     <i class="fas fa-users"></i>
                 </div>
@@ -79,7 +79,7 @@
                 <span class="feature-badge">24 Pazienti</span>
             </div>
 
-            <div class="feature-card" onclick="location.href='piani-dietetici.html'">
+            <div class="feature-card" onclick="location.href='pianiDietetici.html'">
                 <div class="feature-icon">
                     <i class="fas fa-clipboard-list"></i>
                 </div>
@@ -128,7 +128,7 @@
         <div class="recent-activity">
             <h3>Attività Recenti</h3>
             <ul class="activity-list">
-                <li>
+                <li onclick="location.href='gestionePazienti.html'">
                     <div class="activity-icon">
                         <i class="fas fa-user-plus"></i>
                     </div>
@@ -137,7 +137,7 @@
                         <p>Maria Bianchi • Ieri alle 14:30 • Prima visita programmata</p>
                     </div>
                 </li>
-                <li>
+                <li onclick="location.href='pianiDietetici.html'">
                     <div class="activity-icon">
                         <i class="fas fa-edit"></i>
                     </div>
@@ -184,6 +184,22 @@
                 }, index * 100);
             });
         });
+
+        // Funzione per aggiornare il numero di pazienti (da aggiungere nella dashboard nutrizionista)
+function updatePatientCount(count) {
+    const patientCountElement = document.querySelector('.stat-number'); // Seleziona l'elemento del conteggio
+    if (patientCountElement) {
+        patientCountElement.textContent = count;
+    }
+}
+
+// All'avvio della dashboard, carica il conteggio dal localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const savedCount = localStorage.getItem('patientCount');
+    if (savedCount) {
+        updatePatientCount(savedCount);
+    }
+});
     </script>
 </body>
 </html>

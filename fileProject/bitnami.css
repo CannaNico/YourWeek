@@ -1,10 +1,10 @@
-
-        html {
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');       
+       html {
             scroll-behavior: smooth;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
             color: white;
             overflow-x: hidden;
             background: #0a0a0a;
@@ -417,3 +417,335 @@
                 font-size: 1rem;
             }
         }
+
+        /* Footer Styles */
+/* Footer Styles */
+.footer-section {
+    background: white;
+    color: #333;
+    padding: 50px 0 20px 0;
+    position: relative;
+    z-index: 10;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 30px;
+}
+
+.footer-info h3,
+.footer-links h3,
+.footer-social h3 {
+    color: #2d4a5c;
+    margin-bottom: 20px;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.footer-info p {
+    line-height: 1.6;
+    margin-bottom: 15px;
+    color: #666;
+}
+
+.contact-info p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.contact-info i {
+    color: #4db8ff;
+    width: 20px;
+}
+
+.footer-links ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links li {
+    margin-bottom: 12px;
+}
+
+.footer-links a {
+    color: #666;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+    color: #4db8ff;
+}
+
+.footer-links i {
+    color: #4db8ff;
+    width: 20px;
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.social-icons a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* Instagram con immagine */
+.social-icons a.instagram {
+    background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+}
+
+.social-icons a.instagram .social-img {
+    width: 24px;
+    height: 24px;
+    filter: brightness(0) invert(1);
+}
+
+/* Facebook con immagine */
+.social-icons a.facebook {
+    background: #1877F2;
+}
+
+.social-icons a.facebook .social-img {
+    width: 24px;
+    height: 24px;
+    filter: brightness(0) invert(1);
+}
+
+/* Twitter con immagine */
+.social-icons a.twitter {
+    background: #1DA1F2;
+}
+
+.social-icons a.twitter .social-img {
+    width: 24px;
+    height: 24px;
+    filter: brightness(0) invert(1);
+}
+
+/* WhatsApp con immagine */
+.social-icons a.whatsapp {
+    background: #25D366;
+}
+
+.social-icons a.whatsapp .social-img {
+    width: 26px;
+    height: 26px;
+    filter: brightness(0) invert(1);
+}
+
+.social-icons a:hover {
+    transform: translateY(-5px) scale(1.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.app-version {
+    border-top: 1px solid #e9ecef;
+    padding-top: 20px;
+}
+
+.app-version p {
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .footer-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .footer-section {
+        padding: 40px 0 20px 0;
+    }
+    
+    .social-icons {
+        justify-content: center;
+    }
+}
+.full-width-features {
+    margin-top: 80px;
+    position: relative;
+    z-index: 5; /* Porta la sezione sopra il video */
+    background: linear-gradient(135deg, #0f0c29 0%, #7b7b7d 50%, #010102 100%); /* Sfondo solido */
+}
+
+.full-width-feature {
+    position: relative;
+    height: 70vh;
+    min-height: 500px;
+    overflow: hidden;
+    margin-bottom: 40px;
+}
+
+.full-width-feature:last-child {
+    margin-bottom: 0;
+}
+
+.feature-image-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.feature-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+}
+
+.full-width-feature:hover .feature-image-container img {
+    transform: translateX(-10%);
+}
+
+.feature-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+}
+
+.feature-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 40px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.feature-title-overlay {
+    color: white;
+    font-size: 4rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+    margin-bottom: 0;
+}
+
+.feature-text-overlay {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.8s ease;
+}
+
+.full-width-feature:hover .feature-text-overlay {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.feature-text-overlay h3 {
+    color: #2d4a5c;
+    font-size: 2.2rem;
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.feature-text-overlay p {
+    color: #333;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 25px;
+}
+
+.feature-list-overlay {
+    list-style: none;
+    padding: 0;
+}
+
+.feature-list-overlay li {
+    color: #2d4a5c;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.feature-list-overlay i {
+    color: #4db8ff;
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .feature-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        text-align: center;
+    }
+
+    .feature-title-overlay {
+        font-size: 3rem;
+    }
+
+    .feature-text-overlay {
+        transform: translateY(50px);
+    }
+
+    .full-width-feature:hover .feature-text-overlay {
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .full-width-feature {
+        height: 60vh;
+        min-height: 400px;
+        margin-bottom: 30px;
+    }
+
+    .feature-title-overlay {
+        font-size: 2.5rem;
+    }
+
+    .feature-text-overlay {
+        padding: 25px;
+    }
+
+    .feature-text-overlay h3 {
+        font-size: 1.8rem;
+    }
+}

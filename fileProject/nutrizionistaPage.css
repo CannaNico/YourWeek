@@ -23,25 +23,8 @@ body {
     overflow-x: hidden;
 }
 
-/* Background animato */
-.background-animation {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -2;
-    background: 
-        radial-gradient(circle at 20% 80%, rgba(77, 184, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(76, 217, 100, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(255, 149, 0, 0.05) 0%, transparent 50%);
-    animation: backgroundShift 15s ease-in-out infinite;
-}
 
-@keyframes backgroundShift {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-}
+
 
 .dashboard-header {
     background: rgba(45, 74, 92, 0.7);
@@ -289,7 +272,7 @@ body {
 }
 
 .back-to-login {
-    position: fixed;
+    position: absolute;
     top: 10px;
     left: 30px;
     z-index: 1000;
