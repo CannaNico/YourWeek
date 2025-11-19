@@ -1,5 +1,5 @@
 # YourWeek
-<img width="500" height="500" alt="readmeImage" src="https://github.com/user-attachments/assets/86c56df8-9bf9-4e72-a7ed-4958ae6681bd" />
+<img width="800" height="500" alt="readmeImage" src="https://github.com/user-attachments/assets/86c56df8-9bf9-4e72-a7ed-4958ae6681bd" />
 
 
 
