@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piani Dietetici - YourWeek</title>
+    <link rel="stylesheet" href="pianiDietetici.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="back-button">
+        <a href="nutrizionistaPage.html">
+            <i class="fas fa-arrow-left"></i>
+            Torna alla Dashboard
+        </a>
+    </div>
+
+    <header class="dashboard-header">
+        <div class="logo">
+            <h1>yourweek</h1>
+        </div>
+        <div class="user-info">
+            <h3>Piani Dietetici</h3>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-title">
+            <h2>Gestione Piani Alimentari</h2>
+            <p>Modifica e personalizza i piani dietetici dei tuoi pazienti</p>
+        </div>
+
+        <div class="patients-grid" id="patientsGrid">
+            <!-- I pazienti verranno generati dinamicamente con JavaScript -->
+        </div>
+    </div>
+
+    <!-- Modal per il piano dietetico -->
+    <div class="modal" id="dietModal">
+        <div class="modal-content">
+            <button class="close-modal" id="closeModal">&times;</button>
+            <div id="modalContent">
+                <!-- Il contenuto del modal verrà popolato dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dati di esempio per i pazienti e i loro piani dietetici
+        const patients = [
+            {
+                id: 1,
+                name: "Mario",
+                surname: "Rossi",
+                description: "Piano dimagrimento - 1500 kcal",
+                avatar: "MR",
+                dietStats: {
+                    calorie: "1500 kcal",
+                    proteine: "90g",
+                    pasti: "5"
+                },
+                mealPlan: {
+                    week: "11-17 Dicembre 2024",
+                    days: {
+                        lunedi: {
+                            colazione: "Yogurt greco con frutti di bosco e noci",
+                            pranzo: "Petto di pollo alla griglia con insalata mista",
+                            cena: "Salmone al forno con verdure",
+                            spuntini: "Mela, Mandorle"
+                        },
+                        martedi: {
+                            colazione: "Porridge d'avena con banana",
+                            pranzo: "Riso integrale con tonno e zucchine",
+                            cena: "Zuppa di lenticchie",
+                            spuntini: "Yogurt, Nocciole"
+                        },
+                        mercoledi: {
+                            colazione: "Uova strapazzate con spinaci",
+                            pranzo: "Quinoa con ceci e verdure",
+                            cena: "Filetto di merluzzo con broccoli",
+                            spuntini: "Pera, Semi di zucca"
+                        },
+                        giovedi: {
+                            colazione: "Pane integrale con avocado",
+                            pranzo: "Pasta integrale con pesto di rucola",
+                            cena: "Pollo alle erbe con patate dolci",
+                            spuntini: "Arancia, Noci"
+                        },
+                        venerdi: {
+                            colazione: "Smoothie proteico con spinaci",
+                            pranzo: "Insalata di farro con tonno",
+                            cena: "Bistecca di manzo con carote",
+                            spuntini: "Kiwi, Mandorle"
+                        },
+                        sabato: {
+                            colazione: "Pancake proteici con frutta",
+                            pranzo: "Pizza integrale con verdure",
+                            cena: "Zuppa di pesce",
+                            spuntini: "Frutta secca"
+                        },
+                        domenica: {
+                            colazione: "Fette biscottate con marmellata",
+                            pranzo: "Lasagna vegetariana",
+                            cena: "Minestrone con crostini",
+                            spuntini: "Yogurt bianco"
+                        }
+                    }
+                }
+            },
+            {
+                id: 2,
+                name: "Laura",
+                surname: "Bianchi",
+                description: "Piano massa muscolare - 2200 kcal",
+                avatar: "LB",
+                dietStats: {
+                    calorie: "2200 kcal",
+                    proteine: "120g",
+                    pasti: "6"
+                },
+                mealPlan: {
+                    week: "11-17 Dicembre 2024",
+                    days: {
+                        lunedi: {
+                            colazione: "Porridge con proteine in polvere e banana",
+                            pranzo: "Riso basmati con pollo e verdure saltate",
+                            cena: "Salmone con quinoa e asparagi",
+                            spuntini: "Frullato proteico, Frutta secca mista"
+                        },
+                        martedi: {
+                            colazione: "Uova strapazzate e pane integrale",
+                            pranzo: "Pasta integrale con tonno e piselli",
+                            cena: "Bistecca con patate dolci",
+                            spuntini: "Yogurt greco, Mandorle"
+                        },
+                        mercoledi: {
+                            colazione: "Smoothie proteico con avena",
+                            pranzo: "Pollo al curry con riso integrale",
+                            cena: "Merluzzo al forno con verdure",
+                            spuntini: "Barretta proteica, Frutta"
+                        },
+                        giovedi: {
+                            colazione: "Pancake proteici con miele",
+                            pranzo: "Insalata di quinoa con gamberetti",
+                            cena: "Tacchino con broccoli",
+                            spuntini: "Shake post-workout, Noci"
+                        },
+                        venerdi: {
+                            colazione: "Porridge con burro di arachidi",
+                            pranzo: "Pasta integrale al pesto con pollo",
+                            cena: "Salmone alla griglia con insalata",
+                            spuntini: "Yogurt proteico, Frutta secca"
+                        },
+                        sabato: {
+                            colazione: "Uova e avocado su toast",
+                            pranzo: "Riso venere con gamberi e verdure",
+                            cena: "Bistecca di manzo con patate",
+                            spuntini: "Frullato, Mandorle"
+                        },
+                        domenica: {
+                            colazione: "French toast proteico",
+                            pranzo: "Lasagna con ragù magro",
+                            cena: "Pollo al forno con verdure",
+                            spuntini: "Yogurt greco, Noci"
+                        }
+                    }
+                }
+            },
+            {
+                id: 3,
+                name: "Giulia",
+                surname: "Neri",
+                description: "Piano mantenimento - 1800 kcal",
+                avatar: "GN",
+                dietStats: {
+                    calorie: "1800 kcal",
+                    proteine: "100g",
+                    pasti: "5"
+                },
+                mealPlan: {
+                    week: "11-17 Dicembre 2024",
+                    days: {
+                        lunedi: {
+                            colazione: "Yogurt con cereali e frutta",
+                            pranzo: "Insalata di pollo con verdure miste",
+                            cena: "Pesce al vapore con patate",
+                            spuntini: "Mela, Noci"
+                        },
+                        martedi: {
+                            colazione: "Toast integrale con ricotta",
+                            pranzo: "Riso venere con verdure",
+                            cena: "Petto di tacchino con insalata",
+                            spuntini: "Frutta, Yogurt"
+                        },
+                        mercoledi: {
+                            colazione: "Smoothie bowl con granola",
+                            pranzo: "Pasta al pomodoro con basilico",
+                            cena: "Salmone con zucchine",
+                            spuntini: "Banana, Mandorle"
+                        },
+                        giovedi: {
+                            colazione: "Porridge con mirtilli",
+                            pranzo: "Quinoa con verdure grigliate",
+                            cena: "Pollo al limone con carote",
+                            spuntini: "Pera, Noci"
+                        },
+                        venerdi: {
+                            colazione: "Uova e pane integrale",
+                            pranzo: "Insalata di tonno e fagioli",
+                            cena: "Pizza integrale con verdure",
+                            spuntini: "Frutta secca"
+                        },
+                        sabato: {
+                            colazione: "Pancake con frutta fresca",
+                            pranzo: "Risotto ai funghi",
+                            cena: "Grigliata di pesce misto",
+                            spuntini: "Yogurt, Noci"
+                        },
+                        domenica: {
+                            colazione: "Croissant integrale con marmellata",
+                            pranzo: "Pasta al ragù vegetale",
+                            cena: "Zuppa di legumi",
+                            spuntini: "Frutta di stagione"
+                        }
+                    }
+                }
+            }
+        ];
+
+        let currentEditingPatient = null;
+
+        // Funzione per generare le card dei pazienti
+        function renderPatients() {
+            const grid = document.getElementById('patientsGrid');
+            grid.innerHTML = '';
+
+            patients.forEach(patient => {
+                const card = document.createElement('div');
+                card.className = 'patient-card';
+                card.onclick = () => openDietModal(patient);
+                
+                card.innerHTML = `
+                    <div class="patient-header">
+                        <div class="patient-avatar">${patient.avatar}</div>
+                        <div class="patient-info">
+                            <h3>${patient.name} ${patient.surname}</h3>
+                            <div class="description">${patient.description}</div>
+                        </div>
+                    </div>
+                    <div class="diet-stats">
+                        <div class="diet-stat">
+                            <div class="value">${patient.dietStats.calorie}</div>
+                            <div class="label">Calorie</div>
+                        </div>
+                        <div class="diet-stat">
+                            <div class="value">${patient.dietStats.proteine}</div>
+                            <div class="label">Proteine</div>
+                        </div>
+                        <div class="diet-stat">
+                            <div class="value">${patient.dietStats.pasti}</div>
+                            <div class="label">Pasti/Giorno</div>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // Funzione per aprire il modal con il piano dietetico
+        function openDietModal(patient) {
+            currentEditingPatient = patient;
+            
+            const modal = document.getElementById('dietModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <div class="patient-detail-header">
+                    <div class="patient-detail-avatar">${patient.avatar}</div>
+                    <div>
+                        <h2>${patient.name} ${patient.surname}</h2>
+                        <p>${patient.description}</p>
+                    </div>
+                </div>
+
+                <div class="weekly-plan">
+                    <div class="week-title">
+                        <i class="fas fa-calendar-week"></i> ${patient.mealPlan.week}
+                    </div>
+
+                    <table class="meal-table">
+                        <thead>
+                            <tr>
+                                <th>Giorno</th>
+                                <th><i class="fas fa-coffee"></i> Colazione</th>
+                                <th><i class="fas fa-utensils"></i> Pranzo</th>
+                                <th><i class="fas fa-moon"></i> Cena</th>
+                                <th><i class="fas fa-apple-alt"></i> Spuntini</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${generateMealRows(patient.mealPlan.days)}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="save-btn" onclick="saveMealPlan()">
+                        <i class="fas fa-save"></i> Salva Modifiche
+                    </button>
+                </div>
+            `;
+
+            // Aggiungi event listeners per l'editing
+            setTimeout(() => {
+                addEditListeners();
+            }, 100);
+
+            modal.style.display = 'block';
+        }
+
+        // Genera le righe della tabella pasti
+        function generateMealRows(days) {
+            const dayNames = {
+                lunedi: 'Lunedì',
+                martedi: 'Martedì',
+                mercoledi: 'Mercoledì',
+                giovedi: 'Giovedì',
+                venerdi: 'Venerdì',
+                sabato: 'Sabato',
+                domenica: 'Domenica'
+            };
+
+            let html = '';
+            for (const [dayKey, dayName] of Object.entries(dayNames)) {
+                const meals = days[dayKey] || {};
+                html += `
+                    <tr>
+                        <td><strong>${dayName}</strong></td>
+                        <td>
+                            <div class="meal-content" data-day="${dayKey}" data-meal="colazione">
+                                <span class="meal-text">${meals.colazione || '<div class="empty-meal">Clicca per aggiungere</div>'}</span>
+                                <textarea class="meal-edit" style="display: none;">${meals.colazione || ''}</textarea>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="meal-content" data-day="${dayKey}" data-meal="pranzo">
+                                <span class="meal-text">${meals.pranzo || '<div class="empty-meal">Clicca per aggiungere</div>'}</span>
+                                <textarea class="meal-edit" style="display: none;">${meals.pranzo || ''}</textarea>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="meal-content" data-day="${dayKey}" data-meal="cena">
+                                <span class="meal-text">${meals.cena || '<div class="empty-meal">Clicca per aggiungere</div>'}</span>
+                                <textarea class="meal-edit" style="display: none;">${meals.cena || ''}</textarea>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="meal-content" data-day="${dayKey}" data-meal="spuntini">
+                                <span class="meal-text">${meals.spuntini || '<div class="empty-meal">Clicca per aggiungere</div>'}</span>
+                                <textarea class="meal-edit" style="display: none;">${meals.spuntini || ''}</textarea>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            return html;
+        }
+
+        // Aggiungi event listeners per l'editing
+        function addEditListeners() {
+            const mealContents = document.querySelectorAll('.meal-content');
+            
+            mealContents.forEach(content => {
+                content.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('meal-edit')) return;
+                    
+                    const textElement = this.querySelector('.meal-text');
+                    const editElement = this.querySelector('.meal-edit');
+                    
+                    // Entra in modalità editing
+                    this.classList.add('editing');
+                    textElement.style.display = 'none';
+                    editElement.style.display = 'block';
+                    editElement.focus();
+                    
+                    // Salva quando perde il focus
+                    editElement.addEventListener('blur', function() {
+                        saveMealEdit(this);
+                    });
+                    
+                    // Salva con Enter (senza shift)
+                    editElement.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            this.blur();
+                        }
+                    });
+                });
+            });
+        }
+
+        // Salva la modifica di un pasto
+        function saveMealEdit(textarea) {
+            const contentDiv = textarea.parentElement;
+            const textElement = contentDiv.querySelector('.meal-text');
+            const day = contentDiv.getAttribute('data-day');
+            const meal = contentDiv.getAttribute('data-meal');
+            const newValue = textarea.value.trim();
+
+            // Esci dalla modalità editing
+            contentDiv.classList.remove('editing');
+            textarea.style.display = 'none';
+            textElement.style.display = 'block';
+            
+            if (newValue) {
+                textElement.innerHTML = newValue.replace(/\n/g, '<br>');
+                // Aggiorna i dati del paziente
+                if (currentEditingPatient && currentEditingPatient.mealPlan.days[day]) {
+                    currentEditingPatient.mealPlan.days[day][meal] = newValue;
+                }
+            } else {
+                textElement.innerHTML = '<div class="empty-meal">Clicca per aggiungere</div>';
+                if (currentEditingPatient && currentEditingPatient.mealPlan.days[day]) {
+                    delete currentEditingPatient.mealPlan.days[day][meal];
+                }
+            }
+        }
+
+        // Salva l'intero piano alimentare
+        function saveMealPlan() {
+            if (currentEditingPatient) {
+                // Qui potresti salvare i dati su un server
+                console.log('Piano alimentare salvato:', currentEditingPatient);
+                renderPatients(); // Aggiorna la vista
+                closeModal();
+                
+                // Mostra un messaggio di conferma più elegante
+                showNotification('Piano alimentare aggiornato con successo!');
+            }
+        }
+
+        // Funzione per mostrare notifiche
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #4db8ff, #2d4a5c);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 12px;
+                box-shadow: 0 8px 25px rgba(77, 184, 255, 0.4);
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Chiudi il modal
+        function closeModal() {
+            document.getElementById('dietModal').style.display = 'none';
+        }
+
+        document.getElementById('closeModal').onclick = closeModal;
+
+        // Chiudi il modal cliccando fuori
+        window.onclick = function(event) {
+            const modal = document.getElementById('dietModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Inizializza la pagina
+        document.addEventListener('DOMContentLoaded', renderPatients);
+    </script>
+
+    <style>
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    </style>
+</body>
+</html>
