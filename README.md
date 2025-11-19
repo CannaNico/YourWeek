@@ -1,2 +1,11 @@
 # YourWeek
-Progetto dove si pianifica sia a livello alimentare che sportivo la propria settimana, con l'aggiunta di un algoritmo automatico che ti ricorda ci comprare i prodotti che ti mancano per completare il pasto.
+<img width="1024" height="1024" alt="readmeImage" src="https://github.com/user-attachments/assets/86c56df8-9bf9-4e72-a7ed-4958ae6681bd" />
+
+
+
+
+
+
+
+
+A project where you can plan your week both in terms of food and sports, with the addition of an automatic algorithm that reminds you to buy the products you need to complete the meal.
