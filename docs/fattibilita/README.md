@@ -176,11 +176,21 @@ Infrastruttura: [Descrizione dell'infrastruttura necessaria]
 •Technical support for bug fixes and future improvements
 
 ## 4.3 Fattibilità Tecnica
-Tecnologie disponibili: [Elenco delle tecnologie attualmente disponibili]
-Competenze del team: artificial intelligence, technical skills learned at school and self-taught
+Tecnologie disponibili: The stack is purely client-side, with XAMPP (PHP) used only for hosting and potentially very lightweight backend logic (if used). Server/Hosting (XAMPP): Apache for serving web pages. PHP: Can be used for simple server-side logic or to dynamically generate code, but not for persistent data management (without a database). Frontend (User Interface & Data): HTML & CSS: Application structure and style. JavaScript: Manages all interactivity, algorithm logic, and, most importantly, data persistence. Data Management (Without SQL) The key is storing all data (handouts, plans, recipes). Since the database is excluded, the only solution for "remembering" data between sessions is local browser storage.
+
+Competenze del team: Skills must focus on data manipulation in JavaScript format and algorithmic logic implemented entirely on the client side.
+Web Storage Management: Specific skills in saving, retrieving, and updating data via localStorage. Programming Logic: Required for implementing the JavaScript algorithm that compares two large data sets (Meal Plan and Pantry Inventory). Artificial Intelligence / Algorithm: The comparison algorithm will be written in JavaScript. It will use rules-based logic and loops (for, if/else) to iterate over the objects stored in localStorage and determine which ingredients are missing.
+
 Fornitori e partner: 
-Rischi tecnici: 
-Prototipi e test: [Descrizione di eventuali prototipi o test preliminari]
+Rischi tecnici: The main risk is persistence and scalability, which are inherent in choosing not to use a database.
+In this project we find technical risk with different impact [high/medium/low], this risks are:
+
+- User Data Loss [High]: Clearly warn the user that data is saved only locally in their browser, and deleting site data or cache will erase it.
+- localStorage Speed/Limits [Medium]: Test the application with a large volume of recipes/pantry items to ensure that JavaScript processing does not excessively slow down the interface.
+- Algorithm Complexity (Client-Side) [Medium]: Design the JSON data structure in an optimized way to facilitate rapid comparison of elements by the JavaScript algorithm.
+- Security (Credentials/Sensitive Data) [Low]: As there are no sensitive credentials or external databases, the risk is minimal.
+
+Prototipi e test: Step 1: Working Persistence: Test whether an item is actually saved in the pantry and whether it is correctly reread after reloading the page (checking localStorage). Step 2: JavaScript Logic: Test the comparison algorithm: Add specific ingredients to the meal plan and verify whether they appear in the shopping list based on their presence in localStorage. Step 3: Robustness: Simulate deleting browser data to demonstrate and understand the limitations of local persistence.
 
 <br><br>
 
@@ -189,26 +199,55 @@ Prototipi e test: [Descrizione di eventuali prototipi o test preliminari]
 ## 5.1 Stima dei Costi
 | Categoria        | Investimento Iniziale (€) | Costi annuali (€) |
 |------------------|---------------------------|-------------------|
-| Personnell       |          [60,00]      | [Valore]          |
-| Hardware     |              [5,00]       | [Valore]          |
-| Software     |              [20,00]      | [Valore]          |
-| Training     | [Valore]                  | [Valore]          |
-| Marketing    | [Valore]                  | [Valore]          |
-| Altro        | [Valore]                  | [Valore]          |
-| Totale       | [Valore]                  | [Valore]          |
+| Personnell       |          [800.00]      | [1500.00]          | 
+| Hardware     |              [0,00]       | [50.00]          |
+| Software     |              [50,00]      | [0.00]          |
+| Training     | [0.00]                  | [0.00]          |
+| Marketing    | [400.00]                  | [600.00]          |
+| Altro        | [80.00]                  | [120.00]          |
+| Totale       | [1330.00]                  | [2270.00]          |
 
 <br>
 
 ## 5.2 Stima dei Ricavi
 | Fonte di Ricavo  | Descrizione               | Ricavi annuali (€) |
 |------------------|---------------------------|--------------------|
-| Vendite      | [Descrizione]             | [Valore]           |
-| Abbonamenti  | [Descrizione]             | [Valore]           |
-| Pubblicità   | [Descrizione]             | [Valore]           |
-| Altro        | [Descrizione]             | [Valore]           |
-| Totale       |                           | [Valore]           |   
+| Vendite      | [One-time purchases for         [800.00]
+                 recipe template packs or
+                 customized UI themes to
+                 enhance the user experience] |                    |
+| Abbonamenti  | ["Panty Pro" membership         [4500.00]
+                 offering features like 
+                 cloud-based data backup 
+                 (overcoming the localStorage 
+                 limit) and multi-device 
+                 synchronization]             |               |
+| Pubblicità   | [Dysplaying non-intrusive       [1200.00]
+                 banner ads fron food brands,
+                 grocery stores, or kitchen
+                 appliance companies in the
+                 free version]                |                 |
+| Altro        | [Generating commissions by      [500.00]
+                 interacting direct links to
+                 online grocery stores
+                 within the automatically
+                 generated shopping list]    |                  |
+| Totale       |                           | [7000.00]           |   
 
 [Proiezione di fatturato - meglio se conservative]
+This projection assumes a cautious and gradual market penetration after the public launch.
+User Base Assumption:
+Total Active Users (Year 1): 750
+Subscription Conversion Rate (Subscriptions): 10% (75 paying users)
+Subscription Price: $5/month or $60/year.
+Subscription Revenue Calculation:
+75 users X 60€/year = 4,500€
+Total Estimated Revenue (Year 1):
+Total Revenue \approx 7,000.00€
+Break-Even Point Analysis:
+The project's low annual operating costs (primarily hosting, maintenance, and marketing) make it relatively easy to cover expenses. The estimated profit in the first year of operation would be:
+Total Revenue - Annual Costs = 7,000.00 € - 2,370.00€ = 4,630.00€
+The project is economically viable under these conservative projections.
 
 <br>
 
