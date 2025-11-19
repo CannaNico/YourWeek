@@ -4,139 +4,139 @@
 
 
 
-A project where you can plan your week both in terms of food and sports, with the addition of an automatic algorithm that reminds you to buy the products you need to complete the meal.
-# YourWeek - La Rivoluzione nella Gestione dell'Alimentazione Settimanale
+# YourWeek - Revolutionizing Weekly Meal Management
 
-## 🍎 Trasforma il Tuo Rapporto con il Cibo
+## 🍎 Transform Your Relationship with Food
 
-**YourWeek** nasce dall'idea che mangiare sano dovrebbe essere semplice, organizzato e piacevole. 
-In un mondo dove il tempo è prezioso e le scelte alimentari sono sempre più complesse, 
-abbiamo creato una piattaforma che unisce pianificazione intelligente, organizzazione efficiente 
-e supporto continuo per il tuo benessere.
-
----
-
-## 🔍 Il Problema: Perché YourWeek è Necessario?
-
-### La Realtà Attuale
-- **🎯 Decision Fatigue**: Ogni giorno decidiamo cosa mangiare, consumando energia mentale preziosa
-- **🕒 Time-Consuming**: La pianificazione settimanale richiede ore di lavoro tra ricette, liste e acquisti
-- **💰 Sprechi Alimentari**: Il 30% del cibo acquistato finisce nella spazzatura per scarsa organizzazione
-- **📊 Disorganizzazione**: Dispense caotiche, acquisti duplicati, ingredienti che scadono
-- **🥗 Squilibrio Nutrizionale**: Difficoltà nel mantenere una dieta bilanciata senza strumenti adeguati
-
-### L'Impatto sulla Vita Quotidiana
-- Stress decisionale costante
-- Budget alimentare non ottimizzato
-- Abitudini alimentari incoerenti
-- Scarso controllo sul proprio benessere
+**YourWeek** was born from the idea that healthy eating should be simple, organized, and enjoyable. 
+In a world where time is precious and food choices are increasingly complex, 
+we've created a platform that combines smart planning, efficient organization, 
+and continuous support for your well-being.
 
 ---
 
-## 💡 La Soluzione YourWeek: Un Approccio Olistico
+## 🔍 The Problem: Why YourWeek is Necessary?
 
-### 🗓️ **Pianificazione Intelligente e Personalizzata**
-- **Calendario Settimanale Interattivo**: Design intuitivo per organizzare i pasti di tutta la settimana
-- **Generazione Automatica Liste**: La lista della spesa si crea magicamente dai tuoi pasti pianificati
-- **Integrazione Calendario**: Sincronizzazione con Google Calendar, Apple Calendar e Outlook
-- **Ricette Smart**: Database con centinaia di ricette filtrabili per dieta, allergie e preferenze
-- **Pianificazione Stagionale**: Suggerimenti basati su frutta e verdura di stagione
+### Current Reality
+- **🎯 Decision Fatigue**: Every day we decide what to eat, consuming precious mental energy
+- **🕒 Time-Consuming**: Weekly planning requires hours of work between recipes, lists, and shopping
+- **💰 Food Waste**: 30% of purchased food ends up in the trash due to poor organization
+- **📊 Disorganization**: Chaotic pantries, duplicate purchases, expired ingredients
+- **🥗 Nutritional Imbalance**: Difficulty maintaining a balanced diet without proper tools
 
-### 🏠 **Organizzazione della Dispensa Digitale**
-- **Inventario in Tempo Reale**: Scansiona i codici a barre o inserisci manualmente i tuoi ingredienti
-- **Alert Scadenze**: Notifiche intelligenti per ingredienti in prossimità di scadenza
-- **Suggerimenti Automatici**: Ricette consigliate basate su ciò che hai già in dispensa
-- **Tracking Sprechi**: Monitoraggio degli alimenti sprecati con report mensili
-- **Lista della Spesa Ottimizzata**: Acquisti organizzati per reparto (ortofrutta, surgelati, ecc.)
-
-### 🌱 **Supporto per uno Stile di Vita Sano**
-- **Bilanciamento Nutrizionale**: Analisi automatica di proteine, carboidrati, grassi e micronutrienti
-- **Tracking Obiettivi**: Monitoraggio progressi per dimagrimento, aumento massa muscolare, intolleranze
-- **Promemoria Intelligenti**: Notifiche per pasti, idratazione e assunzione integratori
-- **Community Support**: Condivisione ricette e consigli con altri utenti
-- **Educational Content**: Articoli e guide su nutrizione e cucina sana
-
-### 👨‍⚕️ **Piattaforma per Professionisti della Nutrizione**
-- **Dashboard Nutrizionisti**: Gestione completa della clientela con strumenti avanzati
-- **Piani Personalizzati**: Creazione di diete tailor-made per ogni paziente
-- **Monitoraggio Progressi**: Grafici e statistiche dettagliate sull'andamento dei pazienti
-- **Comunicazione Diretta**: Messaggistica integrata per follow-up e supporto
-- **Documentazione Clinica**: Archiviazione sicura di schede paziente e note mediche
+### Impact on Daily Life
+- Constant decision-making stress
+- Non-optimized food budget
+- Inconsistent eating habits
+- Poor control over personal well-being
 
 ---
 
-## 🚀 Caratteristiche Tecniche Avanzate
+## 💡 The YourWeek Solution: A Holistic Approach
 
-### 🤖 **Intelligenza Artificiale Integrata**
-- **Suggerimenti Personalizzati**: AI che impara le tue preferenze e suggerisce ricette
-- **Adattamento Automatico**: Modifica i piani in base a feedback e risultati
-- **Analisi Pattern**: Identifica abitudini e suggerisce miglioramenti
+### 🗓️ **Smart Personalized Planning**
+- **Interactive Weekly Calendar**: Intuitive design to organize all your weekly meals
+- **Automatic List Generation**: Shopping list magically created from your planned meals
+- **Calendar Integration**: Synchronization with Google Calendar, Apple Calendar, and Outlook
+- **Smart Recipes**: Database with hundreds of recipes filterable by diet, allergies, and preferences
+- **Seasonal Planning**: Suggestions based on seasonal fruits and vegetables
 
-### 📱 **Esperienza Utente Premium**
-- **Design Responsive**: Interfaccia ottimizzata per mobile, tablet e desktop
-- **Accessibilità**: Supporto per screen reader e comandi vocali
-- **Multilingua**: Disponibile in italiano, inglese, spagnolo e francese
-- **Offline Mode**: Funzionalità base disponibili senza connessione internet
+### 🏠 **Digital Pantry Organization**
+- **Real-Time Inventory**: Scan barcodes or manually enter your ingredients
+- **Expiration Alerts**: Smart notifications for ingredients nearing expiration
+- **Automatic Suggestions**: Recommended recipes based on what you already have
+- **Waste Tracking**: Monthly reports on wasted food items
+- **Optimized Shopping List**: Purchases organized by department (produce, frozen, etc.)
 
-### 🔒 **Sicurezza e Privacy**
-- **Crittografia End-to-End**: Dati sensibili protetti con standard bancari
-- **GDPR Compliant**: Piena conformità con le normative sulla privacy europee
-- **Backup Automatico**: I tuoi dati al sicuro con backup cloud giornalieri
+### 🌱 **Healthy Lifestyle Support**
+- **Nutritional Balance**: Automatic analysis of proteins, carbs, fats, and micronutrients
+- **Goal Tracking**: Progress monitoring for weight loss, muscle gain, intolerances
+- **Smart Reminders**: Notifications for meals, hydration, and supplement intake
+- **Community Support**: Recipe sharing and tips with other users
+- **Educational Content**: Articles and guides on nutrition and healthy cooking
 
----
-
-## 📊 Risultati e Benefici Dimostrati
-
-### ✅ **Efficienza Comprovata**
-- **-70% tempo pianificazione**: Da 3 ore a 30 minuti settimanali
-- **-40% sprechi alimentari**: Risparmio medio di €50-€100 al mese
-- **+65% aderenza dieta**: Migliore consistenza nelle abitudini alimentari
-- **+80% soddisfazione utenti**: Valutazione media 4.8/5 stelle
-
-### 🌟 **Impatto sulla Qualità della Vita**
-- **Riduzione stress**: Meno ansia decisionale quotidiana
-- **Maggiore consapevolezza**: Migliore comprensione delle proprie abitudini
-- **Risparmio economico**: Budget alimentare ottimizzato
-- **Benessere generale**: Migliori parametri di salute e energia
+### 👨‍⚕️ **Platform for Nutrition Professionals**
+- **Nutritionist Dashboard**: Complete client management with advanced tools
+- **Personalized Plans**: Tailor-made diet creation for each patient
+- **Progress Monitoring**: Detailed charts and statistics on patient progress
+- **Direct Communication**: Integrated messaging for follow-up and support
+- **Clinical Documentation**: Secure storage of patient records and medical notes
 
 ---
 
-## 🎯 A Chi è Rivolto YourWeek?
+## 🚀 Advanced Technical Features
 
-### 👨‍👩‍👧‍👦 **Famiglie Moderne**
-- Genitori che vogliono organizzare i pasti familiari
-- Coppie che cercano equilibrio tra lavoro e vita domestica
-- Studenti fuori sede che imparano a gestire la spesa
+### 🤖 **Integrated Artificial Intelligence**
+- **Personalized Suggestions**: AI that learns your preferences and suggests recipes
+- **Automatic Adaptation**: Modifies plans based on feedback and results
+- **Pattern Analysis**: Identifies habits and suggests improvements
 
-### 🏃‍♂️ **Persone Attente alla Salute**
-- Sportivi che seguono programmi alimentari specifici
-- Persone con intolleranze o allergie alimentari
-- Chi segue diete particolari (vegetariana, vegana, cheto, ecc.)
+### 📱 **Premium User Experience**
+- **Responsive Design**: Interface optimized for mobile, tablet, and desktop
+- **Accessibility**: Support for screen readers and voice commands
+- **Multilingual**: Available in Italian, English, Spanish, and French
+- **Offline Mode**: Basic functionality available without internet connection
 
-### 🏥 **Professionisti del Settore**
-- Nutrizionisti e dietisti che gestiscono pazienti
-- Personal trainer che integrano piani alimentari
-- Chef e food blogger che creano contenuti
-
----
-
-## 🚀 Il Futuro di YourWeek
-
-### 🎁 **Prossime Funzionalità**
-- **Integrazione Supermercati**: Ordini online direttamente dall'app
-- **Corsi di Cucina**: Video-lezioni con chef professionisti
-- **Community Ricette**: Piattaforma social per condividere creazioni
-- **Analisi Avanzate**: Report dettagliati su impatto ambientale e sostenibilità
-
-### 🌍 **Visione**
-Diventare il compagno indispensabile per chiunque voglia trasformare 
-il proprio rapporto con il cibo, rendendo l'alimentazione sana accessibile, 
-semplice e piacevole per tutti.
+### 🔒 **Security and Privacy**
+- **End-to-End Encryption**: Sensitive data protected with banking standards
+- **GDPR Compliant**: Full compliance with European privacy regulations
+- **Automatic Backup**: Your data safe with daily cloud backups
 
 ---
 
-**Iniziare è semplice: scarica l'app, pianifica la tua prima settimana 
-e scopri come YourWeek può rivoluzionare il tuo approccio all'alimentazione!**
+## 📊 Proven Results and Benefits
 
-📲 **Disponibile su App Store e Google Play**
-💻 **Versione Web: [yourweek.com](https://yourweek.com)**
+### ✅ **Proven Efficiency**
+- **-70% planning time**: From 3 hours to 30 minutes weekly
+- **-40% food waste**: Average savings of €50-€100 per month
+- **+65% diet adherence**: Better consistency in eating habits
+- **+80% user satisfaction**: Average rating 4.8/5 stars
+
+### 🌟 **Impact on Quality of Life**
+- **Reduced stress**: Less daily decision anxiety
+- **Greater awareness**: Better understanding of personal habits
+- **Economic savings**: Optimized food budget
+- **General well-being**: Improved health parameters and energy levels
+
+---
+
+## 🎯 Who is YourWeek For?
+
+### 👨‍👩‍👧‍👦 **Modern Families**
+- Parents wanting to organize family meals
+- Couples seeking work-life balance
+- Students learning to manage groceries
+
+### 🏃‍♂️ **Health-Conscious Individuals**
+- Athletes following specific meal programs
+- People with food intolerances or allergies
+- Those following special diets (vegetarian, vegan, keto, etc.)
+
+### 🏥 **Industry Professionals**
+- Nutritionists and dietitians managing patients
+- Personal trainers integrating meal plans
+- Chefs and food bloggers creating content
+
+---
+
+## 🚀 The Future of YourWeek
+
+### 🎁 **Upcoming Features**
+- **Supermarket Integration**: Online orders directly from the app
+- **Cooking Courses**: Video lessons with professional chefs
+- **Recipe Community**: Social platform for sharing creations
+- **Advanced Analytics**: Detailed reports on environmental impact and sustainability
+
+### 🌍 **Vision**
+To become the indispensable companion for anyone wanting to transform 
+their relationship with food, making healthy eating accessible, 
+simple, and enjoyable for everyone.
+
+---
+
+**Getting started is simple: download the app, plan your first week, 
+and discover how YourWeek can revolutionize your approach to nutrition!**
+
+📲 **Available on App Store and Google Play**
+💻 **Web Version: [yourweek.com](https://yourweek.com)**
+📧 **Contact: hello@yourweek.com**
