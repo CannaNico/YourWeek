@@ -275,31 +275,47 @@ Volume di Vendite Necessario: [Quantità di vendite necessarie per coprire i cos
 # 6. Analisi Organizzativa
 
 ## 6.1 Struttura Interna
-Ruoli e Responsabilità: [Elenco puntato dei principali ruoli e responsabilità]
+Ruoli e Responsabilità: Cannata Nicola (gestore progetto): pensa a gestire il progetto, dare compiti, creare l'htmo e il css
+Gentilcore Lorenzo (gestore documentazione): si occupa della fattibilità
+Verzeroli Mirko (dipendente): segui le direttive del gestore progetto
 <br>
-Nuove figure professionali: [Descrizione delle nuove figure professionali necessarie]
+Nuove figure professionali: 
 <br>
 Formazione: [Piani di formazione per il personale]
 <br>
 
 
 ## 6.2 Struttura di Project Management
-Responsabile di Progetto: [Nome e ruolo]
+Responsabile di Progetto: Cannata Nicola
 <br>
-Team di Progetto: [Elenco dei membri del team]
-Metodologia di Gestione: [Descrizione della metodologia di gestione del progetto (es. Agile, Waterfall)]
-Strumenti di Gestione: [Elenco degli strumenti di gestione del progetto (es. Jira, Trello)]
+Team di Progetto:
+Cannata Nicola 
+Gentilcore Lorenzo
+Verzeroli Mirko 
+Metodologia di Gestione: Agile: based on collaboration, flexibility and continuous delivery of value
+Strumenti di Gestione: Visual studio, xampp, github 
 
 <br><br>
 
 # 7. Analisi dei Rischi
 
 ## 7.1 Identificazione dei Rischi
+This table identifies the key risks for the project, categorized into technical, managerial, and operational areas, and estimates their likelihood of occurrence on a scale of 1 (Very Low) to 5 (Very High).
 | Rischio                | Descrizione               | Probabilità (1-5) |
 |-----------------------|---------------------------|-------------------|
-| [Esempio]             | [Esempio]                 | [Valore]
-| [Esempio]             | [Esempio]                 | [Valore]           |
-| [Esempio]             | [Esempio]                 | [Valore]
+| Data Persistence 
+  Failure               |.The                 | [Valore]
+| JS Algorithm 
+  Complexity Errors     | [Esempio]                 | [Valore]           |
+| Code Scalability 
+  issues                | [Esempio]                 | [Valore]
+| Development Delays    |.[Esempio]                 | [Valore]
+| Poor user feedback.   | [Esempio]                 | [Valore]           |
+| Environment 
+  availability          | [Esempio]                 | [Valore]
+| Future PHP  
+  Vulnerabilities       | [Esempio]                 | [Valore]
+  
 
 <br><br>
 
