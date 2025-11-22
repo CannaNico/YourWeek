@@ -331,7 +331,7 @@ This table identifies the key risks for the project, categorized into technical,
 <br>
 
 ## 8.2 Tempistiche
-Durata Totale del Progetto: [Numero di mesi/anni]
+Durata Totale del Progetto: 9 month
 Milestone Principali: [Elenco puntato delle principali milestone con date previste]
 
 [Gantt - Diagramma di Gantt in allegati]
@@ -341,9 +341,18 @@ Milestone Principali: [Elenco puntato delle principali milestone con date previs
 # 9. Conclusioni e Raccomandazioni
 
 ## 9.1 Sintesi della Valutazione
-Vantaggi principali: [Elenco puntato]
-Svantaggi/Sfide: [Elenco puntato]
-
+This summary assesses the key outcomes of the project, focusing on balancing the benefits of implementing the solution against the challenges imposed by the chosen technological stack (XAMPP, HTML, CSS, JavaScript (No SQL)).
+​Key Advantages:
+​Low Initial Cost: The reliance on free technologies and the absence of a database significantly reduce the initial investment to a minimum (€1,480.00).
+​High Profitability: The project exhibits a very short Payback Period (under 4 months) and an exceptionally high ROI (312.84\%), indicating strong economic viability.
+​Minimal Technical Requirements: The stack is widely known and easy to access, making the project ideal for a team with school-based and self-taught skills.
+​Addresses a Real Problem: The system effectively solves the common need to reduce food waste and simplify weekly grocery shopping.
+​Rapid Development (Agile): The Scrum methodology allows for the delivery of the MVP prototype within a short timeframe (10 weeks).
+​Disadvantages/Challenges:
+​Critical Data Loss Risk: Dependence on localStorage means user data can be easily deleted, severely limiting long-term reliability and trustworthiness.
+​Limited Scalability: The system is inherently non-scalable. It cannot support a large volume of users or evolve into a multi-device application without a mandatory migration to a central database and cloud hosting.
+​JavaScript Complexity: The core comparison algorithm must be entirely handled by client-side JavaScript, making debugging and optimization more complex than a robust server-side implementation.
+​Zero Portability: Without a centralized server, the project is confined to a single device/browser.
 <br>
 
 ## 9.2 Raccomandazione Finale
