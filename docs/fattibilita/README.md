@@ -266,9 +266,17 @@ TIR/IRR (Tasso Interno di Rendimento): [%]
 <br>
 
 ## 5.4 Break-even Analysis
-Punto di Pareggio: [Descrizione del punto di pareggio]
-<br>
-Volume di Vendite Necessario: [Quantità di vendite necessarie per coprire i costi]
+Punto di Pareggio: Break-even Point (BEP)
+​The Break-even Point is the level of activity where Total Revenue equals Total Costs (Initial Investment + Annual Fixed Costs + Variable Costs), resulting in zero profit.
+Break-even Point: The project reaches the break-even point when cumulative revenues manage to cover the initial investment of €1,480.00 and the annual operating costs of €2,370.00.
+Necessary Sales Volume
+We calculate the number of annual paying users required to cover only the annual operating costs (€2,370.00), assuming the main revenue is derived from annual subscriptions.
+Annual Fixed Costs: C = €2,370.00
+Average Annual Subscription Price: 
+Abbonamento = 60.00€
+Necessary paying user = 2.370.00€/60.00€ ≈ 39.5 user
+Necessary Sales Volume: Approximately 40 subscribed users (or the equivalent in advertising/sales revenue) are needed to cover all annual fixed operating costs.
+Would you like to review any other section of the feasibility study, or proceed with new content?
 
 <br><br>
 
@@ -356,9 +364,11 @@ This summary assesses the key outcomes of the project, focusing on balancing the
 <br>
 
 ## 9.2 Raccomandazione Finale
-[FATTIBILE] - Se i benefici superano rischi e costi
-[NON FATTIBILE] - Se i rischi/costi sono troppo alti
-[FATTIBILE CON CONDIZIONI] - Se dipende da specifici fattori
+Justification for the Recommendation
+​The project is technically achievable with the provided stack and is highly economically advantageous given the minimal initial costs. However, it carries a critical technical risk related to data loss and lack of scalability, which prevents its full feasibility as a long-term commercial product.
+​Conditions for Success:
+​Short-Term Goal: The project is FEASIBLE and highly recommended as a Working Prototype (MVP) and Proof of Concept for academic submission or demonstration.
+​Long-Term Goal: For future commercialization, feasibility is contingent upon the immediate migration of the project to a technology stack with a centralized database (e.g., PHP/MySQL, Node.js, Python/PostgreSQL) to resolve the data persistence issue and ensure scalability.
 
 <br><br>
 
