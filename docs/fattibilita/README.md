@@ -369,7 +369,11 @@ Sprint 3 (2 weeks): Implement and thoroughly refine the Automatic Algorithm. Thi
 
 ## 8.2 Tempistiche
 Durata Totale del Progetto: 9 month
-Milestone Principali: [Elenco puntato delle principali milestone con date previste]
+Milestone Principali: ​M1: Design Approved: Achieved by the end of Week 2, including approval of wireframes and the JSON data schema.
+M2: Pantry Section Functional: Achieved by the end of Week 4. The core data input and persistence for the Pantry section are fully operational.
+M3: Core Logic Complete: Achieved by the end of Week 8. The Comparison Algorithm is fully implemented and correctly generates the shopping list with high accuracy.
+M4: MVP Prototype Ready: Achieved by the end of Week 9. All major bugs have been resolved, and the system has successfully passed internal usability tests.
+M5: Final Delivery: Achieved by the end of Week 10. Formal delivery of the complete project package (Code, XAMPP setup, and Documentation).
 
 [Gantt - Diagramma di Gantt in allegati]
 
