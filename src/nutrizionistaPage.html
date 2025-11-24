@@ -6,10 +6,7 @@
     <title>Dashboard Nutrizionista - YourWeek</title>
     <link rel="stylesheet" href="nutrizionistaPage.css">
 </head>
-</head>
 <body>
-    <div class="background-animation"></div>
-
     <div class="back-to-login">
         <a href="loginPage.html">
             <i class="fas fa-arrow-left"></i>
@@ -39,18 +36,18 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card" id="active-patients-card">
+            <div class="stat-card">
                 <div class="stat-icon">
                     <i class="fas fa-users"></i>
                 </div>
-                <div class="stat-number" id="active-patients-count">24</div>
+                <div class="stat-number" id="activePatientsCount">0</div>
                 <p>Pazienti Attivi</p>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">
                     <i class="fas fa-user-plus"></i>
                 </div>
-                <div class="stat-number">8</div>
+                <div class="stat-number" id="newPatientsCount">0</div>
                 <p>Nuovi Questo Mese</p>
             </div>
             <div class="stat-card">
@@ -76,7 +73,7 @@
                 </div>
                 <h3>Gestione Pazienti</h3>
                 <p>Visualizza e gestisci tutti i tuoi pazienti, schede cliniche e storico progressi con strumenti avanzati di monitoraggio</p>
-                <span class="feature-badge">24 Pazienti</span>
+                <span class="feature-badge">Modifica e Visualizza i tuoi pazienti</span>
             </div>
 
             <div class="feature-card" onclick="location.href='pianiDietetici.html'">
@@ -85,7 +82,7 @@
                 </div>
                 <h3>Piani Dietetici</h3>
                 <p>Crea e personalizza piani alimentari unici per ogni paziente con il nostro editor avanzato e database ricette</p>
-                <span class="feature-badge">45 Piani Attivi</span>
+                <span class="feature-badge">Modifica e visualizza i piani alimentari dei tuoi pazienti</span>
             </div>
 
             <div class="feature-card" onclick="location.href='calendario.html'">
@@ -94,7 +91,7 @@
                 </div>
                 <h3>Calendario Smart</h3>
                 <p>Organizza appuntamenti, controlli e follow-up con sistema di promemoria automatico e integrazione calendar</p>
-                <span class="feature-badge">15 Appuntamenti</span>
+                <span class="feature-badge">Visualizza i tuoi appuntamenti</span>
             </div>
 
             <div class="feature-card" onclick="location.href='messaggi.html'">
@@ -103,7 +100,7 @@
                 </div>
                 <h3>Comunicazioni</h3>
                 <p>Messaggistica sicura con i pazienti, notifiche automatiche e sistema di promemoria per follow-up</p>
-                <span class="feature-badge">12 Nuovi Messaggi</span>
+                <span class="feature-badge">Visualizza e manda i tuoi messaggi</span>
             </div>
 
             <div class="feature-card" onclick="location.href='report.html'">
@@ -115,13 +112,13 @@
                 <span class="feature-badge">Analisi in Tempo Reale</span>
             </div>
 
-            <div class="feature-card" onclick="location.href='ricette.html'">
+            <div class="feature-card" onclick="location.href='areaPersonale.html'">
                 <div class="feature-icon">
-                    <i class="fas fa-utensils"></i>
+                    <i class="fas fa-folder"></i>
                 </div>
                 <h3>Area Personale</h3>
                 <p>Gestisci i tuoi appunti, documenti e immagini necessari per lo svolgimento della tua attività</p>
-                <span class="feature-badge">Appunti personali</span>
+                <span class="feature-badge">Appunti Personali</span>
             </div>
         </div>
 
@@ -146,7 +143,7 @@
                         <p>Luca Verdi • Oggi alle 09:15 • Aggiunti nuovi alimenti</p>
                     </div>
                 </li>
-                <li>
+                <li onclick="location.href='calendario.html'">
                     <div class="activity-icon">
                         <i class="fas fa-calendar-plus"></i>
                     </div>
@@ -155,7 +152,7 @@
                         <p>Giulia Neri • Domani alle 11:00 • Controllo mensile</p>
                     </div>
                 </li>
-                <li>
+                <li onclick="location.href='messaggi.html'">
                     <div class="activity-icon">
                         <i class="fas fa-comment-medical"></i>
                     </div>
@@ -169,9 +166,30 @@
     </main>
 
     <script>
-        // Animazioni aggiuntive
+        // Funzione per calcolare i pazienti nuovi del mese corrente
+        function calculateNewPatientsThisMonth() {
+            const patients = JSON.parse(localStorage.getItem('patients')) || [];
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            let newPatientsCount = 0;
+
+            patients.forEach(patient => {
+                // Se il paziente ha una data di registrazione
+                if (patient.registrationDate) {
+                    const regDate = new Date(patient.registrationDate);
+                    if (regDate.getMonth() === currentMonth && regDate.getFullYear() === currentYear) {
+                        newPatientsCount++;
+                    }
+                }
+            });
+
+            return newPatientsCount;
+        }
+
+        // Animazioni al caricamento
         document.addEventListener('DOMContentLoaded', function() {
-            // Animazione di entrata per le card
             const cards = document.querySelectorAll('.stat-card, .feature-card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
@@ -183,23 +201,34 @@
                     card.style.transform = 'translateY(0)';
                 }, index * 100);
             });
+
+            // Aggiorna i conteggi
+            updateDashboardStats();
         });
 
-        // Funzione per aggiornare il numero di pazienti (da aggiungere nella dashboard nutrizionista)
-function updatePatientCount(count) {
-    const patientCountElement = document.querySelector('.stat-number'); // Seleziona l'elemento del conteggio
-    if (patientCountElement) {
-        patientCountElement.textContent = count;
-    }
-}
+        // Funzione per aggiornare tutte le statistiche
+        function updateDashboardStats() {
+            const patients = JSON.parse(localStorage.getItem('patients')) || [];
+            
+            // Aggiorna pazienti attivi
+            const activePatients = patients.length;
+            document.querySelector('.stat-number').textContent = activePatients;
+            
+            // Aggiorna pazienti nuovi del mese
+            const newPatients = calculateNewPatientsThisMonth();
+            document.getElementById('newPatientsCount').textContent = newPatients;
+            
+            // Aggiorna badge nelle feature cards
+            document.querySelectorAll('.feature-badge')[0].textContent = `${activePatients} Pazienti`;
+        }
 
-// All'avvio della dashboard, carica il conteggio dal localStorage
-document.addEventListener('DOMContentLoaded', function() {
-    const savedCount = localStorage.getItem('patientCount');
-    if (savedCount) {
-        updatePatientCount(savedCount);
-    }
-});
+        // Funzione per aggiornare il conteggio pazienti (chiamata da altre pagine)
+        function updatePatientCount(count) {
+            updateDashboardStats();
+        }
+
+        // Carica i dati all'avvio
+        updateDashboardStats();
     </script>
 </body>
 </html>

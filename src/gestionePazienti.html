@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestione Pazienti - YourWeek</title>
-<link rel="stylesheet" href="gestionePazienti.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Pazienti - YourWeek</title>
+    <link rel="stylesheet" href="gestionePazienti.css">
 </head>
 <body>
     <div class="back-button">
-        <a href="dashboard-nutrizionista.html">
+        <a href="nutrizionistaPage.html">
             <i class="fas fa-arrow-left"></i>
             Torna alla Dashboard
         </a>
@@ -34,26 +34,22 @@
             Aggiungi Nuovo Paziente
         </button>
 
-        <div class="patients-grid" id="patientsGrid">
-            <!-- I pazienti verranno generati dinamicamente con JavaScript -->
-        </div>
+        <div class="patients-grid" id="patientsGrid"></div>
     </div>
 
-    <!-- Modal per i dettagli del paziente -->
+    <!-- Modal dettagli paziente -->
     <div class="modal" id="patientModal">
         <div class="modal-content">
-            <button class="close-modal" id="closeModal">&times;</button>
-            <div id="modalContent">
-                <!-- Il contenuto del modal verrà popolato dinamicamente -->
-            </div>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <div id="modalContent"></div>
         </div>
     </div>
 
-    <!-- Modal per aggiungere nuovo paziente -->
+    <!-- Modal aggiungi paziente -->
     <div class="modal" id="addPatientModal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeAddPatientModal()">&times;</button>
-            <h2 style="text-align: center; margin-bottom: 30px; color: #4db8ff;">Aggiungi Nuovo Paziente</h2>
+            <h2 style="text-align: center; margin-bottom: 30px; color: #2d4a5c; font-size: 2rem;">Aggiungi Nuovo Paziente</h2>
             <div class="patient-details-grid">
                 <div class="detail-group">
                     <h4>Nome</h4>
@@ -96,27 +92,6 @@
     </div>
 
     <script>
-        // Funzione per aggiornare il numero di pazienti nella dashboard nutrizionista
-        function updateDashboardPatientCount() {
-            const patientCount = patients.length;
-            
-            // Salva nel localStorage per condividere tra pagine
-            localStorage.setItem('patientCount', patientCount);
-            
-            // Se siamo nella dashboard nutrizionista, aggiorna direttamente
-            if (window.parent && window.parent.updatePatientCount) {
-                window.parent.updatePatientCount(patientCount);
-            }
-            
-            console.log(`Pazienti attivi aggiornati: ${patientCount}`);
-        }
-
-        // Funzione per ottenere il numero di pazienti (usata dalla dashboard)
-        function getPatientCount() {
-            return patients.length;
-        }
-
-        // Dati di esempio per i pazienti
         let patients = JSON.parse(localStorage.getItem('patients')) || [
             {
                 id: 1,
@@ -130,7 +105,7 @@
                 bodyFat: "22%",
                 muscleMass: "38%",
                 nextVisit: "20/12/2024",
-                visitNotes: "Controllo progressi e modifica piano alimentare",
+                registrationDate: new Date(2024, 8, 15).toISOString(), // Settembre 2024
                 weightHistory: [
                     { month: 'Gen', weight: 85 },
                     { month: 'Feb', weight: 82 },
@@ -156,7 +131,7 @@
                 bodyFat: "18%",
                 muscleMass: "42%",
                 nextVisit: "18/12/2024",
-                visitNotes: "Valutazione nuovo piano proteico",
+                registrationDate: new Date(2024, 10, 5).toISOString(), // Novembre 2024
                 weightHistory: [
                     { month: 'Gen', weight: 62 },
                     { month: 'Feb', weight: 63 },
@@ -175,13 +150,6 @@
         let currentEditingPatient = null;
         let isEditing = false;
 
-        // Salva i pazienti nel localStorage
-        function savePatientsToStorage() {
-            localStorage.setItem('patients', JSON.stringify(patients));
-            updateDashboardPatientCount(); // Aggiorna il conteggio
-        }
-
-        // Funzione per generare le card dei pazienti
         function renderPatients() {
             const grid = document.getElementById('patientsGrid');
             grid.innerHTML = '';
@@ -217,16 +185,10 @@
                 
                 grid.appendChild(card);
             });
-
-            // Aggiorna il conteggio nella dashboard
-            updateDashboardPatientCount();
         }
 
-        // Funzione per aprire il modal con i dettagli del paziente
         function openPatientModal(patient) {
             currentEditingPatient = patient;
-            isEditing = false;
-            
             const modal = document.getElementById('patientModal');
             const modalContent = document.getElementById('modalContent');
             
@@ -263,37 +225,19 @@
                     <div class="detail-group">
                         <h4>Data di Nascita</h4>
                         <div class="detail-value">${patient.birthDate}</div>
-                        <button class="edit-btn" onclick="enableEditing('birthDate')">Modifica</button>
-                        <input type="date" class="input-field" id="editBirthDate" value="${formatDateForInput(patient.birthDate)}" style="display: none;">
                     </div>
                     <div class="detail-group">
                         <h4>Massa Muscolare</h4>
                         <div class="detail-value">${patient.muscleMass}</div>
-                        <button class="edit-btn" onclick="enableEditing('muscleMass')">Modifica</button>
-                        <input type="text" class="input-field" id="editMuscleMass" value="${patient.muscleMass}" style="display: none;">
                     </div>
                     <div class="detail-group">
                         <h4>Prossima Visita</h4>
                         <div class="detail-value">${patient.nextVisit}</div>
-                        <button class="edit-btn" onclick="enableEditing('nextVisit')">Modifica</button>
-                        <input type="date" class="input-field" id="editNextVisit" value="${formatDateForInput(patient.nextVisit)}" style="display: none;">
-                    </div>
-                    <div class="detail-group">
-                        <h4>Note Visita</h4>
-                        <div class="detail-value">${patient.visitNotes}</div>
-                        <button class="edit-btn" onclick="enableEditing('visitNotes')">Modifica</button>
-                        <input type="text" class="input-field" id="editVisitNotes" value="${patient.visitNotes}" style="display: none;">
-                    </div>
-                    <div class="detail-group">
-                        <h4>Descrizione</h4>
-                        <div class="detail-value">${patient.description}</div>
-                        <button class="edit-btn" onclick="enableEditing('description')">Modifica</button>
-                        <input type="text" class="input-field" id="editDescription" value="${patient.description}" style="display: none;">
                     </div>
                 </div>
 
                 <div class="chart-container">
-                    <div class="chart-title">Andamento del Peso e Massa Grassa</div>
+                    <div class="chart-title">Andamento del Peso</div>
                     <canvas id="weightChart"></canvas>
                 </div>
 
@@ -303,15 +247,47 @@
                 </div>
             `;
 
-            // Inizializza il grafico
-            setTimeout(() => {
-                createWeightChart(patient);
-            }, 100);
-
+            setTimeout(() => createWeightChart(patient), 100);
             modal.style.display = 'block';
         }
 
-        // Abilita la modifica di un campo
+        function createWeightChart(patient) {
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: patient.weightHistory.map(item => item.month),
+                    datasets: [{
+                        label: 'Peso (kg)',
+                        data: patient.weightHistory.map(item => item.weight),
+                        borderColor: '#4db8ff',
+                        backgroundColor: 'rgba(77, 184, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#2d4a5c' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#e3f2fd' },
+                            ticks: { color: '#2d4a5c' }
+                        },
+                        x: {
+                            grid: { color: '#e3f2fd' },
+                            ticks: { color: '#2d4a5c' }
+                        }
+                    }
+                }
+            });
+        }
+
         function enableEditing(field) {
             isEditing = true;
             document.getElementById(`edit${field.charAt(0).toUpperCase() + field.slice(1)}`).style.display = 'block';
@@ -319,73 +295,29 @@
             document.getElementById('modalActions').style.display = 'flex';
         }
 
-        // Annulla le modifiche
+        function savePatientData() {
+            localStorage.setItem('patients', JSON.stringify(patients));
+            renderPatients();
+            closeModal();
+            alert('Dati aggiornati con successo!');
+        }
+
         function cancelEditing() {
-            isEditing = false;
-            document.querySelectorAll('.input-field').forEach(input => input.style.display = 'none');
-            document.querySelectorAll('.edit-btn').forEach(btn => btn.style.display = 'block');
-            document.getElementById('modalActions').style.display = 'none';
             openPatientModal(currentEditingPatient);
         }
 
-        // Salva i dati modificati
-        function savePatientData() {
-            if (currentEditingPatient) {
-                const height = document.getElementById('editHeight').value;
-                const birthDate = document.getElementById('editBirthDate').value;
-                const muscleMass = document.getElementById('editMuscleMass').value;
-                const nextVisit = document.getElementById('editNextVisit').value;
-                const visitNotes = document.getElementById('editVisitNotes').value;
-                const description = document.getElementById('editDescription').value;
-
-                // Aggiorna i dati del paziente
-                currentEditingPatient.height = height || currentEditingPatient.height;
-                currentEditingPatient.birthDate = formatDateFromInput(birthDate) || currentEditingPatient.birthDate;
-                currentEditingPatient.muscleMass = muscleMass || currentEditingPatient.muscleMass;
-                currentEditingPatient.nextVisit = formatDateFromInput(nextVisit) || currentEditingPatient.nextVisit;
-                currentEditingPatient.visitNotes = visitNotes || currentEditingPatient.visitNotes;
-                currentEditingPatient.description = description || currentEditingPatient.description;
-
-                // Aggiorna l'avatar se nome/cognome sono cambiati
-                currentEditingPatient.avatar = `${currentEditingPatient.name.charAt(0)}${currentEditingPatient.surname.charAt(0)}`;
-
-                isEditing = false;
-                savePatientsToStorage(); // Salva nel localStorage
-                renderPatients();
-                closeModal();
-                alert('Dati aggiornati con successo!');
-            }
-        }
-
-        // Funzioni per aprire/chiudere il modal aggiungi paziente
         function openAddPatientModal() {
             document.getElementById('addPatientModal').style.display = 'block';
         }
 
         function closeAddPatientModal() {
             document.getElementById('addPatientModal').style.display = 'none';
-            // Reset dei campi
-            document.getElementById('newPatientName').value = '';
-            document.getElementById('newPatientSurname').value = '';
-            document.getElementById('newPatientBirthDate').value = '';
-            document.getElementById('newPatientHeight').value = '';
-            document.getElementById('newPatientWeight').value = '';
-            document.getElementById('newPatientBodyFat').value = '';
-            document.getElementById('newPatientMuscleMass').value = '';
-            document.getElementById('newPatientDescription').value = '';
         }
 
-        // Aggiungi nuovo paziente
         function addNewPatient() {
             const name = document.getElementById('newPatientName').value;
             const surname = document.getElementById('newPatientSurname').value;
-            const birthDate = document.getElementById('newPatientBirthDate').value;
-            const height = document.getElementById('newPatientHeight').value;
-            const weight = document.getElementById('newPatientWeight').value;
-            const bodyFat = document.getElementById('newPatientBodyFat').value;
-            const muscleMass = document.getElementById('newPatientMuscleMass').value;
-            const description = document.getElementById('newPatientDescription').value;
-
+            
             if (!name || !surname) {
                 alert('Inserisci almeno nome e cognome del paziente');
                 return;
@@ -395,150 +327,38 @@
                 id: patients.length + 1,
                 name: name,
                 surname: surname,
-                description: description || 'Nuovo paziente',
+                description: document.getElementById('newPatientDescription').value || 'Nuovo paziente',
                 avatar: `${name.charAt(0)}${surname.charAt(0)}`,
-                weight: `${weight} kg`,
-                height: `${height} cm`,
-                birthDate: formatDateFromInput(birthDate) || 'Non specificata',
-                bodyFat: `${bodyFat}%`,
-                muscleMass: `${muscleMass}%`,
+                weight: `${document.getElementById('newPatientWeight').value} kg`,
+                height: `${document.getElementById('newPatientHeight').value} cm`,
+                birthDate: new Date(document.getElementById('newPatientBirthDate').value).toLocaleDateString('it-IT'),
+                bodyFat: `${document.getElementById('newPatientBodyFat').value}%`,
+                muscleMass: `${document.getElementById('newPatientMuscleMass').value}%`,
                 nextVisit: 'Da programmare',
-                visitNotes: 'Prima visita da programmare',
-                weightHistory: [
-                    { month: 'Apr', weight: parseFloat(weight) || 0 }
-                ],
-                bodyFatHistory: [
-                    { month: 'Apr', bodyFat: parseFloat(bodyFat) || 0 }
-                ]
+                registrationDate: new Date().toISOString(), // Data di registrazione
+                weightHistory: [],
+                bodyFatHistory: []
             };
 
             patients.push(newPatient);
-            savePatientsToStorage(); // Salva nel localStorage
+            localStorage.setItem('patients', JSON.stringify(patients));
             renderPatients();
             closeAddPatientModal();
             alert('Paziente aggiunto con successo!');
         }
 
-        // Funzione per creare il grafico del peso e massa grassa
-        function createWeightChart(patient) {
-            const ctx = document.getElementById('weightChart').getContext('2d');
-            const labels = patient.weightHistory.map(item => item.month);
-            const weightData = patient.weightHistory.map(item => item.weight);
-            const bodyFatData = patient.bodyFatHistory.map(item => item.bodyFat);
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Peso (kg)',
-                            data: weightData,
-                            borderColor: '#4db8ff',
-                            backgroundColor: 'rgba(77, 184, 255, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Massa Grassa (%)',
-                            data: bodyFatData,
-                            borderColor: '#ff6b6b',
-                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.4,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: 'white'
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                            ticks: {
-                                color: '#ff6b6b'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: 'white'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Funzioni helper per le date
-        function formatDateForInput(dateString) {
-            if (!dateString || dateString === 'Non specificata') return '';
-            const parts = dateString.split('/');
-            return `${parts[2]}-${parts[1]}-${parts[0]}`;
-        }
-
-        function formatDateFromInput(dateString) {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('it-IT');
-        }
-
-        // Chiudi il modal
         function closeModal() {
             document.getElementById('patientModal').style.display = 'none';
         }
 
-        document.getElementById('closeModal').onclick = closeModal;
-
-        // Chiudi il modal cliccando fuori
         window.onclick = function(event) {
             const modal = document.getElementById('patientModal');
             const addModal = document.getElementById('addPatientModal');
-            if (event.target === modal) {
-                closeModal();
-            }
-            if (event.target === addModal) {
-                closeAddPatientModal();
-            }
+            if (event.target === modal) closeModal();
+            if (event.target === addModal) closeAddPatientModal();
         }
 
-        // Inizializza la pagina
-        document.addEventListener('DOMContentLoaded', function() {
-            renderPatients();
-            updateDashboardPatientCount(); // Aggiorna il conteggio all'avvio
-        });
+        document.addEventListener('DOMContentLoaded', renderPatients);
     </script>
 </body>
 </html>

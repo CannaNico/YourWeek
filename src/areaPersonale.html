@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area Personale - YourWeek</title>
+    <link rel="stylesheet" href="areaPersonale.css">
+</head>
+<body>
+    <div class="back-button">
+        <a href="nutrizionistaPage.html">
+            <i class="fas fa-arrow-left"></i>
+            Torna alla Dashboard
+        </a>
+    </div>
+
+    <header class="dashboard-header">
+        <div class="logo">
+            <h1>yourweek</h1>
+        </div>
+        <div class="user-info">
+            <h3>Area Personale</h3>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="page-title">
+            <h2>La Tua Area Personale</h2>
+            <p>Gestisci i tuoi appunti e documenti necessari per la tua attività</p>
+        </div>
+
+        <div class="sections-grid">
+            <!-- Sezione Documenti -->
+            <div class="section-card" onclick="openDocumentsModal()">
+                <div class="section-icon">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <h3>Documenti</h3>
+                <p>Carica e gestisci immagini, PDF e documenti necessari per la tua attività professionale</p>
+                <span class="section-badge" id="documentsCount">0 Documenti</span>
+            </div>
+
+            <!-- Sezione Note -->
+            <div class="section-card" onclick="openNotesModal()">
+                <div class="section-icon">
+                    <i class="fas fa-sticky-note"></i>
+                </div>
+                <h3>Note Personali</h3>
+                <p>Scrivi e organizza le tue note con data e ora automatica per tenere traccia di tutto</p>
+                <span class="section-badge" id="notesCount">0 Note</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Note -->
+    <div class="modal" id="notesModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeNotesModal()">&times;</button>
+            
+            <div class="modal-header">
+                <h2><i class="fas fa-sticky-note"></i> Le Tue Note</h2>
+                <button class="add-btn" onclick="toggleNoteForm()">
+                    <i class="fas fa-plus"></i> Nuova Nota
+                </button>
+            </div>
+
+            <div class="note-form" id="noteForm" style="display: none;">
+                <textarea id="noteText" placeholder="Scrivi la tua nota qui..."></textarea>
+                <div class="form-actions">
+                    <button class="cancel-note-btn" onclick="cancelNote()">Annulla</button>
+                    <button class="save-note-btn" onclick="saveNote()">
+                        <i class="fas fa-save"></i> Salva Nota
+                    </button>
+                </div>
+            </div>
+
+            <div class="notes-container" id="notesContainer">
+                <div class="empty-state">
+                    <i class="fas fa-sticky-note"></i>
+                    <p>Nessuna nota ancora. Inizia a scrivere!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Documenti -->
+    <div class="modal" id="documentsModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeDocumentsModal()">&times;</button>
+            
+            <div class="modal-header">
+                <h2><i class="fas fa-folder-open"></i> I Tuoi Documenti</h2>
+            </div>
+
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Clicca per caricare file</p>
+                <span>Supportati: PDF, Immagini (JPG, PNG), Word (DOC, DOCX)</span>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple onchange="handleFileUpload(event)">
+
+            <div class="documents-grid" id="documentsContainer">
+                <div class="empty-state">
+                    <i class="fas fa-folder-open"></i>
+                    <p>Nessun documento caricato</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Storage per note e documenti
+        let notes = JSON.parse(localStorage.getItem('personalNotes')) || [];
+        let documents = JSON.parse(localStorage.getItem('personalDocuments')) || [];
+
+        // Aggiorna contatori
+        function updateCounters() {
+            document.getElementById('notesCount').textContent = `${notes.length} Note`;
+            document.getElementById('documentsCount').textContent = `${documents.length} Documenti`;
+        }
+
+        // === GESTIONE NOTE ===
+        function openNotesModal() {
+            document.getElementById('notesModal').style.display = 'block';
+            renderNotes();
+        }
+
+        function closeNotesModal() {
+            document.getElementById('notesModal').style.display = 'none';
+            cancelNote();
+        }
+
+        function toggleNoteForm() {
+            const form = document.getElementById('noteForm');
+            form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function cancelNote() {
+            document.getElementById('noteForm').style.display = 'none';
+            document.getElementById('noteText').value = '';
+        }
+
+        function saveNote() {
+            const text = document.getElementById('noteText').value.trim();
+            
+            if (!text) {
+                alert('Scrivi qualcosa prima di salvare!');
+                return;
+            }
+
+            const now = new Date();
+            const note = {
+                id: Date.now(),
+                text: text,
+                date: now.toLocaleDateString('it-IT'),
+                time: now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+                timestamp: now.getTime()
+            };
+
+            notes.unshift(note);
+            localStorage.setItem('personalNotes', JSON.stringify(notes));
+            
+            cancelNote();
+            renderNotes();
+            updateCounters();
+        }
+
+        function deleteNote(id) {
+            if (confirm('Sei sicuro di voler eliminare questa nota?')) {
+                notes = notes.filter(note => note.id !== id);
+                localStorage.setItem('personalNotes', JSON.stringify(notes));
+                renderNotes();
+                updateCounters();
+            }
+        }
+
+        function editNote(id) {
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                document.getElementById('noteText').value = note.text;
+                document.getElementById('noteForm').style.display = 'block';
+                deleteNote(id);
+            }
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('notesContainer');
+            
+            if (notes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-sticky-note"></i>
+                        <p>Nessuna nota ancora. Inizia a scrivere!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = notes.map(note => `
+                <div class="note-card">
+                    <div class="note-header">
+                        <div class="note-date">
+                            <i class="fas fa-calendar-alt"></i>
+                            ${note.date} - ${note.time}
+                        </div>
+                        <div class="note-actions">
+                            <button class="action-btn" onclick="editNote(${note.id})">
+                                <i class="fas fa-edit"></i> Modifica
+                            </button>
+                            <button class="action-btn delete" onclick="deleteNote(${note.id})">
+                                <i class="fas fa-trash"></i> Elimina
+                            </button>
+                        </div>
+                    </div>
+                    <div class="note-content">${note.text.replace(/\n/g, '<br>')}</div>
+                </div>
+            `).join('');
+        }
+
+        // === GESTIONE DOCUMENTI ===
+        function openDocumentsModal() {
+            document.getElementById('documentsModal').style.display = 'block';
+            renderDocuments();
+        }
+
+        function closeDocumentsModal() {
+            document.getElementById('documentsModal').style.display = 'none';
+        }
+
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const now = new Date();
+                    const doc = {
+                        id: Date.now() + Math.random(),
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        date: now.toLocaleDateString('it-IT'),
+                        data: e.target.result
+                    };
+
+                    documents.push(doc);
+                    localStorage.setItem('personalDocuments', JSON.stringify(documents));
+                    renderDocuments();
+                    updateCounters();
+                };
+                
+                reader.readAsDataURL(file);
+            });
+
+            event.target.value = '';
+        }
+
+        function getDocumentIcon(type) {
+            if (type.includes('pdf')) return '<i class="fas fa-file-pdf document-icon pdf"></i>';
+            if (type.includes('image')) return '<i class="fas fa-file-image document-icon image"></i>';
+            if (type.includes('word') || type.includes('document')) return '<i class="fas fa-file-word document-icon word"></i>';
+            return '<i class="fas fa-file document-icon"></i>';
+        }
+
+        function downloadDocument(id) {
+            const doc = documents.find(d => d.id === id);
+            if (doc) {
+                const link = document.createElement('a');
+                link.href = doc.data;
+                link.download = doc.name;
+                link.click();
+            }
+        }
+
+        function deleteDocument(id) {
+            if (confirm('Sei sicuro di voler eliminare questo documento?')) {
+                documents = documents.filter(doc => doc.id !== id);
+                localStorage.setItem('personalDocuments', JSON.stringify(documents));
+                renderDocuments();
+                updateCounters();
+            }
+        }
+
+        function renderDocuments() {
+            const container = document.getElementById('documentsContainer');
+            
+            if (documents.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p>Nessun documento caricato</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = documents.map(doc => `
+                <div class="document-card">
+                    ${getDocumentIcon(doc.type)}
+                    <div class="document-name">${doc.name}</div>
+                    <div class="document-date">${doc.date}</div>
+                    <div class="document-actions">
+                        <button class="doc-action-btn" onclick="downloadDocument(${doc.id})">
+                            <i class="fas fa-download"></i> Scarica
+                        </button>
+                        <button class="doc-action-btn delete" onclick="deleteDocument(${doc.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Chiudi modal cliccando fuori
+        window.onclick = function(event) {
+            const notesModal = document.getElementById('notesModal');
+            const documentsModal = document.getElementById('documentsModal');
+            
+            if (event.target === notesModal) closeNotesModal();
+            if (event.target === documentsModal) closeDocumentsModal();
+        }
+
+        // Inizializza
+        document.addEventListener('DOMContentLoaded', updateCounters);
+    </script>
+</body>
+</html>

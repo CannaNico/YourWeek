@@ -1,0 +1,171 @@
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione - YourWeek</title>
+    <link rel="stylesheet" href="registrati.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+</head>
+<body>
+    <div class="registration-container">
+        <div class="registration-left">
+            <h1>yourweek</h1>
+            <p>Unisciti alla nostra community di professionisti della nutrizione e inizia a gestire i tuoi pazienti in modo smart!</p>
+            <div class="illustration">
+                <i class="fas fa-user-plus"></i>
+            </div>
+        </div>
+
+        <div class="registration-right">
+            <h2>Crea il tuo account</h2>
+            <p class="subtitle">Compila i dati per iniziare</p>
+
+            <form id="registrationForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nome">Nome</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="nome" name="nome" placeholder="Mario" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cognome">Cognome</label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-user"></i>
+                            <input type="text" id="cognome" name="cognome" placeholder="Rossi" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" placeholder="mario.rossi@email.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" placeholder="Minimo 8 caratteri" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm-password">Conferma Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirm-password" name="confirm-password" placeholder="Ripeti la password" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="data-nascita">Data di Nascita</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-calendar-alt"></i>
+                        <input type="date" id="data-nascita" name="data-nascita" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ruolo">Sono un/una</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-briefcase"></i>
+                        <select id="ruolo" name="ruolo" required>
+                            <option value="">Seleziona il tuo ruolo</option>
+                            <option value="nutrizionista">Nutrizionista</option>
+                            <option value="paziente">Paziente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">
+                        Accetto i <a href="#">Termini e Condizioni</a> e la <a href="#">Privacy Policy</a>
+                    </label>
+                </div>
+
+                <button type="submit" class="register-btn">
+                    <i class="fas fa-user-plus"></i> Registrati
+                </button>
+
+                <div class="divider">oppure</div>
+
+                <div class="social-buttons">
+                    <button type="button" class="social-btn google">
+                        <i class="fab fa-google"></i>
+                        Google
+                    </button>
+                    <button type="button" class="social-btn facebook">
+                        <i class="fab fa-facebook-f"></i>
+                        Facebook
+                    </button>
+                </div>
+
+                <div class="login-link">
+                    Hai già un account? <a href="loginPage.html">Accedi</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const terms = document.getElementById('terms').checked;
+
+            // Validazione password
+            if (password.length < 8) {
+                alert('La password deve essere di almeno 8 caratteri!');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Le password non corrispondono!');
+                return;
+            }
+
+            if (!terms) {
+                alert('Devi accettare i Termini e Condizioni per continuare!');
+                return;
+            }
+
+            // Raccolta dati
+            const formData = {
+                nome: document.getElementById('nome').value,
+                cognome: document.getElementById('cognome').value,
+                email: document.getElementById('email').value,
+                password: password,
+                dataNascita: document.getElementById('data-nascita').value,
+                ruolo: document.getElementById('ruolo').value
+            };
+
+            console.log('Dati registrazione:', formData);
+
+            // Qui andrà la chiamata API per la registrazione
+            alert('Registrazione completata con successo! Verrai reindirizzato alla pagina di log-in.');
+            
+            // Reindirizzamento alla login page
+            window.location.href = 'loginPage.html';
+        });
+
+        // Gestione login social
+        document.querySelector('.google').addEventListener('click', function() {
+            alert('Registrazione con Google in arrivo!');
+        });
+
+        document.querySelector('.facebook').addEventListener('click', function() {
+            alert('Registrazione con Facebook in arrivo!');
+        });
+    </script>
+</body>
+</html>
