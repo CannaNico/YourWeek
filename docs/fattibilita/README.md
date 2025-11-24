@@ -347,10 +347,23 @@ This table identifies the key risks for the project, categorized into technical,
 
 ## 8.1 Fasi del Progetto
 
-1.⁠ ⁠Fase 1 - Avvio: [Attività e durata]
-2.⁠ ⁠Fase 2 - Sviluppo: [Attività e durata]
-3.⁠ ⁠Fase 3 - Testing: [Attività e durata]
-4.⁠ ⁠Fase 4 - Implementazione: [Attività e durata]
+1.⁠ ⁠Fase 1 - Avvio: (2weeks)
+- Setup and Data Design: Configure the local XAMPP environment and set up the code repository.
+- The most crucial activity is defining the precise JavaScript Data Architecture (localStorage/JSON), which dictates how recipes, pantry items, and meal plans will be structured and saved without a database.
+- Create the initial design mock-ups (wireframes) for the user interface.
+2.⁠ ⁠Fase 2 - Sviluppo:(6 Weeks):
+This phase involves three iterative Sprints.
+Sprint 1 (2 weeks): Focus on the Pantry Section implementation, including data input, basic persistence in localStorage, and display.
+Sprint 2 (2 weeks): Develop the Meal Planning Section, allowing users to create and visualize their weekly plan.
+Sprint 3 (2 weeks): Implement and thoroughly refine the Automatic Algorithm. This involves the complex JavaScript logic that compares the items in the pantry data against the required items in the meal plan to correctly generate the final shopping list.
+3.⁠ ⁠Fase 3 - Testing: (1 Week):
+​Functional and User Testing: Perform focused unit tests on critical JavaScript functions, especially those interacting with localStorage.
+​Conduct User Testing (Beta) with a small group to evaluate the application's usability (UX) and overall stability.
+​Intensive bug fixing based on the feedback received.
+4.⁠ ⁠Fase 4 - Implementazione: (1 Week):
+​Finalization and Release: Perform final code cleanup and optimization (CSS/JS compression).
+​Create comprehensive user and technical documentation.
+​Prepare and deliver the MVP Prototype within the configured XAMPP environment.
 
 <br>
 
