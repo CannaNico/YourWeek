@@ -328,17 +328,17 @@ This table identifies the key risks for the project, categorized into technical,
 | Rischio                | Descrizione               | Probabilità (1-5) |
 |-----------------------|---------------------------|-------------------|
 | Data Persistence 
-  Failure               |.The                 | [Valore]
+  Failure               |The user clears their browser cache or switches devices, resulting in the critical loss of all pantry inventory and meal planning data because the data is stored exclusively on the client-side using localStorage and not a central database             | 5
 | JS Algorithm 
-  Complexity Errors     | [Esempio]                 | [Valore]           |
+  Complexity Errors     | Logical flaws or bugs in the JavaScript algorithm responsible for comparing the planned meals against the pantry inventory, leading to the generation of incomplete or incorrect shopping lists. This directly affects the core utility and reliability of the application.                | 4           |
 | Code Scalability 
-  issues                | [Esempio]                 | [Valore]
-| Development Delays    |.[Esempio]                 | [Valore]
-| Poor user feedback.   | [Esempio]                 | [Valore]           |
+  issues                | As the project grows, the core JavaScript codebase may become too large and complex to manage or update efficiently. This will make adding new features (like user accounts or new views) slow and technically risky.                | 3
+| Development Delays    | The team underestimates the time needed for debugging the complex interaction between the different JS sections, particularly the reading, processing, and writing back of large data structures to localStorage.                 | 3
+| Poor user feedback.   | The interface, especially the crucial process of rapidly entering pantry items, proves difficult or inefficient for the end-user. This lack of usability can lead to low adoption rates or user abandonment.                 | 2           |
 | Environment 
-  availability          | [Esempio]                 | [Valore]
+  availability          | Configuration issues or XAMPP incompatibility between different team members' development environments, creating friction and hindering efficient collaboration on the code.                | 2
 | Future PHP  
-  Vulnerabilities       | [Esempio]                 | [Valore]
+  Vulnerabilities       | If the project were to be moved online or expanded to include any PHP form handling, insecure server-side code (even if minimal) could present security flaws (e.g., Cross-Site Scripting or basic injection issues).                 | 1
   
 
 <br><br>
