@@ -243,7 +243,7 @@ Subscription Price: $5/month or $60/year.
 Subscription Revenue Calculation:
 75 users X 60€/year = 4,500€
 Total Estimated Revenue (Year 1):
-Total Revenue \approx 7,000.00€
+Total Revenue ≈ 7,000.00€
 Break-Even Point Analysis:
 The project's low annual operating costs (primarily hosting, maintenance, and marketing) make it relatively easy to cover expenses. The estimated profit in the first year of operation would be:
 Total Revenue - Annual Costs = 7,000.00 € - 2,370.00€ = 4,630.00€
