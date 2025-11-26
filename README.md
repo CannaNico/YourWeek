@@ -6,6 +6,9 @@
 
 # YourWeek - Revolutionizing Weekly Meal Management
 
+## How to start using YourWeek
+1. **Sign Up**: Create your free account on [yourweek.com](https://yourweek.com) or download the app from the App Store or Google Play
+
 ## 🍎 Transform Your Relationship with Food
 
 **YourWeek** was born from the idea that healthy eating should be simple, organized, and enjoyable. 
