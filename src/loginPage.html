@@ -81,6 +81,50 @@
         </div>
     </div>
             <script>
+                const API_BASE_URL = 'api'; // Percorso relativo alle API
+
+// === FUNZIONE HELPER PER CHIAMATE API ===
+async function apiCall(endpoint, method = 'GET', data = null) {
+    const options = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include' // IMPORTANTE per sessioni
+    };
+    
+    if (data && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
+        options.body = JSON.stringify(data);
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/${endpoint}`, options);
+        const result = await response.json();
+        
+        if (!result.success) {
+            throw new Error(result.error || 'Errore nella richiesta');
+        }
+        
+        return result;
+    } catch (error) {
+        console.error('API Error:', error);
+        alert(error.message);
+        throw error;
+    }
+}
+
+// === VERIFICA AUTENTICAZIONE (solo per pagine protette) ===
+async function checkAuth() {
+    try {
+        const result = await apiCall('auth.php?action=check');
+        if (!result.authenticated) {
+            window.location.href = 'loginPage.html';
+        }
+        return result.user;
+    } catch (error) {
+        window.location.href = 'loginPage.html';
+    }
+}
             const typeButtons = document.querySelectorAll('.type-btn');
         let selectedUserType = 'cliente'; // Default
 
@@ -97,43 +141,40 @@
             });
         });
 
-        // Modifica il form submit esistente
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            console.log('Login attempt:', { email, password, userType: selectedUserType });
-            
-            // Reindirizzamento in base al tipo di utente
-            if (selectedUserType === 'cliente') {
-                window.location.href = 'clientePage.html';
-                // alert('Accesso come Cliente effettuato! Reindirizzamento...');
-            } else if (selectedUserType === 'nutrizionista') {
-                // Reindirizza alla dashboard nutrizionista
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    try {
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('password', password);
+        
+        const response = await fetch('api/auth.php?action=login', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (result.user.role === 'nutrizionista') {
                 window.location.href = 'nutrizionistaPage.html';
-                // alert('Accesso come Nutrizionista effettuato! Reindirizzamento...');
+            } else {
+                window.location.href = 'clientePage.html';
             }
-        });
+        } else {
+            alert(result.error || 'Errore durante il login');
+        }
+    } catch (error) {
+        console.error('Errore login:', error);
+        alert('Errore di connessione al server');
+    }
+});
             </script>
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            // Qui andrebbe la logica di autenticazione
-            console.log('Tentativo di login con:', email, password);
-            
-            // Simulazione di login riuscito
-            alert('Login effettuato con successo!');
-            // Reindirizzamento alla dashboard
-            // window.location.href = 'dashboard.html';
-        });
-
-    </script>
 
 </body>
 </html>
