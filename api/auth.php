@@ -50,6 +50,9 @@ function handleLogin() {
         $password = $data['password'] ?? '';
     }
     
+    // DEBUG
+    error_log("Login attempt - Email: $email, Password: $password");
+    
     // Validazione input
     if (empty($email) || empty($password)) {
         sendJSON(['success' => false, 'error' => 'Email e password richiesti'], 400);
@@ -303,23 +306,6 @@ function logFailedLogin($db, $email) {
         ]);
     } catch (PDOException $e) {
         error_log("Errore log tentativo fallito: " . $e->getMessage());
-    }
-}
-
-function logActivity($db, $userId, $action, $description) {
-    try {
-        $stmt = $db->prepare("
-            INSERT INTO ActivityLog (user_id, action, description, ip_address, created_at)
-            VALUES (?, ?, ?, ?, NOW())
-        ");
-        $stmt->execute([
-            $userId,
-            $action,
-            $description,
-            $_SERVER['REMOTE_ADDR'] ?? 'unknown'
-        ]);
-    } catch (PDOException $e) {
-        error_log("Errore log attività: " . $e->getMessage());
     }
 }
 ?>

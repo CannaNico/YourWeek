@@ -1,0 +1,6 @@
+# Proteggi directory uploads
+Options -Indexes
+<Files "*">
+    Order Allow,Deny
+    Allow from all
+</Files>
