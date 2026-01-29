@@ -1,7 +1,7 @@
 <?php
 // api/auth.php
-// Sistema di autenticazione sicuro
-require_once '../includes/db_connection.php';
+// Sistema di autenticazione sicuro - VERSIONE CORRETTA
+require_once __DIR__ . '/../includes/db_connection.php';
 
 // Impedisci accesso diretto al file senza azione
 $action = $_GET['action'] ?? '';
@@ -50,8 +50,8 @@ function handleLogin() {
         $password = $data['password'] ?? '';
     }
     
-    // DEBUG
-    error_log("Login attempt - Email: $email, Password: $password");
+    // DEBUG - Rimuovi in produzione
+    error_log("Login attempt - Email: $email");
     
     // Validazione input
     if (empty($email) || empty($password)) {
@@ -74,37 +74,39 @@ function handleLogin() {
                 role,
                 is_active,
                 email_verified
-            FROM Users 
+            FROM users 
             WHERE email = ? AND is_active = 1
             LIMIT 1
         ");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
         
+        // DEBUG - Rimuovi in produzione
+        error_log("User found: " . ($user ? "YES" : "NO"));
+        
         // Verifica esistenza utente
         if (!$user) {
-            // Usa messaggio generico per sicurezza (non rivelare se l'email esiste)
             sleep(1); // Previene timing attacks
             sendJSON(['success' => false, 'error' => 'Credenziali non valide'], 401);
         }
         
         // Verifica password
         if (!password_verify($password, $user['password_hash'])) {
-            // Log tentativo fallito (opzionale)
+            // Log tentativo fallito
+            error_log("Password verify failed for: $email");
             logFailedLogin($db, $email);
             sleep(1); // Previene timing attacks
             sendJSON(['success' => false, 'error' => 'Credenziali non valide'], 401);
         }
         
-        // Verifica email (opzionale, commentato per ora)
-        /*
-        if (!$user['email_verified']) {
-            sendJSON(['success' => false, 'error' => 'Email non verificata'], 403);
-        }
-        */
+        // DEBUG - Password verificata
+        error_log("Password verified successfully for: $email");
         
         // Rigenera session ID per prevenire session fixation
         session_regenerate_id(true);
+        
+        // DEBUG - Session rigenerato
+        error_log("Session regenerated for user: " . $user['id']);
         
         // Salva dati in sessione
         $_SESSION['user_id'] = $user['id'];
@@ -114,11 +116,17 @@ function handleLogin() {
         $_SESSION['login_time'] = time();
         $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         
+        // DEBUG - Session salvata
+        error_log("Session data saved for user: " . $user['id']);
+        
         // Aggiorna ultimo accesso
         updateLastLogin($db, $user['id']);
         
         // Log accesso riuscito
         logActivity($db, $user['id'], 'login', 'Accesso effettuato');
+        
+        // DEBUG - Login completato
+        error_log("Login successful for user: " . $user['id']);
         
         // Risposta
         sendJSON([
@@ -162,18 +170,16 @@ function handleLogout() {
 
 function checkAuth() {
     if (isset($_SESSION['user_id'])) {
-        // Verifica timeout sessione (opzionale - 2 ore)
-        $sessionTimeout = 7200; // 2 ore in secondi
+        // Verifica timeout sessione (2 ore)
+        $sessionTimeout = 7200;
         if (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time'] > $sessionTimeout)) {
             handleLogout();
+            sendJSON([
+                'success' => true,
+                'authenticated' => false
+            ]);
+            return;
         }
-        
-        // Verifica IP address (opzionale - security extra)
-        /*
-        if (isset($_SESSION['ip_address']) && $_SESSION['ip_address'] !== ($_SERVER['REMOTE_ADDR'] ?? 'unknown')) {
-            handleLogout();
-        }
-        */
         
         sendJSON([
             'success' => true,
@@ -194,16 +200,32 @@ function checkAuth() {
 }
 
 function handleRegister() {
+        error_log("=== INIZIO REGISTRAZIONE ==="); // DEBUG
+    
     $db = getDB();
     $data = json_decode(file_get_contents('php://input'), true);
     
-    // Validazione input
-    $email = sanitizeInput($data['email'] ?? '');
-    $password = $data['password'] ?? '';
-    $firstName = sanitizeInput($data['first_name'] ?? '');
-    $lastName = sanitizeInput($data['last_name'] ?? '');
-    $role = sanitizeInput($data['role'] ?? 'paziente');
-    $birthDate = $data['birth_date'] ?? null;
+    error_log("Dati ricevuti: " . print_r($data, true)); // DEBUG
+
+    $db = getDB();
+    
+    // Supporta sia POST tradizionale che JSON
+    if (isset($_POST['email'])) {
+        $email = sanitizeInput($_POST['email']);
+        $password = $_POST['password'] ?? '';
+        $firstName = sanitizeInput($_POST['first_name'] ?? '');
+        $lastName = sanitizeInput($_POST['last_name'] ?? '');
+        $role = sanitizeInput($_POST['role'] ?? 'paziente');
+        $birthDate = $_POST['birth_date'] ?? null;
+    } else {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $email = sanitizeInput($data['email'] ?? '');
+        $password = $data['password'] ?? '';
+        $firstName = sanitizeInput($data['first_name'] ?? '');
+        $lastName = sanitizeInput($data['last_name'] ?? '');
+        $role = sanitizeInput($data['role'] ?? 'paziente');
+        $birthDate = $data['birth_date'] ?? null;
+    }
     
     // Controlli validazione
     if (empty($email) || empty($password) || empty($firstName) || empty($lastName)) {
@@ -218,18 +240,13 @@ function handleRegister() {
         sendJSON(['success' => false, 'error' => 'La password deve essere di almeno 8 caratteri'], 400);
     }
     
-    // Verifica password complexity (opzionale)
-    if (!preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password) || !preg_match('/[0-9]/', $password)) {
-        sendJSON(['success' => false, 'error' => 'La password deve contenere maiuscole, minuscole e numeri'], 400);
-    }
-    
     if (!in_array($role, ['paziente', 'nutrizionista'])) {
         sendJSON(['success' => false, 'error' => 'Ruolo non valido'], 400);
     }
     
     try {
         // Verifica se email esiste già
-        $stmt = $db->prepare("SELECT id FROM Users WHERE email = ? LIMIT 1");
+        $stmt = $db->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
         $stmt->execute([$email]);
         
         if ($stmt->fetch()) {
@@ -267,9 +284,6 @@ function handleRegister() {
         
         // Log registrazione
         logActivity($db, $userId, 'register', 'Nuovo account creato');
-        
-        // TODO: Invia email di verifica
-        // sendVerificationEmail($email, $userId);
         
         sendJSON([
             'success' => true,

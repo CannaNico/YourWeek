@@ -58,6 +58,8 @@
 
                 <button type="submit" class="login-btn">Accedi</button>
 
+                <button type="button" class="register-btn" onclick="window.location.href='registrati.html'">Registrati</button>
+
                 <div class="separator">
                     <span>OPPURE</span>
                 </div>
@@ -82,17 +84,13 @@
     </div>
             <script>
             const typeButtons = document.querySelectorAll('.type-btn');
-        let selectedUserType = 'cliente'; // Default
+        let selectedUserType = 'cliente';
 
         typeButtons.forEach(button => {
             button.addEventListener('click', function() {
-                // Rimuovi active da tutti i bottoni
                 typeButtons.forEach(btn => btn.classList.remove('active'));
-                // Aggiungi active al bottone cliccato
                 this.classList.add('active');
-                // Salva la selezione
                 selectedUserType = this.getAttribute('data-type');
-                
                 console.log('Tipo utente selezionato:', selectedUserType);
             });
         });
@@ -100,37 +98,52 @@
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            
+            console.log('Tentativo di login con:', email);
             
             try {
                 const formData = new FormData();
                 formData.append('email', email);
                 formData.append('password', password);
                 
-                const response = await fetch('/YourWeek/api/auth.php?action=login', {
+                const response = await fetch('../api/auth.php?action=login', {
                     method: 'POST',
                     body: formData,
                     credentials: 'include'
                 });
                 
+                console.log('Response status:', response.status);
+                
+                // Controlla se la risposta è OK
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Errore dal server:', errorText);
+                    alert('Errore del server (status ' + response.status + '). Controlla la console.');
+                    return;
+                }
+                
                 const result = await response.json();
+                console.log('Risultato:', result);
                 
                 if (result.success) {
+                    alert('Login effettuato con successo!');
+                    
+                    // Reindirizza in base al ruolo
                     if (result.user.role === 'nutrizionista') {
                         window.location.href = 'nutrizionistaPage.html';
                     } else {
                         window.location.href = 'clientePage.html';
                     }
                 } else {
-                    alert('Errore di login: ' + result.message);
+                    alert('Errore di login: ' + (result.error || 'Credenziali non valide'));
                 }
             } catch (error) {
-                console.error('Errore:', error);
-                alert('Errore di connessione');
+                console.error('Errore completo:', error);
+                alert('Errore di connessione: ' + error.message);
             }
         });
-
-
+            </script>
 </body>
 </html>

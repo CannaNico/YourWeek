@@ -39,15 +39,16 @@ body {
     align-items: center;
     justify-content: center;
     padding: 20px;
+    padding-top: 5px;
 }
 
 .login-box {
     background: rgba(20, 20, 30, 0.85);
     backdrop-filter: blur(15px);
     border-radius: 20px;
-    padding: 50px 40px;
+    padding: 30px 30px;
     width: 100%;
-    max-width: 450px;
+    max-width: 420px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.1);
     animation: fadeIn 0.8s ease-out;
@@ -60,52 +61,55 @@ body {
 
 .logo {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
 }
 
 .logo h1 {
-    font-size: 3.5rem;
+    font-size: 2.8rem;
     font-weight: 900;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-transform: uppercase;
     background: linear-gradient(45deg, #ffffff, #e0e0e0, #ffffff);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
     text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-    margin-bottom: 10px;
+    margin-bottom: 3px;
 }
 
 .logo p {
-    font-size: 1.1rem;
-    letter-spacing: 3px;
+    font-size: 1rem;
+    letter-spacing: 2px;
     opacity: 0.8;
+    font-weight: 500;
 }
 
 .input-group {
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .input-group label {
     display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 10px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: rgba(255, 255, 255, 0.95);
+    width: 100%;
 }
 
 .input-group input {
-    width: 90%; /* RIDOTTO DA 100% A 90% */
-    margin: 0 auto; /* CENTRATO */
-    display: block; /* PER FAR FUNZIONARE IL MARGINE AUTO */
-    padding: 15px 20px;
+    width: 100%;
+    padding: 14px 18px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 10px;
     color: white;
-    font-size: 1rem;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 
@@ -127,17 +131,20 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    font-size: 0.9rem;
+    margin-bottom: 15px;
+    font-size: 0.85rem;
 }
 
 .remember {
     display: flex;
     align-items: center;
+    gap: 8px;
 }
 
 .remember input {
-    margin-right: 8px;
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
 }
 
 .forgot-password {
@@ -153,18 +160,18 @@ body {
 
 .login-btn {
     width: 100%;
-    padding: 15px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.15);
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 10px;
     color: white;
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 0.95rem;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
-    margin-bottom: 25px;
+    margin-bottom: 8px;
 }
 
 .login-btn:hover {
@@ -173,10 +180,32 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
+.register-btn {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.register-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
 .separator {
     display: flex;
     align-items: center;
-    margin: 25px 0;
+    margin: 12px 0;
     color: rgba(255, 255, 255, 0.6);
 }
 
@@ -196,8 +225,8 @@ body {
 .social-login {
     display: flex;
     justify-content: center;
-    gap: 20px;
-    margin-bottom: 30px;
+    gap: 12px;
+    margin-bottom: 0;
 }
 
 .social-btn {
@@ -222,7 +251,9 @@ body {
 
 .register-link {
     text-align: center;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    display: none;
 }
 
 .register-link a {
@@ -266,10 +297,9 @@ body {
     margin-right: 8px;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .login-box {
-        padding: 40px 30px;
+        padding: 50px 35px;
         max-width: 400px;
     }
     
@@ -280,11 +310,15 @@ body {
 
 @media (max-width: 480px) {
     .login-box {
-        padding: 30px 20px;
+        padding: 35px 25px;
     }
     
     .logo h1 {
         font-size: 2.5rem;
+    }
+    
+    .logo {
+        margin-bottom: 30px;
     }
     
     .remember-forgot {
@@ -297,11 +331,21 @@ body {
         top: 20px;
         left: 20px;
     }
+    
+    .input-group input {
+        font-size: 1rem;
+    }
+    
+    .login-btn,
+    .register-btn {
+        font-size: 1rem;
+        padding: 14px;
+    }
 }
 
 .social-btn {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -366,10 +410,8 @@ body {
     overflow: hidden;
 }
 .user-type-selector {
-    margin-bottom: 30px;
-    width: 90%;
-    margin-left: auto;
-    margin-right: auto;
+    margin-bottom: 18px;
+    width: 100%;
 }
 
 .selector-container {

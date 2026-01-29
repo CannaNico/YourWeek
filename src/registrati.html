@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -6,11 +7,10 @@
     <link rel="stylesheet" href="registrati.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-</head>
 <body>
     <div class="registration-container">
         <div class="registration-left">
-            <h1>yourweek</h1>
+            <h1>YourWeek</h1>
             <p>Unisciti alla nostra community di professionisti della nutrizione e inizia a gestire i tuoi pazienti in modo smart!</p>
             <div class="illustration">
                 <i class="fas fa-user-plus"></i>
@@ -116,56 +116,63 @@
     </div>
 
     <script>
-        document.getElementById('registrationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
 
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-            const terms = document.getElementById('terms').checked;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    const terms = document.getElementById('terms').checked;
 
-            // Validazione password
-            if (password.length < 8) {
-                alert('La password deve essere di almeno 8 caratteri!');
-                return;
-            }
+    // Validazione
+    if (password.length < 8) {
+        alert('La password deve essere di almeno 8 caratteri!');
+        return;
+    }
 
-            if (password !== confirmPassword) {
-                alert('Le password non corrispondono!');
-                return;
-            }
+    if (password !== confirmPassword) {
+        alert('Le password non corrispondono!');
+        return;
+    }
 
-            if (!terms) {
-                alert('Devi accettare i Termini e Condizioni per continuare!');
-                return;
-            }
+    if (!terms) {
+        alert('Devi accettare i Termini e Condizioni per continuare!');
+        return;
+    }
 
-            // Raccolta dati
-            const formData = {
-                nome: document.getElementById('nome').value,
-                cognome: document.getElementById('cognome').value,
-                email: document.getElementById('email').value,
-                password: password,
-                dataNascita: document.getElementById('data-nascita').value,
-                ruolo: document.getElementById('ruolo').value
-            };
+    // Dati registrazione
+    const registrationData = {
+        email: document.getElementById('email').value,
+        password: password,
+        first_name: document.getElementById('nome').value,
+        last_name: document.getElementById('cognome').value,
+        birth_date: document.getElementById('data-nascita').value,
+        role: document.getElementById('ruolo').value
+    };
 
-            console.log('Dati registrazione:', formData);
+    try {
+        const response = await fetch('../api/auth.php?action=register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(registrationData),
+            credentials: 'include'
+        });
 
-            // Qui andrà la chiamata API per la registrazione
-            alert('Registrazione completata con successo! Verrai reindirizzato alla pagina di log-in.');
-            
-            // Reindirizzamento alla login page
+        const result = await response.json();
+
+        if (result.success) {
+            alert('✅ Registrazione completata! Ora puoi effettuare il login.');
             window.location.href = 'loginPage.html';
-        });
-
-        // Gestione login social
-        document.querySelector('.google').addEventListener('click', function() {
-            alert('Registrazione con Google in arrivo!');
-        });
-
-        document.querySelector('.facebook').addEventListener('click', function() {
-            alert('Registrazione con Facebook in arrivo!');
-        });
+        } else {
+            alert('❌ Errore: ' + (result.error || 'Errore sconosciuto'));
+        }
+    } catch (error) {
+        console.error('Errore:', error);
+        alert('Errore di connessione al server.');
+    }
+});
     </script>
 </body>
 </html>
