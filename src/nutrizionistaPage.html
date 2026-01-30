@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Nutrizionista - YourWeek</title>
     <link rel="stylesheet" href="nutrizionistaPage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="back-to-login">
         <a href="loginPage.html">
@@ -23,7 +26,7 @@
                 <i class="fas fa-user-md"></i>
             </div>
             <div class="user-details">
-                <h3>Dott. Marco Rossi</h3>
+                <h3 id="userName">Dott. Marco Rossi</h3>
                 <p>Nutrizionista Specialista</p>
             </div>
         </div>
@@ -32,7 +35,8 @@
     <main class="dashboard-content">
         <div class="welcome-section">
             <h2>Benvenuto nella Tua Dashboard</h2>
-            <p>Gestisci i tuoi pazienti, crea piani alimentari personalizzati e monitora i progressi con strumenti avanzati</p>
+            <p>Gestisci i tuoi pazienti, crea piani alimentari personalizzati e monitora i progressi con strumenti
+                avanzati</p>
         </div>
 
         <div class="stats-grid">
@@ -72,7 +76,8 @@
                     <i class="fas fa-users"></i>
                 </div>
                 <h3>Gestione Pazienti</h3>
-                <p>Visualizza e gestisci tutti i tuoi pazienti, schede cliniche e storico progressi con strumenti avanzati di monitoraggio</p>
+                <p>Visualizza e gestisci tutti i tuoi pazienti, schede cliniche e storico progressi con strumenti
+                    avanzati di monitoraggio</p>
                 <span class="feature-badge">Modifica e Visualizza i tuoi pazienti</span>
             </div>
 
@@ -81,7 +86,8 @@
                     <i class="fas fa-clipboard-list"></i>
                 </div>
                 <h3>Piani Dietetici</h3>
-                <p>Crea e personalizza piani alimentari unici per ogni paziente con il nostro editor avanzato e database ricette</p>
+                <p>Crea e personalizza piani alimentari unici per ogni paziente con il nostro editor avanzato e database
+                    ricette</p>
                 <span class="feature-badge">Modifica e visualizza i piani alimentari dei tuoi pazienti</span>
             </div>
 
@@ -90,7 +96,8 @@
                     <i class="fas fa-calendar-alt"></i>
                 </div>
                 <h3>Calendario Smart</h3>
-                <p>Organizza appuntamenti, controlli e follow-up con sistema di promemoria automatico e integrazione calendar</p>
+                <p>Organizza appuntamenti, controlli e follow-up con sistema di promemoria automatico e integrazione
+                    calendar</p>
                 <span class="feature-badge">Visualizza i tuoi appuntamenti</span>
             </div>
 
@@ -166,6 +173,32 @@
     </main>
 
     <script>
+        // Verifica autenticazione e carica dati utente
+        async function checkAuthAndLoadUser() {
+            try {
+                const response = await fetch('../api/auth.php?action=check', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.authenticated) {
+                    // Aggiorna il nome utente nell'header con titolo "Dott."
+                    if (result.user.name) {
+                        const fullName = result.user.name;
+                        document.getElementById('userName').textContent = `Dott. ${fullName}`;
+                    }
+                } else {
+                    // Se non autenticato, reindirizza al login
+                    alert('Sessione scaduta. Effettua nuovamente il login.');
+                    window.location.href = 'loginPage.html';
+                }
+            } catch (error) {
+                console.error('Errore verifica autenticazione:', error);
+            }
+        }
+
         // Funzione per calcolare i pazienti nuovi del mese corrente
         function calculateNewPatientsThisMonth() {
             const patients = JSON.parse(localStorage.getItem('patients')) || [];
@@ -189,12 +222,15 @@
         }
 
         // Animazioni al caricamento
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
+            // Carica i dati utente
+            checkAuthAndLoadUser();
+
             const cards = document.querySelectorAll('.stat-card, .feature-card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
                 card.style.transform = 'translateY(30px)';
-                
+
                 setTimeout(() => {
                     card.style.transition = 'all 0.6s ease';
                     card.style.opacity = '1';
@@ -209,15 +245,15 @@
         // Funzione per aggiornare tutte le statistiche
         function updateDashboardStats() {
             const patients = JSON.parse(localStorage.getItem('patients')) || [];
-            
+
             // Aggiorna pazienti attivi
             const activePatients = patients.length;
             document.querySelector('.stat-number').textContent = activePatients;
-            
+
             // Aggiorna pazienti nuovi del mese
             const newPatients = calculateNewPatientsThisMonth();
             document.getElementById('newPatientsCount').textContent = newPatients;
-            
+
             // Aggiorna badge nelle feature cards
             document.querySelectorAll('.feature-badge')[0].textContent = `${activePatients} Pazienti`;
         }
@@ -231,4 +267,5 @@
         updateDashboardStats();
     </script>
 </body>
+
 </html>

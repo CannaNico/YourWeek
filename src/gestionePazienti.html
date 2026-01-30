@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestione Pazienti - YourWeek</title>
     <link rel="stylesheet" href="gestionePazienti.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
     <div class="back-button">
         <a href="nutrizionistaPage.html">
@@ -16,7 +20,7 @@
 
     <header class="dashboard-header">
         <div class="logo">
-            <h1>yourweek</h1>
+            <h1>YourWeek</h1>
         </div>
         <div class="user-info">
             <h3>Gestione Pazienti</h3>
@@ -45,159 +49,420 @@
         </div>
     </div>
 
-    <!-- Modal aggiungi paziente -->
+    <!-- Modal aggiungi paziente (lista pazienti non assegnati) -->
     <div class="modal" id="addPatientModal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeAddPatientModal()">&times;</button>
-            <h2 style="text-align: center; margin-bottom: 30px; color: #2d4a5c; font-size: 2rem;">Aggiungi Nuovo Paziente</h2>
+            <h2 style="text-align: center; margin-bottom: 30px; color: #2d5016; font-size: 2rem;">
+                Seleziona Paziente da Aggiungere
+            </h2>
+            <div id="unassignedPatientsContainer">
+                <p style="text-align: center; color: #5a7a5c;">Caricamento...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal dati iniziali paziente -->
+    <div class="modal" id="patientDataModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closePatientDataModal()">&times;</button>
+            <h2 style="text-align: center; margin-bottom: 30px; color: #2d5016; font-size: 2rem;">
+                Dati Iniziali Paziente
+            </h2>
+            <div id="selectedPatientInfo"
+                style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f0f9f4, #e8f5e9); border-radius: 15px;">
+            </div>
             <div class="patient-details-grid">
                 <div class="detail-group">
-                    <h4>Nome</h4>
-                    <input type="text" class="input-field" id="newPatientName" placeholder="Inserisci nome">
-                </div>
-                <div class="detail-group">
-                    <h4>Cognome</h4>
-                    <input type="text" class="input-field" id="newPatientSurname" placeholder="Inserisci cognome">
-                </div>
-                <div class="detail-group">
-                    <h4>Data di Nascita</h4>
-                    <input type="date" class="input-field" id="newPatientBirthDate">
-                </div>
-                <div class="detail-group">
                     <h4>Altezza (cm)</h4>
-                    <input type="number" class="input-field" id="newPatientHeight" placeholder="Es. 175">
+                    <input type="number" step="0.1" class="input-field" id="patientHeight" placeholder="Es. 175">
                 </div>
                 <div class="detail-group">
                     <h4>Peso Iniziale (kg)</h4>
-                    <input type="number" class="input-field" id="newPatientWeight" placeholder="Es. 70">
+                    <input type="number" step="0.1" class="input-field" id="patientWeight" placeholder="Es. 70"
+                        required>
                 </div>
                 <div class="detail-group">
                     <h4>Massa Grassa Iniziale (%)</h4>
-                    <input type="number" class="input-field" id="newPatientBodyFat" placeholder="Es. 22">
+                    <input type="number" step="0.1" class="input-field" id="patientBodyFat" placeholder="Es. 22">
                 </div>
                 <div class="detail-group">
                     <h4>Massa Muscolare Iniziale (%)</h4>
-                    <input type="number" class="input-field" id="newPatientMuscleMass" placeholder="Es. 38">
+                    <input type="number" step="0.1" class="input-field" id="patientMuscleMass" placeholder="Es. 38">
                 </div>
-                <div class="detail-group">
-                    <h4>Descrizione/Obiettivo</h4>
-                    <input type="text" class="input-field" id="newPatientDescription" placeholder="Es. Obiettivo: Dimagrimento">
+                <div class="detail-group" style="grid-column: 1 / -1;">
+                    <h4>Obiettivo/Note</h4>
+                    <input type="text" class="input-field" id="patientGoal"
+                        placeholder="Es. Dimagrimento, Aumento massa muscolare, Mantenimento">
                 </div>
             </div>
             <div class="modal-actions">
-                <button class="cancel-btn" onclick="closeAddPatientModal()">Annulla</button>
-                <button class="save-btn" onclick="addNewPatient()">Salva Paziente</button>
+                <button class="cancel-btn" onclick="closePatientDataModal()">Annulla</button>
+                <button class="save-btn" onclick="savePatientAssignment()">Aggiungi Paziente</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal aggiungi misurazione -->
+    <div class="modal" id="addMeasurementModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeAddMeasurementModal()">&times;</button>
+            <h2 style="text-align: center; margin-bottom: 30px; color: #2d5016; font-size: 2rem;">
+                Nuova Misurazione
+            </h2>
+            <div class="patient-details-grid">
+                <div class="detail-group">
+                    <h4>Data Misurazione</h4>
+                    <input type="date" class="input-field" id="measurementDate" required>
+                </div>
+                <div class="detail-group">
+                    <h4>Peso (kg)</h4>
+                    <input type="number" step="0.1" class="input-field" id="measurementWeight" placeholder="Es. 70"
+                        required>
+                </div>
+                <div class="detail-group">
+                    <h4>Massa Grassa (%)</h4>
+                    <input type="number" step="0.1" class="input-field" id="measurementBodyFat" placeholder="Es. 22">
+                </div>
+                <div class="detail-group">
+                    <h4>Massa Muscolare (%)</h4>
+                    <input type="number" step="0.1" class="input-field" id="measurementMuscleMass" placeholder="Es. 38">
+                </div>
+                <div class="detail-group" style="grid-column: 1 / -1;">
+                    <h4>Note</h4>
+                    <input type="text" class="input-field" id="measurementNotes" placeholder="Note sulla misurazione">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeAddMeasurementModal()">Annulla</button>
+                <button class="save-btn" onclick="saveMeasurement()">Salva Misurazione</button>
             </div>
         </div>
     </div>
 
     <script>
-        let patients = JSON.parse(localStorage.getItem('patients')) || [
-            {
-                id: 1,
-                name: "Mario",
-                surname: "Rossi",
-                description: "Obiettivo: Dimagrimento - Iniziato 3 mesi fa",
-                avatar: "MR",
-                weight: "78 kg",
-                height: "175 cm",
-                birthDate: "15/03/1985",
-                bodyFat: "22%",
-                muscleMass: "38%",
-                nextVisit: "20/12/2024",
-                registrationDate: new Date(2024, 8, 15).toISOString(), // Settembre 2024
-                weightHistory: [
-                    { month: 'Gen', weight: 85 },
-                    { month: 'Feb', weight: 82 },
-                    { month: 'Mar', weight: 80 },
-                    { month: 'Apr', weight: 78 }
-                ],
-                bodyFatHistory: [
-                    { month: 'Gen', bodyFat: 28 },
-                    { month: 'Feb', bodyFat: 25 },
-                    { month: 'Mar', bodyFat: 23 },
-                    { month: 'Apr', bodyFat: 22 }
-                ]
-            },
-            {
-                id: 2,
-                name: "Laura",
-                surname: "Bianchi",
-                description: "Obiettivo: Aumento massa muscolare - Atleta",
-                avatar: "LB",
-                weight: "65 kg",
-                height: "168 cm",
-                birthDate: "22/07/1992",
-                bodyFat: "18%",
-                muscleMass: "42%",
-                nextVisit: "18/12/2024",
-                registrationDate: new Date(2024, 10, 5).toISOString(), // Novembre 2024
-                weightHistory: [
-                    { month: 'Gen', weight: 62 },
-                    { month: 'Feb', weight: 63 },
-                    { month: 'Mar', weight: 64 },
-                    { month: 'Apr', weight: 65 }
-                ],
-                bodyFatHistory: [
-                    { month: 'Gen', bodyFat: 20 },
-                    { month: 'Feb', bodyFat: 19 },
-                    { month: 'Mar', bodyFat: 18.5 },
-                    { month: 'Apr', bodyFat: 18 }
-                ]
+        let currentPatientId = null;
+        let selectedPatientForAssignment = null;
+
+        // Carica i pazienti all'avvio
+        document.addEventListener('DOMContentLoaded', function () {
+            loadMyPatients();
+            // Imposta la data di oggi come default per le misurazioni
+            document.getElementById('measurementDate').valueAsDate = new Date();
+        });
+
+        /**
+         * Carica i pazienti del nutrizionista
+         */
+        async function loadMyPatients() {
+            try {
+                const response = await fetch('../api/patients.php?action=get_my_patients', {
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    renderPatients(result.patients);
+                } else {
+                    alert('Errore: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                alert('Errore di connessione al server');
             }
-        ];
+        }
 
-        let currentEditingPatient = null;
-        let isEditing = false;
-
-        function renderPatients() {
+        /**
+         * Renderizza i pazienti nella griglia
+         */
+        function renderPatients(patients) {
             const grid = document.getElementById('patientsGrid');
             grid.innerHTML = '';
+
+            if (patients.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #5a7a5c; grid-column: 1 / -1; font-size: 1.2rem; padding: 40px;">Nessun paziente assegnato. Clicca su "Aggiungi Nuovo Paziente" per iniziare.</p>';
+                return;
+            }
 
             patients.forEach(patient => {
                 const card = document.createElement('div');
                 card.className = 'patient-card';
-                card.onclick = () => openPatientModal(patient);
-                
+                card.onclick = () => openPatientModal(patient.id);
+
+                const avatar = `${patient.first_name.charAt(0)}${patient.last_name.charAt(0)}`;
+                const currentWeight = patient.current_weight ? `${patient.current_weight} kg` : (patient.initial_weight ? `${patient.initial_weight} kg` : 'N/D');
+                const currentBodyFat = patient.current_body_fat ? `${patient.current_body_fat}%` : (patient.initial_body_fat ? `${patient.initial_body_fat}%` : 'N/D');
+                const nextVisit = patient.next_appointment ? new Date(patient.next_appointment).toLocaleDateString('it-IT') : 'Da programmare';
+
+                // Calcola età
+                let age = 'N/D';
+                if (patient.birth_date) {
+                    const birthDate = new Date(patient.birth_date);
+                    const today = new Date();
+                    age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    age += ' anni';
+                }
+
                 card.innerHTML = `
                     <div class="patient-header">
-                        <div class="patient-avatar">${patient.avatar}</div>
+                        <div class="patient-avatar">${avatar}</div>
                         <div class="patient-info">
-                            <h3>${patient.name} ${patient.surname}</h3>
-                            <div class="description">${patient.description}</div>
+                            <h3>${patient.first_name} ${patient.last_name}</h3>
+                            <div class="description">${patient.email} • ${age}</div>
                         </div>
                     </div>
                     <div class="patient-stats">
                         <div class="stat">
-                            <div class="value">${patient.weight}</div>
+                            <div class="value">${currentWeight}</div>
                             <div class="label">Peso</div>
                         </div>
                         <div class="stat">
-                            <div class="value">${patient.bodyFat}</div>
+                            <div class="value">${currentBodyFat}</div>
                             <div class="label">Massa Grassa</div>
                         </div>
                         <div class="stat">
-                            <div class="value">${patient.nextVisit}</div>
+                            <div class="value">${nextVisit}</div>
                             <div class="label">Prossima Visita</div>
                         </div>
                     </div>
                 `;
-                
+
                 grid.appendChild(card);
             });
         }
 
-        function openPatientModal(patient) {
-            currentEditingPatient = patient;
+        /**
+         * Apre il modal per aggiungere un paziente (mostra lista pazienti non assegnati)
+         */
+        async function openAddPatientModal() {
+            const modal = document.getElementById('addPatientModal');
+            const container = document.getElementById('unassignedPatientsContainer');
+
+            container.innerHTML = '<p style="text-align: center; color: #5a7a5c;">Caricamento...</p>';
+            modal.style.display = 'block';
+
+            try {
+                const response = await fetch('../api/patients.php?action=get_unassigned', {
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.patients.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: #5a7a5c; padding: 40px;">Nessun paziente disponibile. Tutti i pazienti registrati sono già assegnati.</p>';
+                    } else {
+                        renderUnassignedPatients(result.patients);
+                    }
+                } else {
+                    container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Errore: ' + result.error + '</p>';
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                container.innerHTML = '<p style="text-align: center; color: #e74c3c;">Errore di connessione al server</p>';
+            }
+        }
+
+        /**
+         * Renderizza la lista dei pazienti non assegnati
+         */
+        function renderUnassignedPatients(patients) {
+            const container = document.getElementById('unassignedPatientsContainer');
+            container.innerHTML = '';
+
+            const grid = document.createElement('div');
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+            grid.style.gap = '20px';
+
+            patients.forEach(patient => {
+                const card = document.createElement('div');
+                card.className = 'patient-card';
+                card.style.cursor = 'pointer';
+                card.onclick = () => selectPatientForAssignment(patient);
+
+                const avatar = `${patient.first_name.charAt(0)}${patient.last_name.charAt(0)}`;
+                const registrationDate = new Date(patient.registration_date).toLocaleDateString('it-IT');
+
+                let age = 'N/D';
+                if (patient.birth_date) {
+                    const birthDate = new Date(patient.birth_date);
+                    const today = new Date();
+                    age = today.getFullYear() - birthDate.getFullYear();
+                    const monthDiff = today.getMonth() - birthDate.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                        age--;
+                    }
+                    age += ' anni';
+                }
+
+                card.innerHTML = `
+                    <div class="patient-header">
+                        <div class="patient-avatar">${avatar}</div>
+                        <div class="patient-info">
+                            <h3>${patient.first_name} ${patient.last_name}</h3>
+                            <div class="description">${patient.email}</div>
+                        </div>
+                    </div>
+                    <div class="patient-stats">
+                        <div class="stat">
+                            <div class="value">${age}</div>
+                            <div class="label">Età</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value">${registrationDate}</div>
+                            <div class="label">Registrato il</div>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            container.appendChild(grid);
+        }
+
+        /**
+         * Seleziona un paziente per l'assegnazione e apre il modal per i dati iniziali
+         */
+        function selectPatientForAssignment(patient) {
+            selectedPatientForAssignment = patient;
+            closeAddPatientModal();
+
+            // Mostra info paziente selezionato
+            const info = document.getElementById('selectedPatientInfo');
+            let age = 'N/D';
+            if (patient.birth_date) {
+                const birthDate = new Date(patient.birth_date);
+                const today = new Date();
+                age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                age += ' anni';
+            }
+
+            info.innerHTML = `
+                <h3 style="color: #2d5016; margin-bottom: 10px; font-size: 1.5rem;">${patient.first_name} ${patient.last_name}</h3>
+                <p style="color: #5a7a5c; font-size: 1.1rem;"><strong>Email:</strong> ${patient.email}</p>
+                <p style="color: #5a7a5c; font-size: 1.1rem;"><strong>Età:</strong> ${age}</p>
+            `;
+
+            // Reset campi
+            document.getElementById('patientHeight').value = '';
+            document.getElementById('patientWeight').value = '';
+            document.getElementById('patientBodyFat').value = '';
+            document.getElementById('patientMuscleMass').value = '';
+            document.getElementById('patientGoal').value = '';
+
+            // Apri modal dati
+            document.getElementById('patientDataModal').style.display = 'block';
+        }
+
+        /**
+         * Salva l'assegnazione del paziente con i dati iniziali
+         */
+        async function savePatientAssignment() {
+            if (!selectedPatientForAssignment) return;
+
+            const weight = parseFloat(document.getElementById('patientWeight').value);
+
+            if (!weight || weight <= 0) {
+                alert('Inserisci almeno il peso iniziale del paziente');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('patient_id', selectedPatientForAssignment.id);
+            formData.append('height_cm', document.getElementById('patientHeight').value || 0);
+            formData.append('initial_weight', weight);
+            formData.append('initial_body_fat', document.getElementById('patientBodyFat').value || 0);
+            formData.append('initial_muscle_mass', document.getElementById('patientMuscleMass').value || 0);
+            formData.append('goal', document.getElementById('patientGoal').value || '');
+
+            try {
+                const response = await fetch('../api/patients.php?action=assign_patient', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Paziente aggiunto con successo!');
+                    closePatientDataModal();
+                    loadMyPatients();
+                } else {
+                    alert('Errore: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                alert('Errore di connessione al server');
+            }
+        }
+
+        /**
+         * Apre il modal con i dettagli del paziente
+         */
+        async function openPatientModal(patientId) {
+            currentPatientId = patientId;
             const modal = document.getElementById('patientModal');
             const modalContent = document.getElementById('modalContent');
-            
+
+            modalContent.innerHTML = '<p style="text-align: center; padding: 40px;">Caricamento...</p>';
+            modal.style.display = 'block';
+
+            try {
+                const response = await fetch(`../api/patients.php?action=get_patient_details&patient_id=${patientId}`, {
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    renderPatientDetails(result.patient, result.progress, result.appointments);
+                } else {
+                    modalContent.innerHTML = '<p style="text-align: center; color: #e74c3c;">Errore: ' + result.error + '</p>';
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                modalContent.innerHTML = '<p style="text-align: center; color: #e74c3c;">Errore di connessione al server</p>';
+            }
+        }
+
+        /**
+         * Renderizza i dettagli del paziente nel modal
+         */
+        function renderPatientDetails(patient, progress, appointments) {
+            const modalContent = document.getElementById('modalContent');
+            const avatar = `${patient.first_name.charAt(0)}${patient.last_name.charAt(0)}`;
+
+            // Dati attuali (ultima misurazione o dati iniziali)
+            const latestProgress = progress.length > 0 ? progress[0] : null;
+            const currentWeight = latestProgress ? latestProgress.weight_kg : patient.initial_weight;
+            const currentBodyFat = latestProgress ? latestProgress.body_fat_percent : patient.initial_body_fat;
+            const currentMuscleMass = latestProgress ? latestProgress.muscle_mass_percent : patient.initial_muscle_mass;
+            const currentBMI = latestProgress ? (latestProgress.bmi ? Number(latestProgress.bmi) : null) : null;
+
+            let age = 'N/D';
+            if (patient.birth_date) {
+                const birthDate = new Date(patient.birth_date);
+                age = new Date().getFullYear() - birthDate.getFullYear();
+            }
+
             modalContent.innerHTML = `
                 <div class="patient-detail-header">
-                    <div class="patient-detail-avatar">${patient.avatar}</div>
+                    <div class="patient-detail-avatar">${avatar}</div>
                     <div>
-                        <h2>${patient.name} ${patient.surname}</h2>
-                        <p>${patient.description}</p>
+                        <h2>${patient.first_name} ${patient.last_name}</h2>
+                        <p>${patient.email} • ${age} anni</p>
                     </div>
                 </div>
 
@@ -205,12 +470,20 @@
                     <h4>Ultime Misurazioni</h4>
                     <div class="stats-display">
                         <div class="stat-item">
-                            <div class="value">${patient.weight}</div>
+                            <div class="value">${currentWeight ? currentWeight + ' kg' : 'N/D'}</div>
                             <div class="label">Peso Attuale</div>
                         </div>
                         <div class="stat-item">
-                            <div class="value">${patient.bodyFat}</div>
+                            <div class="value">${currentBodyFat ? currentBodyFat + '%' : 'N/D'}</div>
                             <div class="label">Massa Grassa</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value">${currentMuscleMass ? currentMuscleMass + '%' : 'N/D'}</div>
+                            <div class="label">Massa Muscolare</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="value">${currentBMI !== null ? currentBMI.toFixed(1) : 'N/D'}</div>
+                            <div class="label">BMI</div>
                         </div>
                     </div>
                 </div>
@@ -218,147 +491,242 @@
                 <div class="patient-details-grid">
                     <div class="detail-group">
                         <h4>Altezza</h4>
-                        <div class="detail-value">${patient.height}</div>
-                        <button class="edit-btn" onclick="enableEditing('height')">Modifica</button>
-                        <input type="text" class="input-field" id="editHeight" value="${patient.height}" style="display: none;">
+                        <div class="detail-value">${patient.height_cm ? patient.height_cm + ' cm' : 'N/D'}</div>
                     </div>
                     <div class="detail-group">
                         <h4>Data di Nascita</h4>
-                        <div class="detail-value">${patient.birthDate}</div>
+                        <div class="detail-value">${patient.birth_date ? new Date(patient.birth_date).toLocaleDateString('it-IT') : 'N/D'}</div>
                     </div>
                     <div class="detail-group">
-                        <h4>Massa Muscolare</h4>
-                        <div class="detail-value">${patient.muscleMass}</div>
+                        <h4>Peso Iniziale</h4>
+                        <div class="detail-value">${patient.initial_weight ? patient.initial_weight + ' kg' : 'N/D'}</div>
                     </div>
                     <div class="detail-group">
-                        <h4>Prossima Visita</h4>
-                        <div class="detail-value">${patient.nextVisit}</div>
+                        <h4>Data Registrazione</h4>
+                        <div class="detail-value">${new Date(patient.registration_date).toLocaleDateString('it-IT')}</div>
                     </div>
                 </div>
 
+                <div style="text-align: center; margin: 30px 0; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button class="save-btn" onclick="openAddMeasurementModal()">
+                        <i class="fas fa-plus"></i> Aggiungi Nuova Misurazione
+                    </button>
+                    <button class="cancel-btn" onclick="confirmRemovePatient()" style="background: #e74c3c; color: white; border-color: #e74c3c;">
+                        <i class="fas fa-trash"></i> Elimina Paziente
+                    </button>
+                </div>
+
+                ${progress.length > 0 ? `
                 <div class="chart-container">
                     <div class="chart-title">Andamento del Peso</div>
                     <canvas id="weightChart"></canvas>
                 </div>
+                ` : ''}
 
-                <div class="modal-actions" id="modalActions" style="display: none;">
-                    <button class="cancel-btn" onclick="cancelEditing()">Annulla</button>
-                    <button class="save-btn" onclick="savePatientData()">Salva Modifiche</button>
+                ${progress.length > 0 ? `
+                <div class="current-stats">
+                    <h4>Storico Misurazioni</h4>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        ${progress.map(p => `
+                            <div style="padding: 15px; margin-bottom: 10px; background: white; border-radius: 10px; border: 2px solid rgba(76, 175, 80, 0.1);">
+                                <strong style="color: #2d5016;">${new Date(p.measurement_date).toLocaleDateString('it-IT')}</strong>
+                                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px;">
+                                    <div><small style="color: #5a7a5c;">Peso:</small> <strong>${p.weight_kg} kg</strong></div>
+                                    <div><small style="color: #5a7a5c;">Massa Grassa:</small> <strong>${p.body_fat_percent ? p.body_fat_percent + '%' : 'N/D'}</strong></div>
+                                    <div><small style="color: #5a7a5c;">Massa Muscolare:</small> <strong>${p.muscle_mass_percent ? p.muscle_mass_percent + '%' : 'N/D'}</strong></div>
+                                    <div><small style="color: #5a7a5c;">BMI:</small> <strong>${p.bmi ? Number(p.bmi).toFixed(1) : 'N/D'}</strong></div>
+                                </div>
+                                ${p.notes ? `<div style="margin-top: 10px; color: #5a7a5c; font-style: italic;"><small>${p.notes}</small></div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
+                ` : ''}
             `;
 
-            setTimeout(() => createWeightChart(patient), 100);
-            modal.style.display = 'block';
+            // Crea grafico se ci sono dati
+            if (progress.length > 0) {
+                setTimeout(() => createWeightChart(progress), 100);
+            }
         }
 
-        function createWeightChart(patient) {
-            const ctx = document.getElementById('weightChart').getContext('2d');
-            new Chart(ctx, {
+        /**
+         * Crea il grafico dell'andamento del peso
+         */
+        function createWeightChart(progress) {
+            const ctx = document.getElementById('weightChart');
+            if (!ctx) return;
+
+            // Ordina i progressi per data (dal più vecchio al più recente)
+            const sortedProgress = [...progress].reverse();
+
+            new Chart(ctx.getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: patient.weightHistory.map(item => item.month),
+                    labels: sortedProgress.map(p => new Date(p.measurement_date).toLocaleDateString('it-IT')),
                     datasets: [{
                         label: 'Peso (kg)',
-                        data: patient.weightHistory.map(item => item.weight),
-                        borderColor: '#4db8ff',
-                        backgroundColor: 'rgba(77, 184, 255, 0.1)',
+                        data: sortedProgress.map(p => p.weight_kg),
+                        borderColor: '#4caf50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
                         borderWidth: 3,
                         fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        pointBackgroundColor: '#4caf50',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
                     }]
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: true,
                     plugins: {
                         legend: {
-                            labels: { color: '#2d4a5c' }
+                            labels: {
+                                color: '#2d5016',
+                                font: { size: 14, weight: 'bold' }
+                            }
                         }
                     },
                     scales: {
                         y: {
-                            grid: { color: '#e3f2fd' },
-                            ticks: { color: '#2d4a5c' }
+                            grid: { color: 'rgba(76, 175, 80, 0.1)' },
+                            ticks: {
+                                color: '#2d5016',
+                                font: { weight: 'bold' }
+                            }
                         },
                         x: {
-                            grid: { color: '#e3f2fd' },
-                            ticks: { color: '#2d4a5c' }
+                            grid: { color: 'rgba(76, 175, 80, 0.1)' },
+                            ticks: {
+                                color: '#2d5016',
+                                font: { weight: 'bold' }
+                            }
                         }
                     }
                 }
             });
         }
 
-        function enableEditing(field) {
-            isEditing = true;
-            document.getElementById(`edit${field.charAt(0).toUpperCase() + field.slice(1)}`).style.display = 'block';
-            document.querySelector(`[onclick="enableEditing('${field}')"]`).style.display = 'none';
-            document.getElementById('modalActions').style.display = 'flex';
+        /**
+         * Apre il modal per aggiungere una nuova misurazione
+         */
+        function openAddMeasurementModal() {
+            document.getElementById('measurementDate').valueAsDate = new Date();
+            document.getElementById('measurementWeight').value = '';
+            document.getElementById('measurementBodyFat').value = '';
+            document.getElementById('measurementMuscleMass').value = '';
+            document.getElementById('measurementNotes').value = '';
+
+            document.getElementById('addMeasurementModal').style.display = 'block';
         }
 
-        function savePatientData() {
-            localStorage.setItem('patients', JSON.stringify(patients));
-            renderPatients();
-            closeModal();
-            alert('Dati aggiornati con successo!');
+        /**
+         * Salva una nuova misurazione
+         */
+        async function saveMeasurement() {
+            const weight = parseFloat(document.getElementById('measurementWeight').value);
+
+            if (!weight || weight <= 0) {
+                alert('Inserisci il peso');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('patient_id', currentPatientId);
+            formData.append('measurement_date', document.getElementById('measurementDate').value);
+            formData.append('weight_kg', weight);
+            formData.append('body_fat_percent', document.getElementById('measurementBodyFat').value || 0);
+            formData.append('muscle_mass_percent', document.getElementById('measurementMuscleMass').value || 0);
+            formData.append('notes', document.getElementById('measurementNotes').value || '');
+
+            try {
+                const response = await fetch('../api/patients.php?action=add_progress', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Misurazione salvata con successo!');
+                    closeAddMeasurementModal();
+                    openPatientModal(currentPatientId); // Ricarica i dettagli
+                    loadMyPatients(); // Ricarica la lista
+                } else {
+                    alert('Errore: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                alert('Errore di connessione al server');
+            }
         }
 
-        function cancelEditing() {
-            openPatientModal(currentEditingPatient);
+        /**
+         * Chiede conferma e rimuove il paziente
+         */
+        async function confirmRemovePatient() {
+            if (!currentPatientId) return;
+
+            if (confirm('Sei sicuro di voler rimuovere questo paziente? Il paziente verrà rimosso dalla tua lista, ma i dati non verranno eliminati.')) {
+                try {
+                    const formData = new FormData();
+                    formData.append('patient_id', currentPatientId);
+
+                    const response = await fetch('../api/patients.php?action=remove_patient', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        alert('Paziente rimosso con successo!');
+                        closeModal();
+                        loadMyPatients(); // Ricarica la lista
+                    } else {
+                        alert('Errore: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Errore:', error);
+                    alert('Errore di connessione al server');
+                }
+            }
         }
 
-        function openAddPatientModal() {
-            document.getElementById('addPatientModal').style.display = 'block';
+        // Funzioni per chiudere i modal
+        function closeModal() {
+            document.getElementById('patientModal').style.display = 'none';
         }
 
         function closeAddPatientModal() {
             document.getElementById('addPatientModal').style.display = 'none';
         }
 
-        function addNewPatient() {
-            const name = document.getElementById('newPatientName').value;
-            const surname = document.getElementById('newPatientSurname').value;
-            
-            if (!name || !surname) {
-                alert('Inserisci almeno nome e cognome del paziente');
-                return;
-            }
-
-            const newPatient = {
-                id: patients.length + 1,
-                name: name,
-                surname: surname,
-                description: document.getElementById('newPatientDescription').value || 'Nuovo paziente',
-                avatar: `${name.charAt(0)}${surname.charAt(0)}`,
-                weight: `${document.getElementById('newPatientWeight').value} kg`,
-                height: `${document.getElementById('newPatientHeight').value} cm`,
-                birthDate: new Date(document.getElementById('newPatientBirthDate').value).toLocaleDateString('it-IT'),
-                bodyFat: `${document.getElementById('newPatientBodyFat').value}%`,
-                muscleMass: `${document.getElementById('newPatientMuscleMass').value}%`,
-                nextVisit: 'Da programmare',
-                registrationDate: new Date().toISOString(), // Data di registrazione
-                weightHistory: [],
-                bodyFatHistory: []
-            };
-
-            patients.push(newPatient);
-            localStorage.setItem('patients', JSON.stringify(patients));
-            renderPatients();
-            closeAddPatientModal();
-            alert('Paziente aggiunto con successo!');
+        function closePatientDataModal() {
+            document.getElementById('patientDataModal').style.display = 'none';
+            selectedPatientForAssignment = null;
         }
 
-        function closeModal() {
-            document.getElementById('patientModal').style.display = 'none';
+        function closeAddMeasurementModal() {
+            document.getElementById('addMeasurementModal').style.display = 'none';
         }
 
-        window.onclick = function(event) {
-            const modal = document.getElementById('patientModal');
-            const addModal = document.getElementById('addPatientModal');
-            if (event.target === modal) closeModal();
-            if (event.target === addModal) closeAddPatientModal();
+        // Chiudi modal cliccando fuori
+        window.onclick = function (event) {
+            const modals = ['patientModal', 'addPatientModal', 'patientDataModal', 'addMeasurementModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
         }
-
-        document.addEventListener('DOMContentLoaded', renderPatients);
     </script>
 </body>
+
 </html>

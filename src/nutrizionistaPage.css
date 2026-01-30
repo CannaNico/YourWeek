@@ -1,67 +1,140 @@
+/* ========================================
+   NUTRIZIONISTAPAGE.CSS - Tema Nutrizione
+   Design moderno con palette verde/naturale
+   ======================================== */
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #e8f4f8 0%, #f0f8ff 50%, #e3f2fd 100%);
-    color: #2d4a5c;
-    min-height: 100vh;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+body {
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 50%, #f1f8f4 100%);
+    color: #2d5016;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+/* ========================================
+   HEADER - Tema Nutrizione con Pattern
+   ======================================== */
 .dashboard-header {
-    background: linear-gradient(135deg, #4db8ff, #2d4a5c);
-    padding: 25px 40px;
+    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 50%, #81c784 100%);
+    padding: 30px 40px;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 25px rgba(76, 175, 80, 0.3);
     position: relative;
+    overflow: hidden;
+}
+
+/* Pattern decorativo nell'header */
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.4;
+    pointer-events: none;
 }
 
 .logo h1 {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     font-weight: 900;
     color: white;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 1;
 }
 
+.logo h1::after {
+    content: '🥗';
+    margin-left: 15px;
+    font-size: 2.2rem;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* ========================================
+   USER INFO - Card Moderna
+   ======================================== */
 .user-info {
     position: absolute;
     right: 40px;
     display: flex;
     align-items: center;
     gap: 20px;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 15px 25px;
-    border-radius: 12px;
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.25);
+    padding: 15px 30px;
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.user-info:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .user-avatar {
-    width: 60px;
-    height: 60px;
+    width: 65px;
+    height: 65px;
     border-radius: 50%;
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #f1f8f4 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
-    color: #4db8ff;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    font-size: 2rem;
+    color: #4caf50;
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.5);
 }
 
 .user-details h3 {
     color: white;
-    font-size: 1.3rem;
+    font-size: 1.35rem;
     margin-bottom: 5px;
+    font-weight: 700;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .user-details p {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.95rem;
+    font-weight: 500;
 }
 
+/* ========================================
+   BACK TO LOGIN BUTTON
+   ======================================== */
 .back-to-login {
     position: absolute;
     top: 30px;
@@ -74,20 +147,25 @@ body {
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 12px 18px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 10px;
+    gap: 10px;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 15px;
     transition: all 0.3s ease;
-    font-weight: 500;
+    font-weight: 600;
     backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 .back-to-login a:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.35);
     transform: translateX(-5px);
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
 }
 
+/* ========================================
+   MAIN CONTENT
+   ======================================== */
 .dashboard-content {
     max-width: 1400px;
     margin: 0 auto;
@@ -97,23 +175,43 @@ body {
 .welcome-section {
     text-align: center;
     margin-bottom: 50px;
+    animation: fadeInDown 0.8s ease;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .welcome-section h2 {
-    font-size: 3rem;
-    color: #2d4a5c;
+    font-size: 3.2rem;
+    background: linear-gradient(135deg, #2d5016 0%, #4caf50 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 15px;
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .welcome-section p {
-    font-size: 1.2rem;
-    color: #5a7a8c;
-    max-width: 700px;
+    font-size: 1.25rem;
+    color: #5a7a5c;
+    max-width: 750px;
     margin: 0 auto;
-    line-height: 1.6;
+    line-height: 1.7;
+    font-weight: 400;
 }
 
+/* ========================================
+   STATS GRID - Cards Statistiche
+   ======================================== */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -122,40 +220,75 @@ body {
 }
 
 .stat-card {
-    background: white;
-    border-radius: 20px;
-    padding: 30px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
+    border-radius: 25px;
+    padding: 35px;
     text-align: center;
-    box-shadow: 0 8px 25px rgba(45, 74, 92, 0.1);
-    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #4caf50, #66bb6a, #81c784);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
+}
+
+.stat-card:hover::before {
+    transform: scaleX(1);
 }
 
 .stat-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 35px rgba(45, 74, 92, 0.2);
-    border-color: #4db8ff;
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 20px 45px rgba(76, 175, 80, 0.25);
+    border-color: #4caf50;
 }
 
 .stat-icon {
-    font-size: 2.8rem;
-    margin-bottom: 15px;
-    color: #4db8ff;
+    font-size: 3rem;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.2) rotate(5deg);
 }
 
 .stat-number {
-    font-size: 3rem;
-    font-weight: 800;
-    color: #2d4a5c;
+    font-size: 3.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #2d5016 0%, #4caf50 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin-bottom: 10px;
+    line-height: 1;
 }
 
 .stat-card p {
-    color: #5a7a8c;
-    font-size: 1rem;
-    font-weight: 500;
+    color: #5a7a5c;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 10px;
 }
 
+/* ========================================
+   FEATURES GRID - Funzionalità Principali
+   ======================================== */
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
@@ -164,69 +297,122 @@ body {
 }
 
 .feature-card {
-    background: white;
-    border-radius: 20px;
-    padding: 35px;
-    box-shadow: 0 8px 25px rgba(45, 74, 92, 0.1);
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
+    border-radius: 25px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
     border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(76, 175, 80, 0.1) 0%, transparent 70%);
+    transform: scale(0);
+    transition: transform 0.6s ease;
+}
+
+.feature-card:hover::before {
+    transform: scale(1);
 }
 
 .feature-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 35px rgba(45, 74, 92, 0.2);
-    border-color: #4db8ff;
+    transform: translateY(-12px);
+    box-shadow: 0 20px 50px rgba(76, 175, 80, 0.25);
+    border-color: #4caf50;
 }
 
 .feature-icon {
-    font-size: 3rem;
+    font-size: 3.5rem;
     margin-bottom: 25px;
-    color: #4db8ff;
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     display: inline-block;
-    transition: transform 0.3s ease;
+    transition: all 0.4s ease;
+    position: relative;
+    z-index: 1;
 }
 
 .feature-card:hover .feature-icon {
-    transform: scale(1.15);
+    transform: scale(1.2) rotate(-5deg);
 }
 
 .feature-card h3 {
-    font-size: 1.6rem;
+    font-size: 1.7rem;
     margin-bottom: 15px;
-    color: #2d4a5c;
+    color: #2d5016;
     font-weight: 700;
+    position: relative;
+    z-index: 1;
 }
 
 .feature-card p {
-    color: #5a7a8c;
-    line-height: 1.6;
+    color: #5a7a5c;
+    line-height: 1.7;
     margin-bottom: 20px;
+    font-size: 1.05rem;
+    position: relative;
+    z-index: 1;
 }
 
 .feature-badge {
     display: inline-block;
-    padding: 8px 16px;
-    background: rgba(77, 184, 255, 0.15);
-    color: #4db8ff;
-    border-radius: 20px;
-    font-size: 0.85rem;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(102, 187, 106, 0.15));
+    color: #2d5016;
+    border-radius: 25px;
+    font-size: 0.9rem;
     font-weight: 700;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
 }
 
+.feature-card:hover .feature-badge {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.25), rgba(102, 187, 106, 0.25));
+    border-color: #4caf50;
+    transform: scale(1.05);
+}
+
+/* ========================================
+   RECENT ACTIVITY - Attività Recenti
+   ======================================== */
 .recent-activity {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 8px 25px rgba(45, 74, 92, 0.1);
+    background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
+    border-radius: 25px;
+    padding: 45px;
+    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
     margin-top: 40px;
+    border: 2px solid rgba(76, 175, 80, 0.1);
 }
 
 .recent-activity h3 {
-    font-size: 1.8rem;
-    margin-bottom: 30px;
-    color: #2d4a5c;
-    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 35px;
+    color: #2d5016;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.recent-activity h3::before {
+    content: '';
+    width: 5px;
+    height: 35px;
+    background: linear-gradient(180deg, #4caf50, #66bb6a);
+    border-radius: 10px;
 }
 
 .activity-list {
@@ -234,18 +420,37 @@ body {
 }
 
 .activity-list li {
-    padding: 20px;
-    border-bottom: 1px solid #f0f8ff;
+    padding: 25px;
+    border-bottom: 2px solid rgba(76, 175, 80, 0.08);
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 25px;
     transition: all 0.3s ease;
-    border-radius: 10px;
+    border-radius: 15px;
     cursor: pointer;
+    position: relative;
+}
+
+.activity-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 0;
+    background: linear-gradient(180deg, #4caf50, #66bb6a);
+    border-radius: 10px;
+    transition: height 0.3s ease;
+}
+
+.activity-list li:hover::before {
+    height: 70%;
 }
 
 .activity-list li:hover {
-    background: #f8fcff;
+    background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 100%);
+    transform: translateX(10px);
 }
 
 .activity-list li:last-child {
@@ -253,36 +458,48 @@ body {
 }
 
 .activity-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    background: #f0f8ff;
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #e8f5e9, #f1f8f4);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
-    color: #4db8ff;
+    font-size: 1.5rem;
+    color: #4caf50;
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.15);
+    transition: all 0.3s ease;
+}
+
+.activity-list li:hover .activity-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.25);
 }
 
 .activity-content strong {
-    color: #2d4a5c;
+    color: #2d5016;
     display: block;
-    margin-bottom: 5px;
-    font-size: 1.1rem;
+    margin-bottom: 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
 }
 
 .activity-content p {
-    color: #5a7a8c;
-    font-size: 0.9rem;
+    color: #5a7a5c;
+    font-size: 0.95rem;
+    line-height: 1.5;
 }
 
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
 @media (max-width: 768px) {
     .dashboard-content {
         padding: 30px 20px;
     }
 
     .welcome-section h2 {
-        font-size: 2.2rem;
+        font-size: 2.5rem;
     }
 
     .features-grid {
@@ -296,9 +513,71 @@ body {
     .user-info {
         position: static;
         margin-top: 20px;
+        right: auto;
     }
 
     .dashboard-header {
         flex-direction: column;
+        padding: 25px 20px;
     }
+
+    .logo h1 {
+        font-size: 2.2rem;
+    }
+
+    .back-to-login {
+        top: 15px;
+        left: 15px;
+    }
+
+    .feature-card {
+        padding: 30px;
+    }
+
+    .recent-activity {
+        padding: 30px;
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome-section h2 {
+        font-size: 2rem;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+    }
+
+    .feature-icon {
+        font-size: 2.5rem;
+    }
+
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+
+    .user-details h3 {
+        font-size: 1.1rem;
+    }
+}
+
+/* ========================================
+   ANIMAZIONI AGGIUNTIVE
+   ======================================== */
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.stat-card:hover .stat-number {
+    animation: pulse 1s ease infinite;
 }

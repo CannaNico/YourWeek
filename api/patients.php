@@ -1,576 +1,574 @@
 <?php
 // api/patients.php
-// API per gestione pazienti con validazione completa
-require_once '../includes/db_connection.php';
+// API per la gestione dei pazienti
+require_once __DIR__ . '/../includes/db_connection.php';
 
-// Verifica autenticazione
-requireAuth();
-
-$method = $_SERVER['REQUEST_METHOD'];
+// Impedisci accesso diretto al file senza azione
 $action = $_GET['action'] ?? '';
 
-// Route handling
 switch ($action) {
-    case 'list':
-        if ($method === 'GET') getPatients();
+    case 'get_unassigned':
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            getUnassignedPatients();
+        }
         break;
     
-    case 'get':
-        if ($method === 'GET') getPatient();
+    case 'get_my_patients':
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            getMyPatients();
+        }
         break;
     
-    case 'create':
-        if ($method === 'POST') createPatient();
+    case 'assign_patient':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            assignPatient();
+        }
         break;
     
-    case 'update':
-        if ($method === 'PUT' || $method === 'POST') updatePatient();
+    case 'update_patient':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            updatePatientData();
+        }
         break;
     
-    case 'delete':
-        if ($method === 'DELETE' || $method === 'POST') deletePatient();
+    case 'get_patient_details':
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            getPatientDetails();
+        }
         break;
     
-    case 'progress':
-        if ($method === 'POST') addProgress();
-        elseif ($method === 'GET') getProgress();
+    case 'add_progress':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            addPatientProgress();
+        }
         break;
     
-    case 'stats':
-        if ($method === 'GET') getStats();
+    case 'remove_patient':
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            removePatient();
+        }
         break;
     
     default:
         sendJSON(['success' => false, 'error' => 'Azione non valida'], 400);
 }
 
-// === LISTA PAZIENTI ===
-function getPatients() {
+// === FUNZIONI API ===
+
+/**
+ * Ottiene la lista dei pazienti non ancora assegnati a nessun nutrizionista
+ */
+function getUnassignedPatients() {
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
+    }
+    
+    $db = getDB();
+    
+    try {
+        $stmt = $db->prepare("
+            SELECT 
+                id,
+                email,
+                first_name,
+                last_name,
+                birth_date,
+                registration_date
+            FROM Users
+            WHERE role = 'paziente' 
+                AND is_active = 1
+                AND (nutritionist_id IS NULL OR nutritionist_id = 0)
+            ORDER BY registration_date DESC
+        ");
+        $stmt->execute();
+        $patients = $stmt->fetchAll();
+        
+        sendJSON([
+            'success' => true,
+            'patients' => $patients
+        ]);
+        
+    } catch (PDOException $e) {
+        error_log("Errore get_unassigned_patients: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante il recupero dei pazienti'], 500);
+    }
+}
+
+/**
+ * Ottiene la lista dei pazienti assegnati al nutrizionista loggato
+ */
+function getMyPatients() {
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
+    }
+    
     $db = getDB();
     $nutritionistId = $_SESSION['user_id'];
-    
-    // Solo i nutrizionisti possono vedere i pazienti
-    if (!hasRole('nutrizionista')) {
-        sendJSON(['success' => false, 'error' => 'Permessi insufficienti'], 403);
-    }
     
     try {
         $stmt = $db->prepare("
             SELECT 
                 u.id,
+                u.email,
                 u.first_name,
                 u.last_name,
-                u.email,
                 u.birth_date,
-                u.registration_date,
+                u.height_cm,
                 u.initial_weight,
                 u.initial_body_fat,
                 u.initial_muscle_mass,
-                u.height_cm,
-                (
-                    SELECT p.weight_kg 
-                    FROM PatientProgress p 
-                    WHERE p.patient_id = u.id 
-                    ORDER BY p.measurement_date DESC 
-                    LIMIT 1
-                ) as current_weight,
-                (
-                    SELECT p.body_fat_percent 
-                    FROM PatientProgress p 
-                    WHERE p.patient_id = u.id 
-                    ORDER BY p.measurement_date DESC 
-                    LIMIT 1
-                ) as current_body_fat,
-                (
-                    SELECT p.muscle_mass_percent 
-                    FROM PatientProgress p 
-                    WHERE p.patient_id = u.id 
-                    ORDER BY p.measurement_date DESC 
-                    LIMIT 1
-                ) as current_muscle_mass,
-                (
-                    SELECT a.appointment_date
-                    FROM Appointments a
-                    WHERE a.patient_id = u.id 
-                    AND a.appointment_date >= CURDATE()
-                    AND a.status = 'scheduled'
-                    ORDER BY a.appointment_date ASC, a.start_time ASC
-                    LIMIT 1
-                ) as next_visit
+                u.registration_date,
+                pp.weight_kg as current_weight,
+                pp.body_fat_percent as current_body_fat,
+                pp.muscle_mass_percent as current_muscle_mass,
+                pp.bmi as current_bmi,
+                pp.measurement_date as last_measurement_date
             FROM Users u
-            WHERE u.nutritionist_id = ?
-            AND u.role = 'paziente'
-            AND u.is_active = 1
-            ORDER BY u.registration_date DESC
+            LEFT JOIN (
+                SELECT 
+                    patient_id,
+                    weight_kg,
+                    body_fat_percent,
+                    muscle_mass_percent,
+                    bmi,
+                    measurement_date
+                FROM PatientProgress pp1
+                WHERE measurement_date = (
+                    SELECT MAX(measurement_date)
+                    FROM PatientProgress pp2
+                    WHERE pp2.patient_id = pp1.patient_id
+                )
+            ) pp ON u.id = pp.patient_id
+            WHERE u.role = 'paziente' 
+                AND u.is_active = 1
+                AND u.nutritionist_id = ?
+            ORDER BY u.last_name, u.first_name
         ");
-        
         $stmt->execute([$nutritionistId]);
         $patients = $stmt->fetchAll();
         
-        // Formatta i dati per il frontend
-        $formattedPatients = array_map(function($p) {
-            $weight = $p['current_weight'] ?? $p['initial_weight'];
-            $bodyFat = $p['current_body_fat'] ?? $p['initial_body_fat'];
-            $muscleMass = $p['current_muscle_mass'] ?? $p['initial_muscle_mass'];
-            
-            return [
-                'id' => (int)$p['id'],
-                'name' => $p['first_name'],
-                'surname' => $p['last_name'],
-                'avatar' => strtoupper(substr($p['first_name'], 0, 1) . substr($p['last_name'], 0, 1)),
-                'email' => $p['email'],
-                'birthDate' => $p['birth_date'] ? date('d/m/Y', strtotime($p['birth_date'])) : null,
-                'registrationDate' => $p['registration_date'],
-                'weight' => $weight ? number_format($weight, 1) . ' kg' : 'N/A',
-                'height' => $p['height_cm'] ? $p['height_cm'] . ' cm' : 'N/A',
-                'bodyFat' => $bodyFat ? number_format($bodyFat, 1) . '%' : 'N/A',
-                'muscleMass' => $muscleMass ? number_format($muscleMass, 1) . '%' : 'N/A',
-                'nextVisit' => $p['next_visit'] ? date('d/m/Y', strtotime($p['next_visit'])) : 'Da programmare',
-                'description' => 'Paziente attivo'
-            ];
-        }, $patients);
+        // Aggiungi il prossimo appuntamento per ogni paziente
+        foreach ($patients as &$patient) {
+            $stmtApp = $db->prepare("
+                SELECT appointment_date 
+                FROM Appointments 
+                WHERE patient_id = ? 
+                    AND nutritionist_id = ?
+                    AND status = 'scheduled'
+                    AND appointment_date >= CURDATE()
+                ORDER BY appointment_date ASC
+                LIMIT 1
+            ");
+            $stmtApp->execute([$patient['id'], $nutritionistId]);
+            $appointment = $stmtApp->fetch();
+            $patient['next_appointment'] = $appointment ? $appointment['appointment_date'] : null;
+        }
+        unset($patient);
         
         sendJSON([
             'success' => true,
-            'patients' => $formattedPatients,
-            'total' => count($formattedPatients)
+            'patients' => $patients
         ]);
         
     } catch (PDOException $e) {
-        error_log("Errore lista pazienti: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore nel recupero dei pazienti'], 500);
+        error_log("Errore get_my_patients: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante il recupero dei pazienti'], 500);
     }
 }
 
-// === DETTAGLIO PAZIENTE ===
-function getPatient() {
-    $db = getDB();
-    $patientId = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT);
-    
-    if (!$patientId) {
-        sendJSON(['success' => false, 'error' => 'ID paziente non valido'], 400);
+/**
+ * Assegna un paziente al nutrizionista e imposta i dati iniziali
+ */
+function assignPatient() {
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
     
-    // Verifica permessi
-    if (!hasRole('nutrizionista')) {
-        // Se è un paziente, può vedere solo i propri dati
-        if (!hasRole('paziente') || $_SESSION['user_id'] != $patientId) {
-            sendJSON(['success' => false, 'error' => 'Permessi insufficienti'], 403);
-        }
+    $db = getDB();
+    $nutritionistId = $_SESSION['user_id'];
+    
+    // Supporta sia POST tradizionale che JSON
+    if (isset($_POST['patient_id'])) {
+        $patientId = intval($_POST['patient_id']);
+        $height = floatval($_POST['height_cm'] ?? 0);
+        $weight = floatval($_POST['initial_weight'] ?? 0);
+        $bodyFat = floatval($_POST['initial_body_fat'] ?? 0);
+        $muscleMass = floatval($_POST['initial_muscle_mass'] ?? 0);
+        $goal = sanitizeInput($_POST['goal'] ?? '');
+    } else {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $patientId = intval($data['patient_id'] ?? 0);
+        $height = floatval($data['height_cm'] ?? 0);
+        $weight = floatval($data['initial_weight'] ?? 0);
+        $bodyFat = floatval($data['initial_body_fat'] ?? 0);
+        $muscleMass = floatval($data['initial_muscle_mass'] ?? 0);
+        $goal = sanitizeInput($data['goal'] ?? '');
+    }
+    
+    if (!$patientId) {
+        sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
     }
     
     try {
+        $db->beginTransaction();
+        
+        // Verifica che il paziente non sia già assegnato
         $stmt = $db->prepare("
-            SELECT 
-                id, email, first_name, last_name, birth_date, 
-                height_cm, initial_weight, initial_body_fat, 
-                initial_muscle_mass, registration_date, last_login
+            SELECT nutritionist_id 
             FROM Users 
-            WHERE id = ? AND role = 'paziente' AND is_active = 1
-            LIMIT 1
+            WHERE id = ? AND role = 'paziente'
         ");
         $stmt->execute([$patientId]);
         $patient = $stmt->fetch();
         
         if (!$patient) {
+            $db->rollBack();
             sendJSON(['success' => false, 'error' => 'Paziente non trovato'], 404);
         }
         
-        // Se nutrizionista, verifica che sia suo paziente
-        if (hasRole('nutrizionista')) {
-            $stmt = $db->prepare("SELECT nutritionist_id FROM Users WHERE id = ?");
-            $stmt->execute([$patientId]);
-            $nutritionistId = $stmt->fetchColumn();
-            
-            if ($nutritionistId != $_SESSION['user_id']) {
-                sendJSON(['success' => false, 'error' => 'Questo paziente non è assegnato a te'], 403);
-            }
+        if ($patient['nutritionist_id'] && $patient['nutritionist_id'] != 0) {
+            $db->rollBack();
+            sendJSON(['success' => false, 'error' => 'Paziente già assegnato a un nutrizionista'], 409);
         }
         
-        // Rimuovi dati sensibili se necessario
-        unset($patient['password_hash']);
-        
-        sendJSON([
-            'success' => true,
-            'patient' => $patient
-        ]);
-        
-    } catch (PDOException $e) {
-        error_log("Errore dettaglio paziente: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore nel recupero del paziente'], 500);
-    }
-}
-
-// === CREA PAZIENTE ===
-function createPatient() {
-    requireRole('nutrizionista'); // Solo nutrizionisti possono creare pazienti
-    
-    $db = getDB();
-    $nutritionistId = $_SESSION['user_id'];
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    // Validazione input
-    $email = filter_var($data['email'] ?? '', FILTER_VALIDATE_EMAIL);
-    $firstName = sanitizeInput($data['first_name'] ?? '');
-    $lastName = sanitizeInput($data['last_name'] ?? '');
-    $birthDate = $data['birth_date'] ?? null;
-    $height = filter_var($data['height_cm'] ?? null, FILTER_VALIDATE_FLOAT);
-    $initialWeight = filter_var($data['initial_weight'] ?? null, FILTER_VALIDATE_FLOAT);
-    $initialBodyFat = filter_var($data['initial_body_fat'] ?? null, FILTER_VALIDATE_FLOAT);
-    $initialMuscleMass = filter_var($data['initial_muscle_mass'] ?? null, FILTER_VALIDATE_FLOAT);
-    
-    // Controlli obbligatori
-    if (!$email || empty($firstName) || empty($lastName)) {
-        sendJSON(['success' => false, 'error' => 'Email, nome e cognome sono obbligatori'], 400);
-    }
-    
-    // Validazione ulteriore
-    if ($height !== null && ($height < 50 || $height > 250)) {
-        sendJSON(['success' => false, 'error' => 'Altezza non valida (deve essere tra 50 e 250 cm)'], 400);
-    }
-    
-    if ($initialWeight !== null && ($initialWeight < 20 || $initialWeight > 300)) {
-        sendJSON(['success' => false, 'error' => 'Peso non valido (deve essere tra 20 e 300 kg)'], 400);
-    }
-    
-    if ($initialBodyFat !== null && ($initialBodyFat < 0 || $initialBodyFat > 100)) {
-        sendJSON(['success' => false, 'error' => 'Percentuale massa grassa non valida'], 400);
-    }
-    
-    if ($initialMuscleMass !== null && ($initialMuscleMass < 0 || $initialMuscleMass > 100)) {
-        sendJSON(['success' => false, 'error' => 'Percentuale massa muscolare non valida'], 400);
-    }
-    
-    try {
-        // Verifica email duplicata
-        $stmt = $db->prepare("SELECT id FROM Users WHERE email = ? LIMIT 1");
-        $stmt->execute([$email]);
-        if ($stmt->fetch()) {
-            sendJSON(['success' => false, 'error' => 'Email già registrata'], 409);
-        }
-        
-        // Inizia transazione
-        beginTransaction();
-        
-        // Password temporanea sicura
-        $tempPassword = bin2hex(random_bytes(8));
-        $passwordHash = hashPassword($tempPassword);
-        
-        // Inserisci utente
+        // Assegna il paziente al nutrizionista e aggiorna i dati iniziali
         $stmt = $db->prepare("
-            INSERT INTO Users (
-                email, password_hash, first_name, last_name, role,
-                birth_date, height_cm, initial_weight, initial_body_fat,
-                initial_muscle_mass, nutritionist_id, registration_date, is_active
-            ) VALUES (?, ?, ?, ?, 'paziente', ?, ?, ?, ?, ?, ?, NOW(), 1)
+            UPDATE Users 
+            SET nutritionist_id = ?,
+                height_cm = ?,
+                initial_weight = ?,
+                initial_body_fat = ?,
+                initial_muscle_mass = ?
+            WHERE id = ?
         ");
-        
         $stmt->execute([
-            $email, $passwordHash, $firstName, $lastName,
-            $birthDate, $height, $initialWeight, 
-            $initialBodyFat, $initialMuscleMass, $nutritionistId
+            $nutritionistId,
+            $height > 0 ? $height : null,
+            $weight > 0 ? $weight : null,
+            $bodyFat > 0 ? $bodyFat : null,
+            $muscleMass > 0 ? $muscleMass : null,
+            $patientId
         ]);
         
-        $patientId = $db->lastInsertId();
-        
-        // Se ci sono misurazioni iniziali, salvale
-        if ($initialWeight || $initialBodyFat || $initialMuscleMass) {
+        // Aggiungi il primo record di progresso se abbiamo i dati
+        if ($weight > 0) {
             $stmt = $db->prepare("
-                INSERT INTO PatientProgress (
-                    patient_id, measurement_date, weight_kg, 
-                    body_fat_percent, muscle_mass_percent
-                ) VALUES (?, CURDATE(), ?, ?, ?)
+                INSERT INTO PatientProgress 
+                (patient_id, measurement_date, weight_kg, body_fat_percent, muscle_mass_percent, notes)
+                VALUES (?, CURDATE(), ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    weight_kg = VALUES(weight_kg),
+                    body_fat_percent = VALUES(body_fat_percent),
+                    muscle_mass_percent = VALUES(muscle_mass_percent),
+                    notes = VALUES(notes)
             ");
-            $stmt->execute([$patientId, $initialWeight, $initialBodyFat, $initialMuscleMass]);
+            $stmt->execute([
+                $patientId,
+                $weight,
+                $bodyFat > 0 ? $bodyFat : null,
+                $muscleMass > 0 ? $muscleMass : null,
+                $goal ? "Obiettivo: " . $goal : "Prima misurazione"
+            ]);
         }
         
         // Log attività
-        logActivity($db, $nutritionistId, 'patient_created', "Creato paziente: $firstName $lastName (ID: $patientId)");
+        logActivity($db, $nutritionistId, 'assign_patient', "Paziente ID $patientId assegnato");
         
-        // Commit transazione
-        commit();
-        
-        // TODO: Invia email con password temporanea
-        // sendWelcomeEmail($email, $firstName, $tempPassword);
+        $db->commit();
         
         sendJSON([
             'success' => true,
-            'message' => 'Paziente creato con successo',
-            'patient_id' => $patientId,
-            'temp_password' => $tempPassword // In produzione, invia via email
-        ], 201);
-        
-    } catch (PDOException $e) {
-        rollback();
-        error_log("Errore creazione paziente: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore nella creazione del paziente'], 500);
-    }
-}
-
-// === AGGIORNA PAZIENTE ===
-function updatePatient() {
-    requireRole('nutrizionista');
-    
-    $db = getDB();
-    $data = json_decode(file_get_contents('php://input'), true);
-    $patientId = filter_var($data['id'] ?? null, FILTER_VALIDATE_INT);
-    
-    if (!$patientId) {
-        sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
-    }
-    
-    // Verifica che sia paziente del nutrizionista
-    $stmt = $db->prepare("SELECT nutritionist_id FROM Users WHERE id = ? AND role = 'paziente'");
-    $stmt->execute([$patientId]);
-    $nutritionistId = $stmt->fetchColumn();
-    
-    if ($nutritionistId != $_SESSION['user_id']) {
-        sendJSON(['success' => false, 'error' => 'Non autorizzato a modificare questo paziente'], 403);
-    }
-    
-    try {
-        $updates = [];
-        $params = [];
-        
-        // Campi modificabili
-        if (isset($data['height_cm'])) {
-            $height = filter_var($data['height_cm'], FILTER_VALIDATE_FLOAT);
-            if ($height && $height >= 50 && $height <= 250) {
-                $updates[] = "height_cm = ?";
-                $params[] = $height;
-            }
-        }
-        
-        if (isset($data['first_name'])) {
-            $updates[] = "first_name = ?";
-            $params[] = sanitizeInput($data['first_name']);
-        }
-        
-        if (isset($data['last_name'])) {
-            $updates[] = "last_name = ?";
-            $params[] = sanitizeInput($data['last_name']);
-        }
-        
-        if (isset($data['birth_date'])) {
-            $updates[] = "birth_date = ?";
-            $params[] = $data['birth_date'];
-        }
-        
-        if (empty($updates)) {
-            sendJSON(['success' => false, 'error' => 'Nessun campo da aggiornare'], 400);
-        }
-        
-        $params[] = $patientId;
-        $sql = "UPDATE Users SET " . implode(', ', $updates) . " WHERE id = ?";
-        $stmt = $db->prepare($sql);
-        $stmt->execute($params);
-        
-        logActivity($db, $_SESSION['user_id'], 'patient_updated', "Aggiornato paziente ID: $patientId");
-        
-        sendJSON([
-            'success' => true,
-            'message' => 'Paziente aggiornato con successo'
+            'message' => 'Paziente assegnato con successo'
         ]);
         
     } catch (PDOException $e) {
-        error_log("Errore aggiornamento paziente: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore aggiornamento'], 500);
+        $db->rollBack();
+        error_log("Errore assign_patient: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante l\'assegnazione del paziente'], 500);
     }
 }
 
-// === ELIMINA PAZIENTE (SOFT DELETE) ===
-function deletePatient() {
-    requireRole('nutrizionista');
-    
-    $db = getDB();
-    
-    // Supporta DELETE e POST
-    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-        parse_str(file_get_contents('php://input'), $_DELETE);
-        $patientId = filter_var($_DELETE['id'] ?? $_GET['id'] ?? null, FILTER_VALIDATE_INT);
-    } else {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $patientId = filter_var($data['id'] ?? null, FILTER_VALIDATE_INT);
+/**
+ * Ottiene i dettagli completi di un paziente
+ */
+function getPatientDetails() {
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
+    
+    $patientId = intval($_GET['patient_id'] ?? 0);
+    $nutritionistId = $_SESSION['user_id'];
     
     if (!$patientId) {
         sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
     }
     
-    try {
-        // Verifica proprietà
-        $stmt = $db->prepare("SELECT nutritionist_id FROM Users WHERE id = ? AND role = 'paziente'");
-        $stmt->execute([$patientId]);
-        $nutritionistId = $stmt->fetchColumn();
-        
-        if ($nutritionistId != $_SESSION['user_id']) {
-            sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
-        }
-        
-        // Soft delete
-        $stmt = $db->prepare("UPDATE Users SET is_active = 0, nutritionist_id = NULL WHERE id = ?");
-        $stmt->execute([$patientId]);
-        
-        logActivity($db, $_SESSION['user_id'], 'patient_deleted', "Eliminato paziente ID: $patientId");
-        
-        sendJSON(['success' => true, 'message' => 'Paziente eliminato']);
-        
-    } catch (PDOException $e) {
-        error_log("Errore eliminazione: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore eliminazione'], 500);
-    }
-}
-
-// === AGGIUNGI PROGRESSO ===
-function addProgress() {
     $db = getDB();
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    $patientId = filter_var($data['patient_id'] ?? null, FILTER_VALIDATE_INT);
-    $weight = filter_var($data['weight_kg'] ?? null, FILTER_VALIDATE_FLOAT);
-    $bodyFat = filter_var($data['body_fat_percent'] ?? null, FILTER_VALIDATE_FLOAT);
-    $muscleMass = filter_var($data['muscle_mass_percent'] ?? null, FILTER_VALIDATE_FLOAT);
-    $date = $data['measurement_date'] ?? date('Y-m-d');
-    
-    if (!$patientId) {
-        sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
-    }
-    
-    // Validazione
-    if ($weight !== null && ($weight < 20 || $weight > 300)) {
-        sendJSON(['success' => false, 'error' => 'Peso non valido'], 400);
-    }
-    
-    if ($bodyFat !== null && ($bodyFat < 0 || $bodyFat > 100)) {
-        sendJSON(['success' => false, 'error' => 'Massa grassa non valida'], 400);
-    }
-    
-    if ($muscleMass !== null && ($muscleMass < 0 || $muscleMass > 100)) {
-        sendJSON(['success' => false, 'error' => 'Massa muscolare non valida'], 400);
-    }
     
     try {
-        // Verifica permessi
-        if (hasRole('nutrizionista')) {
-            $stmt = $db->prepare("SELECT nutritionist_id FROM Users WHERE id = ?");
-            $stmt->execute([$patientId]);
-            if ($stmt->fetchColumn() != $_SESSION['user_id']) {
-                sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
-            }
-        } elseif (hasRole('paziente')) {
-            if ($patientId != $_SESSION['user_id']) {
-                sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
-            }
-        }
-        
+        // Ottieni dati paziente
         $stmt = $db->prepare("
-            INSERT INTO PatientProgress (
-                patient_id, measurement_date, weight_kg,
-                body_fat_percent, muscle_mass_percent
-            ) VALUES (?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-                weight_kg = VALUES(weight_kg),
-                body_fat_percent = VALUES(body_fat_percent),
-                muscle_mass_percent = VALUES(muscle_mass_percent)
+            SELECT 
+                u.id,
+                u.email,
+                u.first_name,
+                u.last_name,
+                u.birth_date,
+                u.height_cm,
+                u.initial_weight,
+                u.initial_body_fat,
+                u.initial_muscle_mass,
+                u.registration_date
+            FROM Users u
+            WHERE u.id = ? 
+                AND u.role = 'paziente'
+                AND u.nutritionist_id = ?
         ");
+        $stmt->execute([$patientId, $nutritionistId]);
+        $patient = $stmt->fetch();
         
-        $stmt->execute([$patientId, $date, $weight, $bodyFat, $muscleMass]);
-        
-        logActivity($db, $_SESSION['user_id'], 'progress_added', "Aggiunto progresso paziente ID: $patientId");
-        
-        sendJSON(['success' => true, 'message' => 'Progresso salvato']);
-        
-    } catch (PDOException $e) {
-        error_log("Errore progresso: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore salvataggio'], 500);
-    }
-}
-
-// === OTTIENI PROGRESSI ===
-function getProgress() {
-    $db = getDB();
-    $patientId = filter_var($_GET['patient_id'] ?? null, FILTER_VALIDATE_INT);
-    
-    if (!$patientId) {
-        sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
-    }
-    
-    try {
-        // Verifica permessi
-        if (hasRole('nutrizionista')) {
-            $stmt = $db->prepare("SELECT nutritionist_id FROM Users WHERE id = ?");
-            $stmt->execute([$patientId]);
-            if ($stmt->fetchColumn() != $_SESSION['user_id']) {
-                sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
-            }
-        } elseif (hasRole('paziente')) {
-            if ($patientId != $_SESSION['user_id']) {
-                sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
-            }
+        if (!$patient) {
+            sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
         }
         
+        // Ottieni storico progressi
         $stmt = $db->prepare("
             SELECT 
                 measurement_date,
                 weight_kg,
                 body_fat_percent,
                 muscle_mass_percent,
-                bmi
+                bmi,
+                notes
             FROM PatientProgress
             WHERE patient_id = ?
-            ORDER BY measurement_date ASC
+            ORDER BY measurement_date DESC
         ");
         $stmt->execute([$patientId]);
         $progress = $stmt->fetchAll();
         
-        sendJSON(['success' => true, 'progress' => $progress]);
+        // Ottieni prossimi appuntamenti
+        $stmt = $db->prepare("
+            SELECT 
+                appointment_date,
+                start_time,
+                appointment_type,
+                status,
+                notes
+            FROM Appointments
+            WHERE patient_id = ?
+                AND nutritionist_id = ?
+                AND appointment_date >= CURDATE()
+            ORDER BY appointment_date ASC, start_time ASC
+            LIMIT 5
+        ");
+        $stmt->execute([$patientId, $nutritionistId]);
+        $appointments = $stmt->fetchAll();
+        
+        sendJSON([
+            'success' => true,
+            'patient' => $patient,
+            'progress' => $progress,
+            'appointments' => $appointments
+        ]);
         
     } catch (PDOException $e) {
-        error_log("Errore progressi: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore recupero progressi'], 500);
+        error_log("Errore get_patient_details: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante il recupero dei dettagli'], 500);
     }
 }
 
-// === STATISTICHE ===
-function getStats() {
-    requireRole('nutrizionista');
+/**
+ * Aggiorna i dati di un paziente
+ */
+function updatePatientData() {
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
+    }
     
     $db = getDB();
     $nutritionistId = $_SESSION['user_id'];
     
+    // Supporta sia POST tradizionale che JSON
+    if (isset($_POST['patient_id'])) {
+        $patientId = intval($_POST['patient_id']);
+        $height = floatval($_POST['height_cm'] ?? 0);
+    } else {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $patientId = intval($data['patient_id'] ?? 0);
+        $height = floatval($data['height_cm'] ?? 0);
+    }
+    
+    if (!$patientId) {
+        sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
+    }
+    
     try {
-        // Pazienti attivi
+        // Verifica che il paziente appartenga al nutrizionista
         $stmt = $db->prepare("
-            SELECT COUNT(*) as total
-            FROM Users
-            WHERE nutritionist_id = ? AND role = 'paziente' AND is_active = 1
+            SELECT id FROM Users 
+            WHERE id = ? AND nutritionist_id = ? AND role = 'paziente'
         ");
-        $stmt->execute([$nutritionistId]);
-        $activePatients = $stmt->fetch()['total'];
+        $stmt->execute([$patientId, $nutritionistId]);
         
-        // Nuovi questo mese
-        $stmt = $db->prepare("
-            SELECT COUNT(*) as total
-            FROM Users
-            WHERE nutritionist_id = ?
-            AND role = 'paziente'
-            AND MONTH(registration_date) = MONTH(CURDATE())
-            AND YEAR(registration_date) = YEAR(CURDATE())
-        ");
-        $stmt->execute([$nutritionistId]);
-        $newThisMonth = $stmt->fetch()['total'];
+        if (!$stmt->fetch()) {
+            sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
+        }
+        
+        // Aggiorna altezza
+        if ($height > 0) {
+            $stmt = $db->prepare("UPDATE Users SET height_cm = ? WHERE id = ?");
+            $stmt->execute([$height, $patientId]);
+        }
         
         sendJSON([
             'success' => true,
-            'stats' => [
-                'active_patients' => (int)$activePatients,
-                'new_this_month' => (int)$newThisMonth
-            ]
+            'message' => 'Dati aggiornati con successo'
         ]);
         
     } catch (PDOException $e) {
-        error_log("Errore statistiche: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore statistiche'], 500);
+        error_log("Errore update_patient_data: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante l\'aggiornamento'], 500);
+    }
+}
+
+/**
+ * Aggiunge un nuovo record di progresso per un paziente
+ */
+function addPatientProgress() {
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
+    }
+    
+    $db = getDB();
+    $nutritionistId = $_SESSION['user_id'];
+    
+    // Supporta sia POST tradizionale che JSON
+    if (isset($_POST['patient_id'])) {
+        $patientId = intval($_POST['patient_id']);
+        $weight = floatval($_POST['weight_kg'] ?? 0);
+        $bodyFat = floatval($_POST['body_fat_percent'] ?? 0);
+        $muscleMass = floatval($_POST['muscle_mass_percent'] ?? 0);
+        $notes = sanitizeInput($_POST['notes'] ?? '');
+        $measurementDate = $_POST['measurement_date'] ?? date('Y-m-d');
+    } else {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $patientId = intval($data['patient_id'] ?? 0);
+        $weight = floatval($data['weight_kg'] ?? 0);
+        $bodyFat = floatval($data['body_fat_percent'] ?? 0);
+        $muscleMass = floatval($data['muscle_mass_percent'] ?? 0);
+        $notes = sanitizeInput($data['notes'] ?? '');
+        $measurementDate = $data['measurement_date'] ?? date('Y-m-d');
+    }
+    
+    if (!$patientId || $weight <= 0) {
+        sendJSON(['success' => false, 'error' => 'ID paziente e peso richiesti'], 400);
+    }
+    
+    try {
+        // Verifica che il paziente appartenga al nutrizionista
+        $stmt = $db->prepare("
+            SELECT id FROM Users 
+            WHERE id = ? AND nutritionist_id = ? AND role = 'paziente'
+        ");
+        $stmt->execute([$patientId, $nutritionistId]);
+        
+        if (!$stmt->fetch()) {
+            sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
+        }
+        
+        // Inserisci nuovo progresso (o aggiorna se esiste già per quella data)
+        $stmt = $db->prepare("
+            INSERT INTO PatientProgress 
+            (patient_id, measurement_date, weight_kg, body_fat_percent, muscle_mass_percent, notes)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                weight_kg = VALUES(weight_kg),
+                body_fat_percent = VALUES(body_fat_percent),
+                muscle_mass_percent = VALUES(muscle_mass_percent),
+                notes = VALUES(notes)
+        ");
+        $stmt->execute([
+            $patientId,
+            $measurementDate,
+            $weight,
+            $bodyFat > 0 ? $bodyFat : null,
+            $muscleMass > 0 ? $muscleMass : null,
+            $notes
+        ]);
+        
+        sendJSON([
+            'success' => true,
+            'message' => 'Progresso registrato con successo'
+        ]);
+        
+    } catch (PDOException $e) {
+        error_log("Errore add_patient_progress: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante la registrazione del progresso'], 500);
+    }
+}
+
+/**
+ * Rimuove l'assegnazione di un paziente dal nutrizionista
+ */
+function removePatient() {
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
+    }
+    
+    $db = getDB();
+    $nutritionistId = $_SESSION['user_id'];
+    
+    // Supporta sia POST tradizionale che JSON
+    if (isset($_POST['patient_id'])) {
+        $patientId = intval($_POST['patient_id']);
+    } else {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $patientId = intval($data['patient_id'] ?? 0);
+    }
+    
+    if (!$patientId) {
+        sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
+    }
+    
+    try {
+        // Verifica che il paziente appartenga al nutrizionista
+        $stmt = $db->prepare("
+            SELECT id FROM Users 
+            WHERE id = ? AND nutritionist_id = ? AND role = 'paziente'
+        ");
+        $stmt->execute([$patientId, $nutritionistId]);
+        
+        if (!$stmt->fetch()) {
+            sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
+        }
+        
+        // Rimuovi l'assegnazione (non elimina l'utente, solo il collegamento)
+        $stmt = $db->prepare("
+            UPDATE Users 
+            SET nutritionist_id = NULL 
+            WHERE id = ?
+        ");
+        $stmt->execute([$patientId]);
+        
+        // Log attività
+        logActivity($db, $nutritionistId, 'remove_patient', "Paziente ID $patientId rimosso");
+        
+        sendJSON([
+            'success' => true,
+            'message' => 'Paziente rimosso con successo'
+        ]);
+        
+    } catch (PDOException $e) {
+        error_log("Errore remove_patient: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante la rimozione del paziente'], 500);
     }
 }
 ?>

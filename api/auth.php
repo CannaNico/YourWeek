@@ -44,14 +44,16 @@ function handleLogin() {
     if (isset($_POST['email'])) {
         $email = sanitizeInput($_POST['email']);
         $password = $_POST['password'] ?? '';
+        $selectedRole = sanitizeInput($_POST['selected_role'] ?? 'paziente');
     } else {
         $data = json_decode(file_get_contents('php://input'), true);
         $email = sanitizeInput($data['email'] ?? '');
         $password = $data['password'] ?? '';
+        $selectedRole = sanitizeInput($data['selected_role'] ?? 'paziente');
     }
     
     // DEBUG - Rimuovi in produzione
-    error_log("Login attempt - Email: $email");
+    error_log("Login attempt - Email: $email, Selected Role: $selectedRole");
     
     // Validazione input
     if (empty($email) || empty($password)) {
@@ -101,6 +103,21 @@ function handleLogin() {
         
         // DEBUG - Password verificata
         error_log("Password verified successfully for: $email");
+        
+        // NUOVA VERIFICA: Controlla che il ruolo selezionato corrisponda al ruolo dell'utente
+        // Normalizza i ruoli: 'cliente' e 'paziente' sono equivalenti
+        $userRole = $user['role'];
+        $normalizedSelectedRole = ($selectedRole === 'cliente') ? 'paziente' : $selectedRole;
+        $normalizedUserRole = ($userRole === 'cliente') ? 'paziente' : $userRole;
+        
+        if ($normalizedSelectedRole !== $normalizedUserRole) {
+            error_log("Role mismatch - Selected: $selectedRole, Actual: $userRole");
+            sendJSON([
+                'success' => false, 
+                'error' => 'Ruolo errato',
+                'error_code' => 'ROLE_MISMATCH'
+            ], 403);
+        }
         
         // Rigenera session ID per prevenire session fixation
         session_regenerate_id(true);

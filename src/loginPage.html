@@ -1,13 +1,15 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - YourWeek</title>
     <link rel="stylesheet" href="loginPage.css">
 </head>
+
 <body>
-    
+
     <div class="color-background"></div>
 
     <div class="back-home">
@@ -44,7 +46,8 @@
 
                 <div class="input-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Inserisci la tua password" required>
+                    <input type="password" id="password" name="password" placeholder="Inserisci la tua password"
+                        required>
                     <i class="fas fa-lock"></i>
                 </div>
 
@@ -58,7 +61,8 @@
 
                 <button type="submit" class="login-btn">Accedi</button>
 
-                <button type="button" class="register-btn" onclick="window.location.href='registrati.html'">Registrati</button>
+                <button type="button" class="register-btn"
+                    onclick="window.location.href='registrati.html'">Registrati</button>
 
                 <div class="separator">
                     <span>OPPURE</span>
@@ -82,12 +86,12 @@
             </form>
         </div>
     </div>
-            <script>
-            const typeButtons = document.querySelectorAll('.type-btn');
+    <script>
+        const typeButtons = document.querySelectorAll('.type-btn');
         let selectedUserType = 'cliente';
 
         typeButtons.forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function () {
                 typeButtons.forEach(btn => btn.classList.remove('active'));
                 this.classList.add('active');
                 selectedUserType = this.getAttribute('data-type');
@@ -95,41 +99,43 @@
             });
         });
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            
+
             console.log('Tentativo di login con:', email);
-            
+            console.log('Ruolo selezionato:', selectedUserType);
+
             try {
                 const formData = new FormData();
                 formData.append('email', email);
                 formData.append('password', password);
-                
+                formData.append('selected_role', selectedUserType);
+
                 const response = await fetch('../api/auth.php?action=login', {
                     method: 'POST',
                     body: formData,
                     credentials: 'include'
                 });
-                
+
                 console.log('Response status:', response.status);
-                
-                // Controlla se la risposta è OK
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Errore dal server:', errorText);
+
+                // Prova sempre a parsare la risposta come JSON
+                const result = await response.json();
+                console.log('Risultato:', result);
+
+                // Controlla se la risposta non è OK e non è un errore di ruolo
+                if (!response.ok && result.error_code !== 'ROLE_MISMATCH') {
+                    console.error('Errore dal server:', result);
                     alert('Errore del server (status ' + response.status + '). Controlla la console.');
                     return;
                 }
-                
-                const result = await response.json();
-                console.log('Risultato:', result);
-                
+
                 if (result.success) {
                     alert('Login effettuato con successo!');
-                    
+
                     // Reindirizza in base al ruolo
                     if (result.user.role === 'nutrizionista') {
                         window.location.href = 'nutrizionistaPage.html';
@@ -137,13 +143,19 @@
                         window.location.href = 'clientePage.html';
                     }
                 } else {
-                    alert('Errore di login: ' + (result.error || 'Credenziali non valide'));
+                    // Gestisci errore di ruolo errato con messaggio specifico
+                    if (result.error_code === 'ROLE_MISMATCH') {
+                        alert('Hai sbagliato ruolo');
+                    } else {
+                        alert('Errore di login: ' + (result.error || 'Credenziali non valide'));
+                    }
                 }
             } catch (error) {
                 console.error('Errore completo:', error);
                 alert('Errore di connessione: ' + error.message);
             }
         });
-            </script>
+    </script>
 </body>
+
 </html>

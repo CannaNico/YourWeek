@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Cliente - YourWeek</title>
     <link rel="stylesheet" href="clientePage.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="back-to-login">
-        <a href="login.html">
+        <a href="loginPage.html">
             <i class="fas fa-arrow-left"></i>
             Torna al Login
         </a>
@@ -23,7 +26,7 @@
                 <i class="fas fa-user"></i>
             </div>
             <div>
-                <h3>Benvenuto Cliente!</h3>
+                <h3 id="userName">Benvenuto Cliente!</h3>
                 <p>Accesso effettuato con successo</p>
             </div>
         </div>
@@ -122,5 +125,35 @@
             </ul>
         </div>
     </main>
+
+    <script>
+        // Verifica autenticazione e carica dati utente
+        async function checkAuthAndLoadUser() {
+            try {
+                const response = await fetch('../api/auth.php?action=check', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.authenticated) {
+                    // Aggiorna il nome utente nell'header
+                    const userName = result.user.name || 'Cliente';
+                    document.getElementById('userName').textContent = `Benvenuto ${userName}!`;
+                } else {
+                    // Se non autenticato, reindirizza al login
+                    alert('Sessione scaduta. Effettua nuovamente il login.');
+                    window.location.href = 'loginPage.html';
+                }
+            } catch (error) {
+                console.error('Errore verifica autenticazione:', error);
+            }
+        }
+
+        // Carica i dati utente al caricamento della pagina
+        document.addEventListener('DOMContentLoaded', checkAuthAndLoadUser);
+    </script>
 </body>
+
 </html>
