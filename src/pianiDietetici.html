@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="pianiDietetici.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="back-button">
         <a href="nutrizionistaPage.html">
@@ -46,188 +48,52 @@
     </div>
 
     <script>
-        // Dati di esempio per i pazienti e i loro piani dietetici
-        const patients = [
-            {
-                id: 1,
-                name: "Mario",
-                surname: "Rossi",
-                description: "Piano dimagrimento - 1500 kcal",
-                avatar: "MR",
-                dietStats: {
-                    calorie: "1500 kcal",
-                    proteine: "90g",
-                    pasti: "5"
-                },
-                mealPlan: {
-                    week: "11-17 Dicembre 2024",
-                    days: {
-                        lunedi: {
-                            colazione: "Yogurt greco con frutti di bosco e noci",
-                            pranzo: "Petto di pollo alla griglia con insalata mista",
-                            cena: "Salmone al forno con verdure",
-                            spuntini: "Mela, Mandorle"
-                        },
-                        martedi: {
-                            colazione: "Porridge d'avena con banana",
-                            pranzo: "Riso integrale con tonno e zucchine",
-                            cena: "Zuppa di lenticchie",
-                            spuntini: "Yogurt, Nocciole"
-                        },
-                        mercoledi: {
-                            colazione: "Uova strapazzate con spinaci",
-                            pranzo: "Quinoa con ceci e verdure",
-                            cena: "Filetto di merluzzo con broccoli",
-                            spuntini: "Pera, Semi di zucca"
-                        },
-                        giovedi: {
-                            colazione: "Pane integrale con avocado",
-                            pranzo: "Pasta integrale con pesto di rucola",
-                            cena: "Pollo alle erbe con patate dolci",
-                            spuntini: "Arancia, Noci"
-                        },
-                        venerdi: {
-                            colazione: "Smoothie proteico con spinaci",
-                            pranzo: "Insalata di farro con tonno",
-                            cena: "Bistecca di manzo con carote",
-                            spuntini: "Kiwi, Mandorle"
-                        },
-                        sabato: {
-                            colazione: "Pancake proteici con frutta",
-                            pranzo: "Pizza integrale con verdure",
-                            cena: "Zuppa di pesce",
-                            spuntini: "Frutta secca"
-                        },
-                        domenica: {
-                            colazione: "Fette biscottate con marmellata",
-                            pranzo: "Lasagna vegetariana",
-                            cena: "Minestrone con crostini",
-                            spuntini: "Yogurt bianco"
-                        }
-                    }
-                }
-            },
-            {
-                id: 2,
-                name: "Laura",
-                surname: "Bianchi",
-                description: "Piano massa muscolare - 2200 kcal",
-                avatar: "LB",
-                dietStats: {
-                    calorie: "2200 kcal",
-                    proteine: "120g",
-                    pasti: "6"
-                },
-                mealPlan: {
-                    week: "11-17 Dicembre 2024",
-                    days: {
-                        lunedi: {
-                            colazione: "Porridge con proteine in polvere e banana",
-                            pranzo: "Riso basmati con pollo e verdure saltate",
-                            cena: "Salmone con quinoa e asparagi",
-                            spuntini: "Frullato proteico, Frutta secca mista"
-                        },
-                        martedi: {
-                            colazione: "Uova strapazzate e pane integrale",
-                            pranzo: "Pasta integrale con tonno e piselli",
-                            cena: "Bistecca con patate dolci",
-                            spuntini: "Yogurt greco, Mandorle"
-                        },
-                        mercoledi: {
-                            colazione: "Smoothie proteico con avena",
-                            pranzo: "Pollo al curry con riso integrale",
-                            cena: "Merluzzo al forno con verdure",
-                            spuntini: "Barretta proteica, Frutta"
-                        },
-                        giovedi: {
-                            colazione: "Pancake proteici con miele",
-                            pranzo: "Insalata di quinoa con gamberetti",
-                            cena: "Tacchino con broccoli",
-                            spuntini: "Shake post-workout, Noci"
-                        },
-                        venerdi: {
-                            colazione: "Porridge con burro di arachidi",
-                            pranzo: "Pasta integrale al pesto con pollo",
-                            cena: "Salmone alla griglia con insalata",
-                            spuntini: "Yogurt proteico, Frutta secca"
-                        },
-                        sabato: {
-                            colazione: "Uova e avocado su toast",
-                            pranzo: "Riso venere con gamberi e verdure",
-                            cena: "Bistecca di manzo con patate",
-                            spuntini: "Frullato, Mandorle"
-                        },
-                        domenica: {
-                            colazione: "French toast proteico",
-                            pranzo: "Lasagna con ragù magro",
-                            cena: "Pollo al forno con verdure",
-                            spuntini: "Yogurt greco, Noci"
-                        }
-                    }
-                }
-            },
-            {
-                id: 3,
-                name: "Giulia",
-                surname: "Neri",
-                description: "Piano mantenimento - 1800 kcal",
-                avatar: "GN",
-                dietStats: {
-                    calorie: "1800 kcal",
-                    proteine: "100g",
-                    pasti: "5"
-                },
-                mealPlan: {
-                    week: "11-17 Dicembre 2024",
-                    days: {
-                        lunedi: {
-                            colazione: "Yogurt con cereali e frutta",
-                            pranzo: "Insalata di pollo con verdure miste",
-                            cena: "Pesce al vapore con patate",
-                            spuntini: "Mela, Noci"
-                        },
-                        martedi: {
-                            colazione: "Toast integrale con ricotta",
-                            pranzo: "Riso venere con verdure",
-                            cena: "Petto di tacchino con insalata",
-                            spuntini: "Frutta, Yogurt"
-                        },
-                        mercoledi: {
-                            colazione: "Smoothie bowl con granola",
-                            pranzo: "Pasta al pomodoro con basilico",
-                            cena: "Salmone con zucchine",
-                            spuntini: "Banana, Mandorle"
-                        },
-                        giovedi: {
-                            colazione: "Porridge con mirtilli",
-                            pranzo: "Quinoa con verdure grigliate",
-                            cena: "Pollo al limone con carote",
-                            spuntini: "Pera, Noci"
-                        },
-                        venerdi: {
-                            colazione: "Uova e pane integrale",
-                            pranzo: "Insalata di tonno e fagioli",
-                            cena: "Pizza integrale con verdure",
-                            spuntini: "Frutta secca"
-                        },
-                        sabato: {
-                            colazione: "Pancake con frutta fresca",
-                            pranzo: "Risotto ai funghi",
-                            cena: "Grigliata di pesce misto",
-                            spuntini: "Yogurt, Noci"
-                        },
-                        domenica: {
-                            colazione: "Croissant integrale con marmellata",
-                            pranzo: "Pasta al ragù vegetale",
-                            cena: "Zuppa di legumi",
-                            spuntini: "Frutta di stagione"
-                        }
-                    }
-                }
-            }
-        ];
-
+        let patients = [];
         let currentEditingPatient = null;
+
+        // Funzione per caricare i pazienti dall'API
+        async function loadPatients() {
+            try {
+                const response = await fetch('../api/patients.php?action=get_my_patients', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    patients = result.patients.map(p => ({
+                        id: p.id,
+                        name: p.first_name,
+                        surname: p.last_name,
+                        description: p.focus_area || "Piano alimentare personalizzato",
+                        avatar: (p.first_name[0] + p.last_name[0]).toUpperCase(),
+                        dietStats: {
+                            calorie: p.target_calories ? p.target_calories + " kcal" : "Da definire",
+                            proteine: p.target_protein ? p.target_protein + "g" : "Da definire",
+                            pasti: p.meals_per_day || "5"
+                        },
+                        mealPlan: {
+                            week: "Settimana Corrente",
+                            days: {
+                                lunedi: { colazione: "", pranzo: "", cena: "", spuntini: "" },
+                                martedi: { colazione: "", pranzo: "", cena: "", spuntini: "" },
+                                mercoledi: { colazione: "", pranzo: "", cena: "", spuntini: "" },
+                                giovedi: { colazione: "", pranzo: "", cena: "", spuntini: "" },
+                                venerdi: { colazione: "", pranzo: "", cena: "", spuntini: "" },
+                                sabato: { colazione: "", pranzo: "", cena: "", spuntini: "" },
+                                domenica: { colazione: "", pranzo: "", cena: "", spuntini: "" }
+                            }
+                        }
+                    }));
+                    renderPatients();
+                } else {
+                    console.error('Errore caricamento pazienti:', result.error);
+                }
+            } catch (error) {
+                console.error('Errore durante il caricamento:', error);
+            }
+        }
 
         // Funzione per generare le card dei pazienti
         function renderPatients() {
@@ -238,7 +104,7 @@
                 const card = document.createElement('div');
                 card.className = 'patient-card';
                 card.onclick = () => openDietModal(patient);
-                
+
                 card.innerHTML = `
                     <div class="patient-header">
                         <div class="patient-avatar">${patient.avatar}</div>
@@ -262,7 +128,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 grid.appendChild(card);
             });
         }
@@ -270,10 +136,10 @@
         // Funzione per aprire il modal con il piano dietetico
         function openDietModal(patient) {
             currentEditingPatient = patient;
-            
+
             const modal = document.getElementById('dietModal');
             const modalContent = document.getElementById('modalContent');
-            
+
             modalContent.innerHTML = `
                 <div class="patient-detail-header">
                     <div class="patient-detail-avatar">${patient.avatar}</div>
@@ -370,27 +236,27 @@
         // Aggiungi event listeners per l'editing
         function addEditListeners() {
             const mealContents = document.querySelectorAll('.meal-content');
-            
+
             mealContents.forEach(content => {
-                content.addEventListener('click', function(e) {
+                content.addEventListener('click', function (e) {
                     if (e.target.classList.contains('meal-edit')) return;
-                    
+
                     const textElement = this.querySelector('.meal-text');
                     const editElement = this.querySelector('.meal-edit');
-                    
+
                     // Entra in modalità editing
                     this.classList.add('editing');
                     textElement.style.display = 'none';
                     editElement.style.display = 'block';
                     editElement.focus();
-                    
+
                     // Salva quando perde il focus
-                    editElement.addEventListener('blur', function() {
+                    editElement.addEventListener('blur', function () {
                         saveMealEdit(this);
                     });
-                    
+
                     // Salva con Enter (senza shift)
-                    editElement.addEventListener('keydown', function(e) {
+                    editElement.addEventListener('keydown', function (e) {
                         if (e.key === 'Enter' && !e.shiftKey) {
                             e.preventDefault();
                             this.blur();
@@ -412,7 +278,7 @@
             contentDiv.classList.remove('editing');
             textarea.style.display = 'none';
             textElement.style.display = 'block';
-            
+
             if (newValue) {
                 textElement.innerHTML = newValue.replace(/\n/g, '<br>');
                 // Aggiorna i dati del paziente
@@ -434,7 +300,7 @@
                 console.log('Piano alimentare salvato:', currentEditingPatient);
                 renderPatients(); // Aggiorna la vista
                 closeModal();
-                
+
                 // Mostra un messaggio di conferma più elegante
                 showNotification('Piano alimentare aggiornato con successo!');
             }
@@ -456,9 +322,9 @@
                 animation: slideIn 0.3s ease;
             `;
             notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
-            
+
             document.body.appendChild(notification);
-            
+
             setTimeout(() => {
                 notification.style.animation = 'slideOut 0.3s ease';
                 setTimeout(() => notification.remove(), 300);
@@ -473,7 +339,7 @@
         document.getElementById('closeModal').onclick = closeModal;
 
         // Chiudi il modal cliccando fuori
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const modal = document.getElementById('dietModal');
             if (event.target === modal) {
                 closeModal();
@@ -481,7 +347,7 @@
         }
 
         // Inizializza la pagina
-        document.addEventListener('DOMContentLoaded', renderPatients);
+        document.addEventListener('DOMContentLoaded', loadPatients);
     </script>
 
     <style>
@@ -490,6 +356,7 @@
                 transform: translateX(400px);
                 opacity: 0;
             }
+
             to {
                 transform: translateX(0);
                 opacity: 1;
@@ -501,6 +368,7 @@
                 transform: translateX(0);
                 opacity: 1;
             }
+
             to {
                 transform: translateX(400px);
                 opacity: 0;
@@ -508,4 +376,5 @@
         }
     </style>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,11 +8,13 @@
     <link rel="stylesheet" href="registrati.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="registration-container">
         <div class="registration-left">
             <h1>YourWeek</h1>
-            <p>Unisciti alla nostra community di professionisti della nutrizione e inizia a gestire i tuoi pazienti in modo smart!</p>
+            <p>Unisciti alla nostra community di professionisti della nutrizione e inizia a gestire i tuoi pazienti in
+                modo smart!</p>
             <div class="illustration">
                 <i class="fas fa-user-plus"></i>
             </div>
@@ -60,7 +63,8 @@
                     <label for="confirm-password">Conferma Password</label>
                     <div class="input-wrapper">
                         <i class="fas fa-lock"></i>
-                        <input type="password" id="confirm-password" name="confirm-password" placeholder="Ripeti la password" required>
+                        <input type="password" id="confirm-password" name="confirm-password"
+                            placeholder="Ripeti la password" required>
                     </div>
                 </div>
 
@@ -82,6 +86,18 @@
                             <option value="paziente">Paziente</option>
                         </select>
                     </div>
+                </div>
+
+                <!-- Campo codice nutrizionista (visibile solo per pazienti) -->
+                <div class="form-group" id="nutritionist-code-group" style="display: none;">
+                    <label for="codice-nutrizionista">Codice Nutrizionista (opzionale)</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" id="codice-nutrizionista" name="codice-nutrizionista"
+                            placeholder="Es: NUT-12345" maxlength="10">
+                    </div>
+                    <small style="color: #5a7a5c; margin-top: 5px; display: block;">Se hai ricevuto un codice dal tuo
+                        nutrizionista, inseriscilo qui per essere assegnato automaticamente.</small>
                 </div>
 
                 <div class="checkbox-group">
@@ -116,63 +132,88 @@
     </div>
 
     <script>
-        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirm-password').value;
-    const terms = document.getElementById('terms').checked;
-
-    // Validazione
-    if (password.length < 8) {
-        alert('La password deve essere di almeno 8 caratteri!');
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        alert('Le password non corrispondono!');
-        return;
-    }
-
-    if (!terms) {
-        alert('Devi accettare i Termini e Condizioni per continuare!');
-        return;
-    }
-
-    // Dati registrazione
-    const registrationData = {
-        email: document.getElementById('email').value,
-        password: password,
-        first_name: document.getElementById('nome').value,
-        last_name: document.getElementById('cognome').value,
-        birth_date: document.getElementById('data-nascita').value,
-        role: document.getElementById('ruolo').value
-    };
-
-    try {
-        const response = await fetch('../api/auth.php?action=register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(registrationData),
-            credentials: 'include'
+        // Mostra/nascondi campo codice nutrizionista in base al ruolo selezionato
+        document.getElementById('ruolo').addEventListener('change', function () {
+            const codeGroup = document.getElementById('nutritionist-code-group');
+            if (this.value === 'paziente') {
+                codeGroup.style.display = 'block';
+            } else {
+                codeGroup.style.display = 'none';
+                document.getElementById('codice-nutrizionista').value = ''; // Reset campo
+            }
         });
 
-        const result = await response.json();
+        document.getElementById('registrationForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-        if (result.success) {
-            alert('✅ Registrazione completata! Ora puoi effettuare il login.');
-            window.location.href = 'loginPage.html';
-        } else {
-            alert('❌ Errore: ' + (result.error || 'Errore sconosciuto'));
-        }
-    } catch (error) {
-        console.error('Errore:', error);
-        alert('Errore di connessione al server.');
-    }
-});
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const terms = document.getElementById('terms').checked;
+            const role = document.getElementById('ruolo').value;
+            const nutritionistCode = document.getElementById('codice-nutrizionista').value.trim();
+
+            // Validazione
+            if (password.length < 8) {
+                alert('La password deve essere di almeno 8 caratteri!');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                alert('Le password non corrispondono!');
+                return;
+            }
+
+            if (!terms) {
+                alert('Devi accettare i Termini e Condizioni per continuare!');
+                return;
+            }
+
+            // Validazione codice nutrizionista (se fornito)
+            if (role === 'paziente' && nutritionistCode && !nutritionistCode.match(/^NUT-\d{5}$/)) {
+                alert('Il codice nutrizionista deve essere nel formato NUT-XXXXX (es: NUT-12345)');
+                return;
+            }
+
+            // Dati registrazione
+            const registrationData = {
+                email: document.getElementById('email').value,
+                password: password,
+                first_name: document.getElementById('nome').value,
+                last_name: document.getElementById('cognome').value,
+                birth_date: document.getElementById('data-nascita').value,
+                role: role
+            };
+
+            // Aggiungi codice nutrizionista se fornito
+            if (role === 'paziente' && nutritionistCode) {
+                registrationData.nutritionist_code = nutritionistCode;
+            }
+
+            try {
+                const response = await fetch('../api/auth.php?action=register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(registrationData),
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('✅ Registrazione completata! Ora puoi effettuare il login.');
+                    window.location.href = 'loginPage.html';
+                } else {
+                    alert('❌ Errore: ' + (result.error || 'Errore sconosciuto'));
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                alert('Errore di connessione al server.');
+            }
+        });
     </script>
 </body>
+
 </html>

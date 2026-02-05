@@ -334,6 +334,7 @@ CREATE TABLE `users` (
   `first_name` varchar(100) NOT NULL,
   `last_name` varchar(100) NOT NULL,
   `role` enum('nutrizionista','paziente','admin') NOT NULL DEFAULT 'paziente',
+  `nutritionist_code` varchar(10) DEFAULT NULL COMMENT 'Codice univoco per nutrizionisti',
   `birth_date` date DEFAULT NULL,
   `height_cm` decimal(5,2) DEFAULT NULL,
   `initial_weight` decimal(5,2) DEFAULT NULL COMMENT 'Peso iniziale in kg',
@@ -499,6 +500,7 @@ ALTER TABLE `personalnotes` ADD FULLTEXT KEY `idx_text` (`note_text`);
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `unique_nutritionist_code` (`nutritionist_code`),
   ADD KEY `idx_email` (`email`),
   ADD KEY `idx_role` (`role`),
   ADD KEY `idx_nutritionist` (`nutritionist_id`),

@@ -27,7 +27,7 @@ body {
     background: linear-gradient(135deg, #4caf50 0%, #66bb6a 50%, #81c784 100%);
     padding: 30px 40px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     box-shadow: 0 6px 25px rgba(76, 175, 80, 0.3);
     position: relative;
@@ -60,31 +60,7 @@ body {
     z-index: 1;
 }
 
-.logo h1::after {
-    content: '🥗';
-    margin-left: 15px;
-    font-size: 2.2rem;
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
-}
-
-/* ========================================
-   USER INFO - Card Moderna
-   ======================================== */
 .user-info {
-    position: absolute;
-    right: 40px;
     display: flex;
     align-items: center;
     gap: 20px;
@@ -105,35 +81,33 @@ body {
 }
 
 .user-avatar {
-    width: 65px;
-    height: 65px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ffffff 0%, #f1f8f4 100%);
+    background: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
     color: #4caf50;
-    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
-    border: 3px solid rgba(255, 255, 255, 0.5);
+    font-size: 1.5rem;
 }
 
 .user-details h3 {
     color: white;
     font-size: 1.35rem;
-    margin-bottom: 5px;
+    margin: 0;
     font-weight: 700;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .user-details p {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 0.95rem;
-    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.9rem;
+    margin: 0;
 }
 
 /* ========================================
-   BACK TO LOGIN BUTTON
+   BACK BUTTON
    ======================================== */
 .back-to-login {
     position: absolute;
@@ -210,12 +184,12 @@ body {
 }
 
 /* ========================================
-   STATS GRID - Cards Statistiche
+   STATS GRID
    ======================================== */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 25px;
+    gap: 30px;
     margin-bottom: 50px;
 }
 
@@ -223,12 +197,12 @@ body {
     background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
     border-radius: 25px;
     padding: 35px;
-    text-align: center;
     box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 2px solid transparent;
     position: relative;
     overflow: hidden;
+    text-align: center;
 }
 
 .stat-card::before {
@@ -254,44 +228,42 @@ body {
 }
 
 .stat-icon {
-    font-size: 3rem;
-    margin-bottom: 20px;
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
     background: linear-gradient(135deg, #4caf50, #66bb6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: inline-block;
-    transition: transform 0.3s ease;
-}
-
-.stat-card:hover .stat-icon {
-    transform: scale(1.2) rotate(5deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.3);
 }
 
 .stat-number {
-    font-size: 3.5rem;
-    font-weight: 900;
+    font-size: 2.5rem;
+    font-weight: bold;
     background: linear-gradient(135deg, #2d5016 0%, #4caf50 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin-bottom: 10px;
-    line-height: 1;
 }
 
 .stat-card p {
     color: #5a7a5c;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    margin-top: 10px;
+    margin: 0;
 }
 
 /* ========================================
-   FEATURES GRID - Funzionalità Principali
+   FEATURES GRID
    ======================================== */
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 30px;
     margin-bottom: 50px;
 }
@@ -301,8 +273,8 @@ body {
     border-radius: 25px;
     padding: 40px;
     box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     border: 2px solid transparent;
     position: relative;
     overflow: hidden;
@@ -311,214 +283,156 @@ body {
 .feature-card::before {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(76, 175, 80, 0.1) 0%, transparent 70%);
-    transform: scale(0);
-    transition: transform 0.6s ease;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #4caf50, #66bb6a, #81c784);
+    transform: scaleX(0);
+    transition: transform 0.4s ease;
 }
 
 .feature-card:hover::before {
-    transform: scale(1);
+    transform: scaleX(1);
 }
 
 .feature-card:hover {
-    transform: translateY(-12px);
-    box-shadow: 0 20px 50px rgba(76, 175, 80, 0.25);
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 20px 45px rgba(76, 175, 80, 0.25);
     border-color: #4caf50;
 }
 
 .feature-icon {
-    font-size: 3.5rem;
+    width: 80px;
+    height: 80px;
     margin-bottom: 25px;
+    border-radius: 20px;
     background: linear-gradient(135deg, #4caf50, #66bb6a);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: inline-block;
-    transition: all 0.4s ease;
-    position: relative;
-    z-index: 1;
-}
-
-.feature-card:hover .feature-icon {
-    transform: scale(1.2) rotate(-5deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
 }
 
 .feature-card h3 {
-    font-size: 1.7rem;
-    margin-bottom: 15px;
+    font-size: 1.8rem;
     color: #2d5016;
+    margin-bottom: 15px;
     font-weight: 700;
-    position: relative;
-    z-index: 1;
 }
 
 .feature-card p {
     color: #5a7a5c;
+    font-size: 1.05rem;
     line-height: 1.7;
     margin-bottom: 20px;
-    font-size: 1.05rem;
-    position: relative;
-    z-index: 1;
 }
 
 .feature-badge {
     display: inline-block;
-    padding: 10px 20px;
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(102, 187, 106, 0.15));
-    color: #2d5016;
-    border-radius: 25px;
+    background: linear-gradient(135deg, #f0f9f4, #e8f5e9);
+    color: #4caf50;
+    padding: 8px 20px;
+    border-radius: 20px;
     font-size: 0.9rem;
-    font-weight: 700;
-    border: 2px solid rgba(76, 175, 80, 0.3);
-    transition: all 0.3s ease;
-    position: relative;
-    z-index: 1;
-}
-
-.feature-card:hover .feature-badge {
-    background: linear-gradient(135deg, rgba(76, 175, 80, 0.25), rgba(102, 187, 106, 0.25));
-    border-color: #4caf50;
-    transform: scale(1.05);
+    font-weight: 600;
+    border: 2px solid rgba(76, 175, 80, 0.2);
 }
 
 /* ========================================
-   RECENT ACTIVITY - Attività Recenti
+   RECENT ACTIVITY
    ======================================== */
 .recent-activity {
     background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
     border-radius: 25px;
-    padding: 45px;
+    padding: 40px;
     box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
-    margin-top: 40px;
     border: 2px solid rgba(76, 175, 80, 0.1);
 }
 
 .recent-activity h3 {
     font-size: 2rem;
-    margin-bottom: 35px;
     color: #2d5016;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.recent-activity h3::before {
-    content: '';
-    width: 5px;
-    height: 35px;
-    background: linear-gradient(180deg, #4caf50, #66bb6a);
-    border-radius: 10px;
+    margin-bottom: 30px;
+    font-weight: 700;
+    text-align: center;
 }
 
 .activity-list {
     list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .activity-list li {
-    padding: 25px;
-    border-bottom: 2px solid rgba(76, 175, 80, 0.08);
     display: flex;
     align-items: center;
-    gap: 25px;
-    transition: all 0.3s ease;
+    gap: 20px;
+    padding: 25px;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, #f0f9f4, #e8f5e9);
     border-radius: 15px;
     cursor: pointer;
-    position: relative;
-}
-
-.activity-list li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 0;
-    background: linear-gradient(180deg, #4caf50, #66bb6a);
-    border-radius: 10px;
-    transition: height 0.3s ease;
-}
-
-.activity-list li:hover::before {
-    height: 70%;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
 }
 
 .activity-list li:hover {
-    background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 100%);
     transform: translateX(10px);
-}
-
-.activity-list li:last-child {
-    border-bottom: none;
+    box-shadow: 0 5px 20px rgba(76, 175, 80, 0.15);
+    border-color: #4caf50;
 }
 
 .activity-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #e8f5e9, #f1f8f4);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
-    color: #4caf50;
-    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.15);
-    transition: all 0.3s ease;
-}
-
-.activity-list li:hover .activity-icon {
-    transform: scale(1.1) rotate(5deg);
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.25);
+    color: white;
+    font-size: 1.3rem;
+    flex-shrink: 0;
 }
 
 .activity-content strong {
-    color: #2d5016;
     display: block;
-    margin-bottom: 8px;
-    font-size: 1.15rem;
+    color: #2d5016;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
     font-weight: 700;
 }
 
 .activity-content p {
     color: #5a7a5c;
     font-size: 0.95rem;
-    line-height: 1.5;
+    margin: 0;
 }
 
 /* ========================================
    RESPONSIVE DESIGN
    ======================================== */
 @media (max-width: 768px) {
-    .dashboard-content {
-        padding: 30px 20px;
-    }
-
-    .welcome-section h2 {
-        font-size: 2.5rem;
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 
     .features-grid {
         grid-template-columns: 1fr;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .user-info {
-        position: static;
-        margin-top: 20px;
-        right: auto;
-    }
-
     .dashboard-header {
         flex-direction: column;
         padding: 25px 20px;
+        gap: 20px;
+    }
+
+    .user-info {
+        width: 100%;
+        justify-content: center;
     }
 
     .logo h1 {
@@ -530,12 +444,12 @@ body {
         left: 15px;
     }
 
-    .feature-card {
-        padding: 30px;
+    .welcome-section h2 {
+        font-size: 2.5rem;
     }
 
-    .recent-activity {
-        padding: 30px;
+    .dashboard-content {
+        padding: 30px 20px;
     }
 }
 
@@ -544,40 +458,122 @@ body {
         font-size: 2rem;
     }
 
-    .stat-number {
-        font-size: 2.5rem;
+    .feature-card {
+        padding: 30px 20px;
     }
 
-    .feature-icon {
-        font-size: 2.5rem;
-    }
-
-    .user-avatar {
-        width: 50px;
-        height: 50px;
-        font-size: 1.5rem;
-    }
-
-    .user-details h3 {
-        font-size: 1.1rem;
+    .stat-card {
+        padding: 25px 20px;
     }
 }
 
 /* ========================================
-   ANIMAZIONI AGGIUNTIVE
+   NUTRITIONIST CODE SECTION
    ======================================== */
-@keyframes pulse {
-
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
+.nutritionist-code-section {
+    margin: 40px 0;
+    padding: 40px;
+    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    border-radius: 25px;
+    box-shadow: 0 15px 35px rgba(76, 175, 80, 0.3);
+    text-align: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
 }
 
-.stat-card:hover .stat-number {
-    animation: pulse 1s ease infinite;
+.nutritionist-code-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at top right, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
+}
+
+.nutritionist-code-section h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    font-weight: 800;
+}
+
+.nutritionist-code-section p {
+    margin: 0 0 25px 0;
+    opacity: 0.95;
+    font-size: 1.1rem;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.code-display-wrapper {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 20px 40px;
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    display: inline-block;
+    margin-bottom: 25px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+#nutritionistCode {
+    font-size: 2.8rem;
+    font-weight: 900;
+    letter-spacing: 5px;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.copy-btn {
+    background: white;
+    color: #4caf50;
+    border: none;
+    padding: 16px 40px;
+    border-radius: 30px;
+    font-weight: 800;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.copy-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+    background: #f8fdf9;
+}
+
+.copy-btn:active {
+    transform: translateY(-2px) scale(0.98);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+@media (max-width: 768px) {
+    .nutritionist-code-section {
+        padding: 30px 20px;
+    }
+
+    #nutritionistCode {
+        font-size: 2rem;
+        letter-spacing: 3px;
+    }
+
+    .copy-btn {
+        width: 100%;
+        justify-content: center;
+    }
 }

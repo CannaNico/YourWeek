@@ -70,6 +70,25 @@
             </div>
         </div>
 
+        <!-- Sezione Codice Nutrizionista -->
+        <div class="nutritionist-code-section">
+            <h3 id="codeTitle">
+                <i class="fas fa-id-card"></i>
+                Il Tuo Codice Nutrizionista
+            </h3>
+            <p>Condividi questo codice con i tuoi pazienti per permettere loro di registrarsi e associarsi
+                automaticamente a te</p>
+            <div class="code-display-wrapper">
+                <div id="nutritionistCode">Caricamento...</div>
+            </div>
+            <div>
+                <button class="copy-btn" onclick="copyNutritionistCode()">
+                    <i class="fas fa-copy"></i>
+                    Copia Codice
+                </button>
+            </div>
+        </div>
+
         <div class="features-grid">
             <div class="feature-card" onclick="location.href='gestionePazienti.html'">
                 <div class="feature-icon">
@@ -189,6 +208,9 @@
                         const fullName = result.user.name;
                         document.getElementById('userName').textContent = `Dott. ${fullName}`;
                     }
+
+                    // Carica il codice nutrizionista
+                    loadNutritionistCode();
                 } else {
                     // Se non autenticato, reindirizza al login
                     alert('Sessione scaduta. Effettua nuovamente il login.');
@@ -196,6 +218,51 @@
                 }
             } catch (error) {
                 console.error('Errore verifica autenticazione:', error);
+            }
+        }
+
+        // Carica il codice nutrizionista
+        async function loadNutritionistCode() {
+            try {
+                const response = await fetch('../api/patients.php?action=get_nutritionist_code', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.code) {
+                    document.getElementById('nutritionistCode').textContent = result.code;
+                } else {
+                    document.getElementById('nutritionistCode').textContent = 'Errore caricamento';
+                    console.error('Errore caricamento codice:', result.error);
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                document.getElementById('nutritionistCode').textContent = 'Errore caricamento';
+            }
+        }
+
+        // Copia il codice nutrizionista negli appunti
+        function copyNutritionistCode() {
+            const codeElement = document.getElementById('nutritionistCode');
+            const code = codeElement.textContent;
+
+            if (code && code !== 'Caricamento...' && code !== 'Errore caricamento') {
+                navigator.clipboard.writeText(code).then(() => {
+                    // Feedback visivo
+                    const originalText = codeElement.textContent;
+                    codeElement.textContent = '✓ Copiato!';
+                    codeElement.style.color = '#fff';
+
+                    setTimeout(() => {
+                        codeElement.textContent = originalText;
+                        codeElement.style.color = '';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Errore copia:', err);
+                    alert('Errore durante la copia del codice');
+                });
             }
         }
 

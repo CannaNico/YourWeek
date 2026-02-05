@@ -12,43 +12,49 @@ switch ($action) {
             getUnassignedPatients();
         }
         break;
-    
+
     case 'get_my_patients':
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             getMyPatients();
         }
         break;
-    
+
     case 'assign_patient':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             assignPatient();
         }
         break;
-    
+
     case 'update_patient':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             updatePatientData();
         }
         break;
-    
+
     case 'get_patient_details':
         if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             getPatientDetails();
         }
         break;
-    
+
     case 'add_progress':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             addPatientProgress();
         }
         break;
-    
+
     case 'remove_patient':
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             removePatient();
         }
         break;
-    
+
+    case 'get_nutritionist_code':
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            getNutritionistCode();
+        }
+        break;
+
     default:
         sendJSON(['success' => false, 'error' => 'Azione non valida'], 400);
 }
@@ -58,14 +64,15 @@ switch ($action) {
 /**
  * Ottiene la lista dei pazienti non ancora assegnati a nessun nutrizionista
  */
-function getUnassignedPatients() {
+function getUnassignedPatients()
+{
     // Verifica autenticazione
     if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
         sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
-    
+
     $db = getDB();
-    
+
     try {
         $stmt = $db->prepare("
             SELECT 
@@ -83,12 +90,12 @@ function getUnassignedPatients() {
         ");
         $stmt->execute();
         $patients = $stmt->fetchAll();
-        
+
         sendJSON([
             'success' => true,
             'patients' => $patients
         ]);
-        
+
     } catch (PDOException $e) {
         error_log("Errore get_unassigned_patients: " . $e->getMessage());
         sendJSON(['success' => false, 'error' => 'Errore durante il recupero dei pazienti'], 500);
@@ -98,15 +105,16 @@ function getUnassignedPatients() {
 /**
  * Ottiene la lista dei pazienti assegnati al nutrizionista loggato
  */
-function getMyPatients() {
+function getMyPatients()
+{
     // Verifica autenticazione
     if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
         sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
-    
+
     $db = getDB();
     $nutritionistId = $_SESSION['user_id'];
-    
+
     try {
         $stmt = $db->prepare("
             SELECT 
@@ -148,7 +156,7 @@ function getMyPatients() {
         ");
         $stmt->execute([$nutritionistId]);
         $patients = $stmt->fetchAll();
-        
+
         // Aggiungi il prossimo appuntamento per ogni paziente
         foreach ($patients as &$patient) {
             $stmtApp = $db->prepare("
@@ -166,12 +174,12 @@ function getMyPatients() {
             $patient['next_appointment'] = $appointment ? $appointment['appointment_date'] : null;
         }
         unset($patient);
-        
+
         sendJSON([
             'success' => true,
             'patients' => $patients
         ]);
-        
+
     } catch (PDOException $e) {
         error_log("Errore get_my_patients: " . $e->getMessage());
         sendJSON(['success' => false, 'error' => 'Errore durante il recupero dei pazienti'], 500);
@@ -181,15 +189,16 @@ function getMyPatients() {
 /**
  * Assegna un paziente al nutrizionista e imposta i dati iniziali
  */
-function assignPatient() {
+function assignPatient()
+{
     // Verifica autenticazione
     if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
         sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
-    
+
     $db = getDB();
     $nutritionistId = $_SESSION['user_id'];
-    
+
     // Supporta sia POST tradizionale che JSON
     if (isset($_POST['patient_id'])) {
         $patientId = intval($_POST['patient_id']);
@@ -207,14 +216,14 @@ function assignPatient() {
         $muscleMass = floatval($data['initial_muscle_mass'] ?? 0);
         $goal = sanitizeInput($data['goal'] ?? '');
     }
-    
+
     if (!$patientId) {
         sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
     }
-    
+
     try {
         $db->beginTransaction();
-        
+
         // Verifica che il paziente non sia già assegnato
         $stmt = $db->prepare("
             SELECT nutritionist_id 
@@ -223,17 +232,17 @@ function assignPatient() {
         ");
         $stmt->execute([$patientId]);
         $patient = $stmt->fetch();
-        
+
         if (!$patient) {
             $db->rollBack();
             sendJSON(['success' => false, 'error' => 'Paziente non trovato'], 404);
         }
-        
+
         if ($patient['nutritionist_id'] && $patient['nutritionist_id'] != 0) {
             $db->rollBack();
             sendJSON(['success' => false, 'error' => 'Paziente già assegnato a un nutrizionista'], 409);
         }
-        
+
         // Assegna il paziente al nutrizionista e aggiorna i dati iniziali
         $stmt = $db->prepare("
             UPDATE Users 
@@ -252,7 +261,7 @@ function assignPatient() {
             $muscleMass > 0 ? $muscleMass : null,
             $patientId
         ]);
-        
+
         // Aggiungi il primo record di progresso se abbiamo i dati
         if ($weight > 0) {
             $stmt = $db->prepare("
@@ -273,17 +282,17 @@ function assignPatient() {
                 $goal ? "Obiettivo: " . $goal : "Prima misurazione"
             ]);
         }
-        
+
         // Log attività
         logActivity($db, $nutritionistId, 'assign_patient', "Paziente ID $patientId assegnato");
-        
+
         $db->commit();
-        
+
         sendJSON([
             'success' => true,
             'message' => 'Paziente assegnato con successo'
         ]);
-        
+
     } catch (PDOException $e) {
         $db->rollBack();
         error_log("Errore assign_patient: " . $e->getMessage());
@@ -294,21 +303,22 @@ function assignPatient() {
 /**
  * Ottiene i dettagli completi di un paziente
  */
-function getPatientDetails() {
+function getPatientDetails()
+{
     // Verifica autenticazione
     if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
         sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
-    
+
     $patientId = intval($_GET['patient_id'] ?? 0);
     $nutritionistId = $_SESSION['user_id'];
-    
+
     if (!$patientId) {
         sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
     }
-    
+
     $db = getDB();
-    
+
     try {
         // Ottieni dati paziente
         $stmt = $db->prepare("
@@ -330,11 +340,11 @@ function getPatientDetails() {
         ");
         $stmt->execute([$patientId, $nutritionistId]);
         $patient = $stmt->fetch();
-        
+
         if (!$patient) {
             sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
         }
-        
+
         // Ottieni storico progressi
         $stmt = $db->prepare("
             SELECT 
@@ -350,7 +360,7 @@ function getPatientDetails() {
         ");
         $stmt->execute([$patientId]);
         $progress = $stmt->fetchAll();
-        
+
         // Ottieni prossimi appuntamenti
         $stmt = $db->prepare("
             SELECT 
@@ -368,14 +378,14 @@ function getPatientDetails() {
         ");
         $stmt->execute([$patientId, $nutritionistId]);
         $appointments = $stmt->fetchAll();
-        
+
         sendJSON([
             'success' => true,
             'patient' => $patient,
             'progress' => $progress,
             'appointments' => $appointments
         ]);
-        
+
     } catch (PDOException $e) {
         error_log("Errore get_patient_details: " . $e->getMessage());
         sendJSON(['success' => false, 'error' => 'Errore durante il recupero dei dettagli'], 500);
@@ -385,15 +395,16 @@ function getPatientDetails() {
 /**
  * Aggiorna i dati di un paziente
  */
-function updatePatientData() {
+function updatePatientData()
+{
     // Verifica autenticazione
     if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
         sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
-    
+
     $db = getDB();
     $nutritionistId = $_SESSION['user_id'];
-    
+
     // Supporta sia POST tradizionale che JSON
     if (isset($_POST['patient_id'])) {
         $patientId = intval($_POST['patient_id']);
@@ -403,11 +414,11 @@ function updatePatientData() {
         $patientId = intval($data['patient_id'] ?? 0);
         $height = floatval($data['height_cm'] ?? 0);
     }
-    
+
     if (!$patientId) {
         sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
     }
-    
+
     try {
         // Verifica che il paziente appartenga al nutrizionista
         $stmt = $db->prepare("
@@ -415,22 +426,22 @@ function updatePatientData() {
             WHERE id = ? AND nutritionist_id = ? AND role = 'paziente'
         ");
         $stmt->execute([$patientId, $nutritionistId]);
-        
+
         if (!$stmt->fetch()) {
             sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
         }
-        
+
         // Aggiorna altezza
         if ($height > 0) {
             $stmt = $db->prepare("UPDATE Users SET height_cm = ? WHERE id = ?");
             $stmt->execute([$height, $patientId]);
         }
-        
+
         sendJSON([
             'success' => true,
             'message' => 'Dati aggiornati con successo'
         ]);
-        
+
     } catch (PDOException $e) {
         error_log("Errore update_patient_data: " . $e->getMessage());
         sendJSON(['success' => false, 'error' => 'Errore durante l\'aggiornamento'], 500);
@@ -440,15 +451,16 @@ function updatePatientData() {
 /**
  * Aggiunge un nuovo record di progresso per un paziente
  */
-function addPatientProgress() {
+function addPatientProgress()
+{
     // Verifica autenticazione
     if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
         sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
-    
+
     $db = getDB();
     $nutritionistId = $_SESSION['user_id'];
-    
+
     // Supporta sia POST tradizionale che JSON
     if (isset($_POST['patient_id'])) {
         $patientId = intval($_POST['patient_id']);
@@ -466,11 +478,11 @@ function addPatientProgress() {
         $notes = sanitizeInput($data['notes'] ?? '');
         $measurementDate = $data['measurement_date'] ?? date('Y-m-d');
     }
-    
+
     if (!$patientId || $weight <= 0) {
         sendJSON(['success' => false, 'error' => 'ID paziente e peso richiesti'], 400);
     }
-    
+
     try {
         // Verifica che il paziente appartenga al nutrizionista
         $stmt = $db->prepare("
@@ -478,11 +490,11 @@ function addPatientProgress() {
             WHERE id = ? AND nutritionist_id = ? AND role = 'paziente'
         ");
         $stmt->execute([$patientId, $nutritionistId]);
-        
+
         if (!$stmt->fetch()) {
             sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
         }
-        
+
         // Inserisci nuovo progresso (o aggiorna se esiste già per quella data)
         $stmt = $db->prepare("
             INSERT INTO PatientProgress 
@@ -502,12 +514,12 @@ function addPatientProgress() {
             $muscleMass > 0 ? $muscleMass : null,
             $notes
         ]);
-        
+
         sendJSON([
             'success' => true,
             'message' => 'Progresso registrato con successo'
         ]);
-        
+
     } catch (PDOException $e) {
         error_log("Errore add_patient_progress: " . $e->getMessage());
         sendJSON(['success' => false, 'error' => 'Errore durante la registrazione del progresso'], 500);
@@ -517,15 +529,16 @@ function addPatientProgress() {
 /**
  * Rimuove l'assegnazione di un paziente dal nutrizionista
  */
-function removePatient() {
+function removePatient()
+{
     // Verifica autenticazione
     if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
         sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
     }
-    
+
     $db = getDB();
     $nutritionistId = $_SESSION['user_id'];
-    
+
     // Supporta sia POST tradizionale che JSON
     if (isset($_POST['patient_id'])) {
         $patientId = intval($_POST['patient_id']);
@@ -533,11 +546,11 @@ function removePatient() {
         $data = json_decode(file_get_contents('php://input'), true);
         $patientId = intval($data['patient_id'] ?? 0);
     }
-    
+
     if (!$patientId) {
         sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
     }
-    
+
     try {
         // Verifica che il paziente appartenga al nutrizionista
         $stmt = $db->prepare("
@@ -545,11 +558,11 @@ function removePatient() {
             WHERE id = ? AND nutritionist_id = ? AND role = 'paziente'
         ");
         $stmt->execute([$patientId, $nutritionistId]);
-        
+
         if (!$stmt->fetch()) {
             sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
         }
-        
+
         // Rimuovi l'assegnazione (non elimina l'utente, solo il collegamento)
         $stmt = $db->prepare("
             UPDATE Users 
@@ -557,18 +570,55 @@ function removePatient() {
             WHERE id = ?
         ");
         $stmt->execute([$patientId]);
-        
+
         // Log attività
         logActivity($db, $nutritionistId, 'remove_patient', "Paziente ID $patientId rimosso");
-        
+
         sendJSON([
             'success' => true,
             'message' => 'Paziente rimosso con successo'
         ]);
-        
+
     } catch (PDOException $e) {
         error_log("Errore remove_patient: " . $e->getMessage());
         sendJSON(['success' => false, 'error' => 'Errore durante la rimozione del paziente'], 500);
+    }
+}
+
+/**
+ * Ottiene il codice univoco del nutrizionista loggato
+ */
+function getNutritionistCode()
+{
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
+    }
+
+    $db = getDB();
+    $nutritionistId = $_SESSION['user_id'];
+
+    try {
+        $stmt = $db->prepare("
+            SELECT nutritionist_code 
+            FROM users 
+            WHERE id = ? AND role = 'nutrizionista'
+        ");
+        $stmt->execute([$nutritionistId]);
+        $result = $stmt->fetch();
+
+        if (!$result || empty($result['nutritionist_code'])) {
+            sendJSON(['success' => false, 'error' => 'Codice non trovato'], 404);
+        }
+
+        sendJSON([
+            'success' => true,
+            'code' => $result['nutritionist_code']
+        ]);
+
+    } catch (PDOException $e) {
+        error_log("Errore get_nutritionist_code: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante il recupero del codice'], 500);
     }
 }
 ?>

@@ -139,6 +139,12 @@ function handleLogin() {
         // Aggiorna ultimo accesso
         updateLastLogin($db, $user['id']);
         
+        // Se è un nutrizionista, verifica/genera codice univoco
+        $nutritionistCode = null;
+        if ($user['role'] === 'nutrizionista') {
+            $nutritionistCode = ensureNutritionistCode($db, $user['id']);
+        }
+        
         // Log accesso riuscito
         logActivity($db, $user['id'], 'login', 'Accesso effettuato');
         
@@ -146,7 +152,7 @@ function handleLogin() {
         error_log("Login successful for user: " . $user['id']);
         
         // Risposta
-        sendJSON([
+        $response = [
             'success' => true,
             'message' => 'Login effettuato con successo',
             'user' => [
@@ -155,7 +161,14 @@ function handleLogin() {
                 'name' => $user['first_name'] . ' ' . $user['last_name'],
                 'role' => $user['role']
             ]
-        ]);
+        ];
+        
+        // Aggiungi codice nutrizionista se presente
+        if ($nutritionistCode) {
+            $response['user']['nutritionist_code'] = $nutritionistCode;
+        }
+        
+        sendJSON($response);
         
     } catch (PDOException $e) {
         error_log("Errore login: " . $e->getMessage());
@@ -217,7 +230,7 @@ function checkAuth() {
 }
 
 function handleRegister() {
-        error_log("=== INIZIO REGISTRAZIONE ==="); // DEBUG
+    error_log("=== INIZIO REGISTRAZIONE ==="); // DEBUG
     
     $db = getDB();
     $data = json_decode(file_get_contents('php://input'), true);
@@ -234,6 +247,7 @@ function handleRegister() {
         $lastName = sanitizeInput($_POST['last_name'] ?? '');
         $role = sanitizeInput($_POST['role'] ?? 'paziente');
         $birthDate = $_POST['birth_date'] ?? null;
+        $nutritionistCode = sanitizeInput($_POST['nutritionist_code'] ?? '');
     } else {
         $data = json_decode(file_get_contents('php://input'), true);
         $email = sanitizeInput($data['email'] ?? '');
@@ -242,6 +256,7 @@ function handleRegister() {
         $lastName = sanitizeInput($data['last_name'] ?? '');
         $role = sanitizeInput($data['role'] ?? 'paziente');
         $birthDate = $data['birth_date'] ?? null;
+        $nutritionistCode = sanitizeInput($data['nutritionist_code'] ?? '');
     }
     
     // Controlli validazione
@@ -270,6 +285,24 @@ function handleRegister() {
             sendJSON(['success' => false, 'error' => 'Email già registrata'], 409);
         }
         
+        // Se è un paziente e ha fornito un codice nutrizionista, verifica che esista
+        $nutritionistId = null;
+        if ($role === 'paziente' && !empty($nutritionistCode)) {
+            $stmt = $db->prepare("
+                SELECT id FROM users 
+                WHERE nutritionist_code = ? AND role = 'nutrizionista' AND is_active = 1
+                LIMIT 1
+            ");
+            $stmt->execute([$nutritionistCode]);
+            $nutritionist = $stmt->fetch();
+            
+            if (!$nutritionist) {
+                sendJSON(['success' => false, 'error' => 'Codice nutrizionista non valido'], 400);
+            }
+            
+            $nutritionistId = $nutritionist['id'];
+        }
+        
         // Hash password
         $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         
@@ -282,10 +315,11 @@ function handleRegister() {
                 last_name, 
                 role,
                 birth_date,
+                nutritionist_id,
                 registration_date,
                 is_active,
                 email_verified
-            ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 1, 0)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 1, 0)
         ");
         
         $stmt->execute([
@@ -294,7 +328,8 @@ function handleRegister() {
             $firstName,
             $lastName,
             $role,
-            $birthDate
+            $birthDate,
+            $nutritionistId
         ]);
         
         $userId = $db->lastInsertId();
@@ -337,6 +372,64 @@ function logFailedLogin($db, $email) {
         ]);
     } catch (PDOException $e) {
         error_log("Errore log tentativo fallito: " . $e->getMessage());
+    }
+}
+
+/**
+ * Genera un codice univoco per nutrizionista
+ */
+function generateNutritionistCode($db) {
+    $maxAttempts = 10;
+    $attempt = 0;
+    
+    while ($attempt < $maxAttempts) {
+        // Genera codice nel formato NUT-XXXXX (5 cifre)
+        $code = 'NUT-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT);
+        
+        // Verifica se il codice esiste già
+        $stmt = $db->prepare("SELECT id FROM users WHERE nutritionist_code = ? LIMIT 1");
+        $stmt->execute([$code]);
+        
+        if (!$stmt->fetch()) {
+            return $code; // Codice univoco trovato
+        }
+        
+        $attempt++;
+    }
+    
+    // Fallback: usa timestamp se non riesce a generare un codice univoco
+    return 'NUT-' . substr(time(), -5);
+}
+
+/**
+ * Assicura che un nutrizionista abbia un codice univoco
+ * Se non ce l'ha, ne genera uno
+ */
+function ensureNutritionistCode($db, $userId) {
+    try {
+        // Verifica se ha già un codice
+        $stmt = $db->prepare("SELECT nutritionist_code FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+        
+        if ($user && !empty($user['nutritionist_code'])) {
+            return $user['nutritionist_code'];
+        }
+        
+        // Genera nuovo codice
+        $code = generateNutritionistCode($db);
+        
+        // Aggiorna il database
+        $stmt = $db->prepare("UPDATE users SET nutritionist_code = ? WHERE id = ?");
+        $stmt->execute([$code, $userId]);
+        
+        error_log("Generated nutritionist code: $code for user: $userId");
+        
+        return $code;
+        
+    } catch (PDOException $e) {
+        error_log("Errore generazione codice nutrizionista: " . $e->getMessage());
+        return null;
     }
 }
 ?>

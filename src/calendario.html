@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="calendario.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="back-button">
         <a href="nutrizionistaPage.html">
@@ -32,28 +33,27 @@
         </div>
 
         <div class="calendar-controls">
-            <button class="control-btn" id="prevMonth">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <h3 class="current-month" id="currentMonth">Dicembre 2024</h3>
-            <button class="control-btn" id="nextMonth">
-                <i class="fas fa-chevron-right"></i>
+            <div class="calendar-nav">
+                <button class="nav-btn" id="prevMonth">
+                    <i class="fas fa-chevron-left"></i> Prec
+                </button>
+                <h3 class="current-month" id="currentMonth">Dicembre 2024</h3>
+                <button class="nav-btn" id="nextMonth">
+                    Succ <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <button class="add-appointment-btn" onclick="openAddAppointmentModal()">
+                <i class="fas fa-plus"></i> Nuovo Appuntamento
             </button>
         </div>
 
-        <div class="calendar-wrapper">
+        <div class="calendar" id="calendarSection">
             <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
 
-            <div class="appointments-sidebar">
-                <div class="sidebar-header">
-                    <h3>Appuntamenti</h3>
-                    <button class="add-appointment-btn" onclick="openAddAppointmentModal()">
-                        <i class="fas fa-plus"></i> Nuovo
-                    </button>
-                </div>
-
-                <div class="upcoming-appointments" id="upcomingAppointments"></div>
-            </div>
+        <div class="appointments-section">
+            <h3>Appuntamenti In Programma</h3>
+            <div class="appointments-list" id="upcomingAppointments"></div>
         </div>
     </div>
 
@@ -62,15 +62,13 @@
         <div class="modal-content">
             <button class="close-modal" onclick="closeAppointmentModal()">&times;</button>
             <h2 class="modal-title">Nuovo Appuntamento</h2>
-            
+
             <div class="form-grid">
                 <div class="form-group">
                     <label>Paziente</label>
                     <select class="input-field" id="appointmentPatient">
                         <option value="">Seleziona paziente</option>
-                        <option value="1">Mario Rossi</option>
-                        <option value="2">Laura Bianchi</option>
-                        <option value="3">Giulia Neri</option>
+                        <!-- Pazienti caricati via API -->
                     </select>
                 </div>
 
@@ -106,7 +104,8 @@
 
                 <div class="form-group full-width">
                     <label>Note</label>
-                    <textarea class="input-field" id="appointmentNotes" placeholder="Aggiungi note sull'appuntamento..."></textarea>
+                    <textarea class="input-field" id="appointmentNotes"
+                        placeholder="Aggiungi note sull'appuntamento..."></textarea>
                 </div>
 
                 <div class="form-group full-width">
@@ -127,50 +126,63 @@
     </div>
 
     <script>
-        let appointments = JSON.parse(localStorage.getItem('appointments')) || [
-            {
-                id: 1,
-                patientName: "Mario Rossi",
-                date: "2024-12-20",
-                time: "09:00",
-                duration: 60,
-                type: "controllo",
-                typeLabel: "Controllo Mensile",
-                notes: "Verifica progressi dieta dimagrimento",
-                reminder: true
-            },
-            {
-                id: 2,
-                patientName: "Giulia Neri",
-                date: "2024-12-20",
-                time: "11:00",
-                duration: 60,
-                type: "controllo",
-                typeLabel: "Controllo Mensile",
-                notes: "Controllo mensile routine",
-                reminder: true
-            }
-        ];
-
+        let appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+        let patients = [];
         let currentDate = new Date();
         let selectedDate = null;
+
+        // Funzione per caricare i pazienti dall'API
+        async function loadPatients() {
+            try {
+                const response = await fetch('../api/patients.php?action=get_my_patients', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    patients = result.patients;
+                    updatePatientDropdown();
+                } else {
+                    console.error('Errore caricamento pazienti:', result.error);
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+            }
+        }
+
+        // Aggiorna il dropdown dei pazienti nel modal
+        function updatePatientDropdown() {
+            const select = document.getElementById('appointmentPatient');
+            // Mantieni solo la prima opzione
+            select.innerHTML = '<option value="">Seleziona paziente</option>';
+
+            patients.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = `${p.first_name} ${p.last_name}`;
+                select.appendChild(option);
+            });
+        }
 
         function generateCalendar(year, month) {
             const calendarGrid = document.getElementById('calendarGrid');
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             const daysInMonth = lastDay.getDate();
-            const startDay = firstDay.getDay();
+            const startDay = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1; // Lunedì come primo giorno
 
             const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
-                              'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+                'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
             document.getElementById('currentMonth').textContent = `${monthNames[month]} ${year}`;
 
             let html = '';
-            const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+            const dayNames = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
             dayNames.forEach(day => {
-                html += `<div class="calendar-day-header">${day}</div>`;
+                html += `<div class="calendar-header">${day}</div>`;
             });
+
 
             for (let i = 0; i < startDay; i++) {
                 html += `<div class="calendar-day empty"></div>`;
@@ -203,8 +215,8 @@
 
         function isSameDay(date1, date2) {
             return date1.getDate() === date2.getDate() &&
-                   date1.getMonth() === date2.getMonth() &&
-                   date1.getFullYear() === date2.getFullYear();
+                date1.getMonth() === date2.getMonth() &&
+                date1.getFullYear() === date2.getFullYear();
         }
 
         function selectDate(dateStr) {
@@ -230,27 +242,26 @@
             container.innerHTML = upcoming.map(apt => {
                 const aptDate = new Date(apt.date);
                 const dateStr = aptDate.toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-                
+
                 return `
-                    <div class="appointment-card ${apt.type}">
-                        <div class="appointment-header">
-                            <div class="appointment-patient">
-                                <i class="fas fa-user-circle"></i>
-                                ${apt.patientName}
-                            </div>
-                            <div class="appointment-type-badge">${apt.typeLabel}</div>
+                    <div class="appointment-card">
+                        <div class="appointment-time">
+                            <div class="time">${apt.time}</div>
+                            <div class="date">${dateStr}</div>
                         </div>
-                        <div class="appointment-info">
-                            <div class="info-item">
-                                <i class="fas fa-calendar"></i>
-                                ${dateStr}
-                            </div>
-                            <div class="info-item">
-                                <i class="fas fa-clock"></i>
-                                ${apt.time} (${apt.duration} min)
-                            </div>
+                        <div class="appointment-details">
+                            <h4>${apt.patientName}</h4>
+                            <p><i class="fas fa-tag"></i> ${apt.typeLabel}</p>
+                            ${apt.notes ? `<p><i class="fas fa-sticky-note"></i> ${apt.notes}</p>` : ''}
                         </div>
-                        ${apt.notes ? `<div class="appointment-notes">${apt.notes}</div>` : ''}
+                        <div class="appointment-actions">
+                            <button class="action-btn edit-btn" onclick="editAppointment(${apt.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete-btn" onclick="deleteAppointment(${apt.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -295,7 +306,7 @@
 
             appointments.push(appointment);
             localStorage.setItem('appointments', JSON.stringify(appointments));
-            
+
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             closeAppointmentModal();
             alert('Appuntamento salvato con successo!');
@@ -311,7 +322,7 @@
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
         });
 
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const appointmentModal = document.getElementById('appointmentModal');
             if (event.target === appointmentModal) {
                 closeAppointmentModal();
@@ -319,8 +330,10 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            loadPatients();
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
         });
     </script>
 </body>
+
 </html>

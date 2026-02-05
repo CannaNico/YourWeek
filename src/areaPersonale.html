@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Area Personale - YourWeek</title>
     <link rel="stylesheet" href="areaPersonale.css">
 </head>
+
 <body>
     <div class="back-button">
         <a href="nutrizionistaPage.html">
@@ -29,25 +31,37 @@
             <p>Gestisci i tuoi appunti e documenti necessari per la tua attività</p>
         </div>
 
-        <div class="sections-grid">
+        <div class="area-grid">
             <!-- Sezione Documenti -->
             <div class="section-card" onclick="openDocumentsModal()">
-                <div class="section-icon">
-                    <i class="fas fa-folder-open"></i>
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <h3>Documenti</h3>
                 </div>
-                <h3>Documenti</h3>
                 <p>Carica e gestisci immagini, PDF e documenti necessari per la tua attività professionale</p>
-                <span class="section-badge" id="documentsCount">0 Documenti</span>
+                <div style="margin-top: 15px;">
+                    <span class="view-btn" id="documentsCount"
+                        style="padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">0
+                        Documenti</span>
+                </div>
             </div>
 
             <!-- Sezione Note -->
             <div class="section-card" onclick="openNotesModal()">
-                <div class="section-icon">
-                    <i class="fas fa-sticky-note"></i>
+                <div class="section-header">
+                    <div class="section-icon">
+                        <i class="fas fa-sticky-note"></i>
+                    </div>
+                    <h3>Note Personali</h3>
                 </div>
-                <h3>Note Personali</h3>
                 <p>Scrivi e organizza le tue note con data e ora automatica per tenere traccia di tutto</p>
-                <span class="section-badge" id="notesCount">0 Note</span>
+                <div style="margin-top: 15px;">
+                    <span class="view-btn" id="notesCount"
+                        style="padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">0
+                        Note</span>
+                </div>
             </div>
         </div>
     </div>
@@ -56,7 +70,7 @@
     <div class="modal" id="notesModal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeNotesModal()">&times;</button>
-            
+
             <div class="modal-header">
                 <h2><i class="fas fa-sticky-note"></i> Le Tue Note</h2>
                 <button class="add-btn" onclick="toggleNoteForm()">
@@ -64,21 +78,18 @@
                 </button>
             </div>
 
-            <div class="note-form" id="noteForm" style="display: none;">
-                <textarea id="noteText" placeholder="Scrivi la tua nota qui..."></textarea>
+            <div class="note-input-container" id="noteForm" style="display: none;">
+                <textarea class="note-textarea" id="noteText" placeholder="Scrivi la tua nota qui..."></textarea>
                 <div class="form-actions">
-                    <button class="cancel-note-btn" onclick="cancelNote()">Annulla</button>
                     <button class="save-note-btn" onclick="saveNote()">
                         <i class="fas fa-save"></i> Salva Nota
                     </button>
+                    <button class="cancel-btn" onclick="cancelNote()" style="margin-left: 10px;">Annulla</button>
                 </div>
             </div>
 
-            <div class="notes-container" id="notesContainer">
-                <div class="empty-state">
-                    <i class="fas fa-sticky-note"></i>
-                    <p>Nessuna nota ancora. Inizia a scrivere!</p>
-                </div>
+            <div class="item-list" id="notesContainer">
+                <!-- Note generate via JS -->
             </div>
         </div>
     </div>
@@ -87,23 +98,24 @@
     <div class="modal" id="documentsModal">
         <div class="modal-content">
             <button class="close-modal" onclick="closeDocumentsModal()">&times;</button>
-            
+
             <div class="modal-header">
                 <h2><i class="fas fa-folder-open"></i> I Tuoi Documenti</h2>
             </div>
 
             <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Clicca per caricare file</p>
-                <span>Supportati: PDF, Immagini (JPG, PNG), Word (DOC, DOCX)</span>
-            </div>
-            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple onchange="handleFileUpload(event)">
-
-            <div class="documents-grid" id="documentsContainer">
-                <div class="empty-state">
-                    <i class="fas fa-folder-open"></i>
-                    <p>Nessun documento caricato</p>
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
                 </div>
+                <div class="upload-text">Clicca per caricare file</div>
+                <p style="color: #5a7a5c; margin-top: 10px; font-size: 0.9rem;">Supportati: PDF, Immagini (JPG, PNG),
+                    Word</p>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple style="display: none;"
+                onchange="handleFileUpload(event)">
+
+            <div class="item-list" id="documentsContainer">
+                <!-- Documenti generati via JS -->
             </div>
         </div>
     </div>
@@ -142,7 +154,7 @@
 
         function saveNote() {
             const text = document.getElementById('noteText').value.trim();
-            
+
             if (!text) {
                 alert('Scrivi qualcosa prima di salvare!');
                 return;
@@ -159,7 +171,7 @@
 
             notes.unshift(note);
             localStorage.setItem('personalNotes', JSON.stringify(notes));
-            
+
             cancelNote();
             renderNotes();
             updateCounters();
@@ -185,11 +197,11 @@
 
         function renderNotes() {
             const container = document.getElementById('notesContainer');
-            
+
             if (notes.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-sticky-note"></i>
+                    <div style="text-align: center; padding: 40px; color: #5a7a5c;">
+                        <i class="fas fa-sticky-note" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
                         <p>Nessuna nota ancora. Inizia a scrivere!</p>
                     </div>
                 `;
@@ -197,22 +209,22 @@
             }
 
             container.innerHTML = notes.map(note => `
-                <div class="note-card">
-                    <div class="note-header">
-                        <div class="note-date">
-                            <i class="fas fa-calendar-alt"></i>
-                            ${note.date} - ${note.time}
-                        </div>
-                        <div class="note-actions">
-                            <button class="action-btn" onclick="editNote(${note.id})">
-                                <i class="fas fa-edit"></i> Modifica
-                            </button>
-                            <button class="action-btn delete" onclick="deleteNote(${note.id})">
-                                <i class="fas fa-trash"></i> Elimina
-                            </button>
+                <div class="item">
+                    <div class="item-info">
+                        <i class="fas fa-sticky-note"></i>
+                        <div>
+                            <div class="item-name">${note.text.length > 50 ? note.text.substring(0, 50) + '...' : note.text}</div>
+                            <div style="font-size: 0.8rem; color: #5a7a5c;">${note.date} - ${note.time}</div>
                         </div>
                     </div>
-                    <div class="note-content">${note.text.replace(/\n/g, '<br>')}</div>
+                    <div class="item-actions">
+                        <button class="action-btn view-btn" onclick="editNote(${note.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn delete-btn" onclick="deleteNote(${note.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -229,11 +241,11 @@
 
         function handleFileUpload(event) {
             const files = event.target.files;
-            
+
             Array.from(files).forEach(file => {
                 const reader = new FileReader();
-                
-                reader.onload = function(e) {
+
+                reader.onload = function (e) {
                     const now = new Date();
                     const doc = {
                         id: Date.now() + Math.random(),
@@ -249,7 +261,7 @@
                     renderDocuments();
                     updateCounters();
                 };
-                
+
                 reader.readAsDataURL(file);
             });
 
@@ -284,11 +296,11 @@
 
         function renderDocuments() {
             const container = document.getElementById('documentsContainer');
-            
+
             if (documents.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-folder-open"></i>
+                    <div style="text-align: center; padding: 40px; color: #5a7a5c;">
+                        <i class="fas fa-folder-open" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.3;"></i>
                         <p>Nessun documento caricato</p>
                     </div>
                 `;
@@ -296,15 +308,19 @@
             }
 
             container.innerHTML = documents.map(doc => `
-                <div class="document-card">
-                    ${getDocumentIcon(doc.type)}
-                    <div class="document-name">${doc.name}</div>
-                    <div class="document-date">${doc.date}</div>
-                    <div class="document-actions">
-                        <button class="doc-action-btn" onclick="downloadDocument(${doc.id})">
-                            <i class="fas fa-download"></i> Scarica
+                <div class="item">
+                    <div class="item-info">
+                        ${getDocumentIcon(doc.type)}
+                        <div>
+                            <div class="item-name">${doc.name}</div>
+                            <div style="font-size: 0.8rem; color: #5a7a5c;">${doc.date} - ${(doc.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="action-btn view-btn" onclick="downloadDocument(${doc.id})">
+                            <i class="fas fa-download"></i>
                         </button>
-                        <button class="doc-action-btn delete" onclick="deleteDocument(${doc.id})">
+                        <button class="action-btn delete-btn" onclick="deleteDocument(${doc.id})">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -313,10 +329,10 @@
         }
 
         // Chiudi modal cliccando fuori
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const notesModal = document.getElementById('notesModal');
             const documentsModal = document.getElementById('documentsModal');
-            
+
             if (event.target === notesModal) closeNotesModal();
             if (event.target === documentsModal) closeDocumentsModal();
         }
@@ -325,4 +341,5 @@
         document.addEventListener('DOMContentLoaded', updateCounters);
     </script>
 </body>
+
 </html>
