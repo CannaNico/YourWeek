@@ -4,9 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Piani Dietetici - YourWeek</title>
+    <title>Gestione Piani Dietetici - YourWeek</title>
     <link rel="stylesheet" href="pianiDietetici.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<base target="_blank">
 </head>
 
 <body>
@@ -22,14 +23,14 @@
             <h1>yourweek</h1>
         </div>
         <div class="user-info">
-            <h3>Piani Dietetici</h3>
+            <h3>Gestione Piani</h3>
         </div>
     </header>
 
     <div class="container">
         <div class="page-title">
             <h2>Gestione Piani Alimentari</h2>
-            <p>Modifica e personalizza i piani dietetici dei tuoi pazienti</p>
+            <p>Assegna e gestisci i piani dietetici dei tuoi pazienti</p>
         </div>
 
         <div class="patients-grid" id="patientsGrid">
@@ -43,6 +44,87 @@
             <button class="close-modal" id="closeModal">&times;</button>
             <div id="modalContent">
                 <!-- Il contenuto del modal verrà popolato dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal per l'upload del file o inserimento manuale -->
+    <div class="modal" id="addPlanModal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeAddPlanModal()">&times;</button>
+            <h2 style="text-align: center; margin-bottom: 30px; color: #064e3b; font-size: 2rem;">
+                <i class="fas fa-utensils"></i> Assegna Piano Dietetico
+            </h2>
+
+            <div id="selectedPatientInfo" style="text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-radius: 15px;">
+            </div>
+
+            <!-- Toggle per scegliere il metodo di inserimento -->
+            <div class="input-method-toggle">
+                <button class="toggle-btn active" id="btnManual" onclick="setInputMethod('manual')">
+                    <i class="fas fa-keyboard"></i> Inserimento Manuale
+                </button>
+                <button class="toggle-btn" id="btnFile" onclick="setInputMethod('file')">
+                    <i class="fas fa-file-upload"></i> Carica File
+                </button>
+            </div>
+
+            <!-- Sezione Inserimento Manuale -->
+            <div id="manualInputSection">
+                <div class="weekly-plan">
+                    <div class="week-title">
+                        <i class="fas fa-calendar-week"></i> Piano Settimanale
+                    </div>
+                    <table class="meal-table">
+                        <thead>
+                            <tr>
+                                <th>Giorno</th>
+                                <th><i class="fas fa-coffee"></i> Colazione</th>
+                                <th><i class="fas fa-utensils"></i> Pranzo</th>
+                                <th><i class="fas fa-moon"></i> Cena</th>
+                                <th><i class="fas fa-apple-alt"></i> Spuntini</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manualMealTableBody">
+                            <!-- Generato dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sezione Upload File -->
+            <div id="fileInputSection" style="display: none;">
+                <div class="upload-section">
+                    <h3><i class="fas fa-cloud-upload-alt"></i> Carica Piano Dietetico</h3>
+                    <p>Carica un file PDF, Word o Excel con il piano alimentare del paziente</p>
+
+                    <div class="upload-area" onclick="document.getElementById('planFileInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Clicca qui o trascina il file</p>
+                        <small style="color: #6b7280;">PDF, DOC, DOCX, XLS, XLSX (max 10MB)</small>
+                    </div>
+                    <input type="file" id="planFileInput" class="file-input" accept=".pdf,.doc,.docx,.xls,.xlsx" onchange="handleFileSelect(event)">
+
+                    <div id="filePreview" style="display: none;">
+                        <div class="file-preview">
+                            <i class="fas fa-file-alt"></i>
+                            <div class="file-info">
+                                <div class="file-name" id="fileName">nome_file.pdf</div>
+                                <div class="file-size" id="fileSize">2.5 MB</div>
+                            </div>
+                            <button class="remove-file" onclick="removeFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeAddPlanModal()">Annulla</button>
+                <button class="save-btn" onclick="saveDietPlan()">
+                    <i class="fas fa-save"></i> Salva Piano
+                </button>
             </div>
         </div>
     </div>
@@ -100,10 +182,14 @@
             const grid = document.getElementById('patientsGrid');
             grid.innerHTML = '';
 
+            if (patients.length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: #065f46; grid-column: 1 / -1; font-size: 1.2rem; padding: 40px;">Nessun paziente assegnato.</p>';
+                return;
+            }
+
             patients.forEach(patient => {
                 const card = document.createElement('div');
                 card.className = 'patient-card';
-                card.onclick = () => openDietModal(patient);
 
                 card.innerHTML = `
                     <div class="patient-header">
@@ -113,19 +199,27 @@
                             <div class="description">${patient.description}</div>
                         </div>
                     </div>
-                    <div class="diet-stats">
-                        <div class="diet-stat">
+                    <div class="patient-stats">
+                        <div class="stat">
                             <div class="value">${patient.dietStats.calorie}</div>
                             <div class="label">Calorie</div>
                         </div>
-                        <div class="diet-stat">
+                        <div class="stat">
                             <div class="value">${patient.dietStats.proteine}</div>
                             <div class="label">Proteine</div>
                         </div>
-                        <div class="diet-stat">
+                        <div class="stat">
                             <div class="value">${patient.dietStats.pasti}</div>
                             <div class="label">Pasti/Giorno</div>
                         </div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(16, 185, 129, 0.1); display: flex; gap: 10px;">
+                        <button class="save-btn" style="flex: 1; padding: 10px; font-size: 0.9rem;" onclick="event.stopPropagation(); openAddPlanModal(patients.find(p => p.id === ${patient.id}))">
+                            <i class="fas fa-plus"></i> Assegna Piano
+                        </button>
+                        <button class="cancel-btn" style="flex: 1; padding: 10px; font-size: 0.9rem;" onclick="event.stopPropagation(); openDietModal(patients.find(p => p.id === ${patient.id}))">
+                            <i class="fas fa-eye"></i> Visualizza
+                        </button>
                     </div>
                 `;
 
@@ -343,6 +437,171 @@
             const modal = document.getElementById('dietModal');
             if (event.target === modal) {
                 closeModal();
+            }
+        }
+
+        // Variabili per la gestione del piano
+        let currentInputMethod = 'manual';
+        let selectedFile = null;
+        let currentPatientForPlan = null;
+
+        // Funzione per impostare il metodo di inserimento
+        function setInputMethod(method) {
+            currentInputMethod = method;
+
+            // Aggiorna i bottoni
+            document.getElementById('btnManual').classList.toggle('active', method === 'manual');
+            document.getElementById('btnFile').classList.toggle('active', method === 'file');
+
+            // Mostra/nascondi le sezioni
+            document.getElementById('manualInputSection').style.display = method === 'manual' ? 'block' : 'none';
+            document.getElementById('fileInputSection').style.display = method === 'file' ? 'block' : 'none';
+        }
+
+        // Funzione per gestire la selezione del file
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                document.getElementById('fileName').textContent = file.name;
+                document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                document.getElementById('filePreview').style.display = 'block';
+            }
+        }
+
+        // Formatta la dimensione del file
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Rimuovi il file selezionato
+        function removeFile() {
+            selectedFile = null;
+            document.getElementById('planFileInput').value = '';
+            document.getElementById('filePreview').style.display = 'none';
+        }
+
+        // Apre il modal per aggiungere un piano dietetico
+        function openAddPlanModal(patient) {
+            currentPatientForPlan = patient;
+
+            // Mostra info paziente
+            const info = document.getElementById('selectedPatientInfo');
+            info.innerHTML = `
+                <h3 style="color: #064e3b; margin-bottom: 10px; font-size: 1.5rem;">${patient.name} ${patient.surname}</h3>
+                <p style="color: #065f46; font-size: 1.1rem;">${patient.description}</p>
+            `;
+
+            // Reset stato
+            setInputMethod('manual');
+            removeFile();
+
+            // Genera la tabella per l'inserimento manuale
+            generateManualMealTable();
+
+            // Mostra il modal
+            document.getElementById('addPlanModal').style.display = 'block';
+        }
+
+        // Genera la tabella per l'inserimento manuale
+        function generateManualMealTable() {
+            const tbody = document.getElementById('manualMealTableBody');
+            const dayNames = {
+                lunedi: 'Lunedì',
+                martedi: 'Martedì',
+                mercoledi: 'Mercoledì',
+                giovedi: 'Giovedì',
+                venerdi: 'Venerdì',
+                sabato: 'Sabato',
+                domenica: 'Domenica'
+            };
+
+            let html = '';
+            for (const [dayKey, dayName] of Object.entries(dayNames)) {
+                html += `
+                    <tr>
+                        <td><strong>${dayName}</strong></td>
+                        <td>
+                            <textarea class="meal-edit" id="${dayKey}_colazione" 
+                                placeholder="Clicca per aggiungere" rows="2"></textarea>
+                        </td>
+                        <td>
+                            <textarea class="meal-edit" id="${dayKey}_pranzo" 
+                                placeholder="Clicca per aggiungere" rows="2"></textarea>
+                        </td>
+                        <td>
+                            <textarea class="meal-edit" id="${dayKey}_cena" 
+                                placeholder="Clicca per aggiungere" rows="2"></textarea>
+                        </td>
+                        <td>
+                            <textarea class="meal-edit" id="${dayKey}_spuntini" 
+                                placeholder="Clicca per aggiungere" rows="2"></textarea>
+                        </td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Chiudi il modal per aggiungere piano
+        function closeAddPlanModal() {
+            document.getElementById('addPlanModal').style.display = 'none';
+            currentPatientForPlan = null;
+        }
+
+        // Salva il piano dietetico
+        async function saveDietPlan() {
+            if (!currentPatientForPlan) return;
+
+            const formData = new FormData();
+            formData.append('patient_id', currentPatientForPlan.id);
+            formData.append('input_method', currentInputMethod);
+            formData.append('plan_name', 'Piano Dietetico - ' + new Date().toLocaleDateString('it-IT'));
+
+            if (currentInputMethod === 'file' && selectedFile) {
+                formData.append('plan_file', selectedFile);
+            } else if (currentInputMethod === 'manual') {
+                // Raccogli i dati dalla tabella
+                const mealPlan = {};
+                const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+                const meals = ['colazione', 'pranzo', 'cena', 'spuntini'];
+
+                days.forEach(day => {
+                    mealPlan[day] = {};
+                    meals.forEach(meal => {
+                        const value = document.getElementById(`${day}_${meal}`).value.trim();
+                        if (value) {
+                            mealPlan[day][meal] = value;
+                        }
+                    });
+                });
+
+                formData.append('meal_plan', JSON.stringify(mealPlan));
+            }
+
+            try {
+                const response = await fetch('../api/diet_plans.php?action=save_plan', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Piano dietetico salvato con successo!');
+                    closeAddPlanModal();
+                    loadPatients(); // Ricarica la lista
+                } else {
+                    alert('Errore: ' + (result.error || 'Errore durante il salvataggio'));
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                alert('Errore durante il salvataggio del piano');
             }
         }
 

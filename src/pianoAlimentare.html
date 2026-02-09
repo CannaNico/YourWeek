@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Mio Piano Alimentare - YourWeek</title>
+    <link rel="stylesheet" href="pianoAlimentare.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<base target="_blank">
+</head>
+
+<body>
+    <div class="back-button">
+        <a href="clientePage.html">
+            <i class="fas fa-arrow-left"></i>
+            Torna alla Dashboard
+        </a>
+    </div>
+
+    <header class="dashboard-header">
+        <div class="logo">
+            <h1>YourWeek</h1>
+        </div>
+        <div class="user-info">
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div>
+                <h3 id="userName">Il Mio Piano</h3>
+                <p>Visualizza il tuo piano alimentare</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-content">
+        <div class="welcome-section">
+            <h2>Il Tuo Piano Alimentare</h2>
+            <p>Consulta il piano dietetico personalizzato creato dal tuo nutrizionista</p>
+        </div>
+
+        <!-- Info Nutrizionista -->
+        <div class="nutritionist-card" id="nutritionistCard">
+            <div class="nutritionist-avatar">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div class="nutritionist-info">
+                <h3 id="nutritionistName">Dr. Nutrizionista</h3>
+                <p id="nutritionistEmail">email@nutrizionista.it</p>
+                <span class="badge"><i class="fas fa-check-circle"></i> Piano Attivo</span>
+            </div>
+        </div>
+
+        <!-- Sezione Piano File -->
+        <div class="plan-file-section" id="planFileSection" style="display: none;">
+            <div class="section-header">
+                <h3><i class="fas fa-file-alt"></i> Piano Alimentare</h3>
+                <span class="file-badge" id="fileTypeBadge">PDF</span>
+            </div>
+            <div class="file-viewer">
+                <div class="file-icon">
+                    <i class="fas fa-file-pdf" id="fileIcon"></i>
+                </div>
+                <div class="file-details">
+                    <h4 id="fileName">piano_alimentare.pdf</h4>
+                    <p id="fileInfo">Caricato il 15/01/2025</p>
+                </div>
+                <a href="#" class="download-btn" id="downloadBtn" download>
+                    <i class="fas fa-download"></i> Scarica
+                </a>
+            </div>
+            <div class="pdf-preview" id="pdfPreview">
+                <iframe id="pdfFrame" src="" frameborder="0"></iframe>
+            </div>
+        </div>
+
+        <!-- Sezione Piano Manuale -->
+        <div class="plan-manual-section" id="planManualSection" style="display: none;">
+            <div class="section-header">
+                <h3><i class="fas fa-utensils"></i> Piano Settimanale</h3>
+                <span class="badge manual-badge"><i class="fas fa-edit"></i> Inserito Manualmente</span>
+            </div>
+
+            <div class="weekly-plan-container" id="weeklyPlanContainer">
+                <!-- Generato dinamicamente -->
+            </div>
+        </div>
+
+        <!-- Nessun Piano -->
+        <div class="no-plan-section" id="noPlanSection">
+            <div class="no-plan-icon">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h3>Nessun Piano Alimentare</h3>
+            <p>Il tuo nutrizionista non ha ancora caricato un piano alimentare. Contatta il tuo nutrizionista per ricevere il tuo piano personalizzato.</p>
+        </div>
+
+        <!-- Note Nutrizionista -->
+        <div class="notes-section" id="notesSection" style="display: none;">
+            <h3><i class="fas fa-sticky-note"></i> Note del Nutrizionista</h3>
+            <div class="notes-content" id="notesContent">
+                <!-- Note inserite dal nutrizionista -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Carica il nutrizionista assegnato al paziente
+        async function loadMyNutritionist() {
+            try {
+                const response = await fetch('../api/diet_plans.php?action=get_my_nutritionist', {
+                    credentials: 'include'
+                });
+                const result = await response.json();
+
+                if (result.success && result.hasNutritionist) {
+                    const nut = result.nutritionist;
+                    document.getElementById('nutritionistName').textContent = 'Dr. ' + nut.full_name;
+                    document.getElementById('nutritionistEmail').textContent = nut.email;
+                    document.getElementById('nutritionistCard').style.display = 'flex';
+                } else {
+                    document.getElementById('nutritionistCard').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Errore caricamento nutrizionista:', error);
+                document.getElementById('nutritionistCard').style.display = 'none';
+            }
+        }
+
+        // Carica il piano alimentare del paziente
+        async function loadDietPlan() {
+            try {
+                const response = await fetch('../api/diet_plans.php?action=get_my_plan', {
+                    credentials: 'include'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    renderDietPlan(result);
+                } else {
+                    showNoPlan();
+                }
+            } catch (error) {
+                console.error('Errore caricamento piano:', error);
+                showNoPlan();
+            }
+        }
+
+        // Renderizza il piano alimentare
+        function renderDietPlan(data) {
+            if (!data.hasPlan) {
+                showNoPlan();
+                return;
+            }
+
+            // Nascondi sezione nessun piano
+            document.getElementById('noPlanSection').style.display = 'none';
+
+            // Info nutrizionista
+            if (data.nutritionist) {
+                document.getElementById('nutritionistName').textContent = 'Dr. ' + data.nutritionist.full_name;
+                document.getElementById('nutritionistEmail').textContent = data.nutritionist.email;
+            }
+
+            // Mostra il piano manuale (i pasti)
+            if (data.meals && Object.keys(data.meals).length > 0) {
+                renderManualPlan(data.meals);
+            }
+
+            // Note
+            if (data.plan && data.plan.notes) {
+                document.getElementById('notesSection').style.display = 'block';
+                document.getElementById('notesContent').textContent = data.plan.notes;
+            }
+        }
+
+        // Renderizza piano manuale
+        function renderManualPlan(meals) {
+            document.getElementById('planManualSection').style.display = 'block';
+
+            const container = document.getElementById('weeklyPlanContainer');
+            const dayNames = {
+                lunedi: 'Lunedì',
+                martedi: 'Martedì',
+                mercoledi: 'Mercoledì',
+                giovedi: 'Giovedì',
+                venerdi: 'Venerdì',
+                sabato: 'Sabato',
+                domenica: 'Domenica'
+            };
+
+            // Mappa dei tipi di pasto per la visualizzazione
+            const mealTypeLabels = {
+                'colazione': { icon: 'fa-coffee', label: 'Colazione' },
+                'spuntino-mattina': { icon: 'fa-sun', label: 'Spuntino Mattina' },
+                'pranzo': { icon: 'fa-utensils', label: 'Pranzo' },
+                'spuntino-pomeriggio': { icon: 'fa-cookie', label: 'Spuntino Pomeriggio' },
+                'cena': { icon: 'fa-moon', label: 'Cena' },
+                'spuntino-sera': { icon: 'fa-cookie-bite', label: 'Spuntino Sera' }
+            };
+
+            let html = '';
+            let hasAnyMeal = false;
+
+            for (const [dayKey, dayName] of Object.entries(dayNames)) {
+                const dayMeals = meals[dayKey] || {};
+                const dayMealItems = [];
+
+                // Raccogli tutti i pasti per questo giorno
+                for (const [mealType, description] of Object.entries(dayMeals)) {
+                    if (description && description.trim() !== '') {
+                        const labelInfo = mealTypeLabels[mealType] || { icon: 'fa-utensils', label: mealType };
+                        dayMealItems.push({
+                            type: mealType,
+                            label: labelInfo.label,
+                            icon: labelInfo.icon,
+                            description: description
+                        });
+                    }
+                }
+
+                // Mostra il giorno solo se ha pasti
+                if (dayMealItems.length > 0) {
+                    hasAnyMeal = true;
+                    let mealsHtml = '';
+                    dayMealItems.forEach(meal => {
+                        mealsHtml += `
+                            <div class="meal-item">
+                                <span class="meal-time"><i class="fas ${meal.icon}"></i> ${meal.label}</span>
+                                <span class="meal-food">${meal.description}</span>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                        <div class="day-card">
+                            <div class="day-header">
+                                <h4>${dayName}</h4>
+                            </div>
+                            <div class="meals-list">
+                                ${mealsHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            if (hasAnyMeal) {
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = '<p style="text-align: center; color: #6b7280; padding: 40px;">Nessun pasto programmato nel piano.</p>';
+            }
+        }
+
+        // Mostra sezione nessun piano
+        function showNoPlan() {
+            document.getElementById('noPlanSection').style.display = 'block';
+            document.getElementById('planFileSection').style.display = 'none';
+            document.getElementById('planManualSection').style.display = 'none';
+            document.getElementById('notesSection').style.display = 'none';
+        }
+
+        // Carica i dati al caricamento della pagina
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMyNutritionist();
+            loadDietPlan();
+        });
+    </script>
+</body>
+
+</html>

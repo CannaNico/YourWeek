@@ -7,6 +7,7 @@
     <title>Registrazione - YourWeek</title>
     <link rel="stylesheet" href="registrati.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<base target="_blank">
 </head>
 
 <body>
@@ -90,14 +91,14 @@
 
                 <!-- Campo codice nutrizionista (visibile solo per pazienti) -->
                 <div class="form-group" id="nutritionist-code-group" style="display: none;">
-                    <label for="codice-nutrizionista">Codice Nutrizionista (opzionale)</label>
+                    <label for="codice-nutrizionista">Codice Nutrizionista <span style="color: #e74c3c;">*</span></label>
                     <div class="input-wrapper">
                         <i class="fas fa-id-card"></i>
                         <input type="text" id="codice-nutrizionista" name="codice-nutrizionista"
-                            placeholder="Es: NUT-12345" maxlength="10">
+                            placeholder="Es: NUT-12345" maxlength="10" required>
                     </div>
-                    <small style="color: #5a7a5c; margin-top: 5px; display: block;">Se hai ricevuto un codice dal tuo
-                        nutrizionista, inseriscilo qui per essere assegnato automaticamente.</small>
+                    <small style="color: #5a7a5c; margin-top: 5px; display: block;">Inserisci il codice ricevuto dal tuo
+                        nutrizionista per essere assegnato automaticamente.</small>
                 </div>
 
                 <div class="checkbox-group">
@@ -168,8 +169,13 @@
                 return;
             }
 
-            // Validazione codice nutrizionista (se fornito)
-            if (role === 'paziente' && nutritionistCode && !nutritionistCode.match(/^NUT-\d{5}$/)) {
+            // Validazione codice nutrizionista (obbligatorio per pazienti)
+            if (role === 'paziente' && !nutritionistCode) {
+                alert('Il codice nutrizionista è obbligatorio per i pazienti!');
+                return;
+            }
+
+            if (role === 'paziente' && !nutritionistCode.match(/^NUT-\d{5}$/)) {
                 alert('Il codice nutrizionista deve essere nel formato NUT-XXXXX (es: NUT-12345)');
                 return;
             }

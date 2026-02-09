@@ -1,3 +1,23 @@
+/* ========================================
+   REGISTRATI.CSS - Modern Split Design
+   Design a due colonne con glassmorphism
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --glass-bg: rgba(255, 255, 255, 0.95);
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --success-color: #10b981;
+    --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.2);
+    --shadow-strong: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -5,90 +25,197 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Poppins', 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    position: relative;
+    overflow-x: hidden;
 }
 
+/* Sfondo decorativo */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 40%);
+    z-index: -1;
+    animation: floatBackground 20s ease-in-out infinite;
+}
+
+@keyframes floatBackground {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    50% { transform: translate(-2%, -2%) rotate(1deg); }
+}
+
+/* Container principale */
 .registration-container {
-    background: white;
-    border-radius: 25px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    background: var(--glass-bg);
+    border-radius: 30px;
+    box-shadow: var(--shadow-strong);
     overflow: hidden;
     display: flex;
-    max-width: 1000px;
+    max-width: 1100px;
     width: 100%;
-    min-height: 650px;
+    min-height: 700px;
+    animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Lato sinistro - Hero */
 .registration-left {
-    flex: 1;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 60px 50px;
+    flex: 0 0 40%;
+    background: var(--primary-gradient);
+    padding: 60px 40px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     color: white;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.registration-left::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 30% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.registration-left::after {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    background: conic-gradient(
+        from 0deg at 50% 50%,
+        transparent 0deg,
+        rgba(255, 255, 255, 0.05) 90deg,
+        transparent 180deg,
+        rgba(255, 255, 255, 0.05) 270deg,
+        transparent 360deg
+    );
+    animation: rotate 15s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .registration-left h1 {
-    font-size: 3.5rem;
-    font-weight: 900;
+    font-size: 3rem;
+    font-weight: 800;
     margin-bottom: 20px;
-    text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 1;
+    letter-spacing: -1px;
 }
 
 .registration-left p {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     line-height: 1.8;
     opacity: 0.95;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 1;
+    font-weight: 300;
 }
 
 .registration-left .illustration {
-    margin-top: 30px;
-    font-size: 8rem;
-    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+    width: 120px;
+    height: 120px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    animation: float 4s ease-in-out infinite;
 }
 
+.registration-left .illustration i {
+    font-size: 3rem;
+    opacity: 0.95;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+/* Lato destro - Form */
 .registration-right {
     flex: 1;
-    padding: 60px 50px;
+    padding: 40px 50px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    padding-top: 150px;
+    justify-content: flex-start;
+    overflow-y: auto;
+    max-height: 90vh;
 }
 
 .registration-right h2 {
-    font-size: 2.2rem;
-    color: #2d3748;
-    margin-bottom: 15px;
+    font-size: 2rem;
+    color: var(--text-dark);
+    margin-bottom: 8px;
     font-weight: 700;
 }
 
 .registration-right .subtitle {
-    color: #718096;
-    margin-bottom: 35px;
+    color: var(--text-muted);
+    margin-bottom: 30px;
     font-size: 1rem;
+    font-weight: 400;
 }
 
+/* Form Groups */
 .form-group {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 8px;
-    color: #2d3748;
-    font-weight: 600;
-    font-size: 0.95rem;
+    color: var(--text-dark);
+    font-weight: 500;
+    font-size: 0.9rem;
 }
 
 .input-wrapper {
@@ -97,116 +224,160 @@ body {
 
 .input-wrapper i {
     position: absolute;
-    left: 18px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: #a0aec0;
-    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-size: 1rem;
+    transition: color 0.3s ease;
 }
 
 .form-group input,
 .form-group select {
     width: 100%;
-    padding: 15px 15px 15px 50px;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: #f7fafc;
-    color: #2d3748;
+    padding: 14px 16px 14px 48px;
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
+    font-size: 0.95rem;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #f8fafc;
+    color: var(--text-dark);
+    font-family: 'Poppins', sans-serif;
+}
+
+.form-group input::placeholder {
+    color: #94a3b8;
 }
 
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: var(--primary-color);
     background: white;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    box-shadow: 
+        0 0 0 4px rgba(102, 126, 234, 0.1),
+        0 4px 12px rgba(102, 126, 234, 0.1);
 }
 
+.form-group input:focus + i,
+.form-group select:focus + i {
+    color: var(--primary-color);
+}
+
+/* Form Row */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 15px;
+    margin-bottom: 5px;
 }
 
+.form-row .form-group {
+    margin-bottom: 15px;
+}
+
+/* Checkbox */
 .checkbox-group {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 25px;
+    gap: 12px;
 }
 
 .checkbox-group input[type="checkbox"] {
     width: 20px;
     height: 20px;
-    margin-right: 10px;
+    margin-top: 2px;
     cursor: pointer;
-    accent-color: #667eea;
+    accent-color: var(--primary-color);
+    border-radius: 5px;
 }
 
 .checkbox-group label {
-    color: #4a5568;
+    color: var(--text-muted);
     font-size: 0.9rem;
     cursor: pointer;
-    user-select: none;
+    line-height: 1.5;
 }
 
 .checkbox-group a {
-    color: #667eea;
+    color: var(--primary-color);
     text-decoration: none;
     font-weight: 600;
+    position: relative;
 }
 
-.checkbox-group a:hover {
-    text-decoration: underline;
+.checkbox-group a::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
 }
 
+.checkbox-group a:hover::after {
+    width: 100%;
+}
+
+/* Register Button */
 .register-btn {
     width: 100%;
     padding: 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--primary-gradient);
     color: white;
     border: none;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    font-weight: 700;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    margin-bottom: 20px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 
+        0 4px 15px rgba(102, 126, 234, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.register-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
 }
 
 .register-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+    box-shadow: 
+        0 8px 25px rgba(102, 126, 234, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+.register-btn:hover::before {
+    left: 100%;
 }
 
 .register-btn:active {
     transform: translateY(0);
 }
 
-.login-link {
-    text-align: center;
-    color: #718096;
-    font-size: 0.95rem;
-}
-
-.login-link a {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.login-link a:hover {
-    text-decoration: underline;
-}
-
+/* Divider */
 .divider {
     display: flex;
     align-items: center;
     margin: 25px 0;
-    color: #a0aec0;
-    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .divider::before,
@@ -214,7 +385,7 @@ body {
     content: '';
     flex: 1;
     height: 1px;
-    background: #e2e8f0;
+    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
 }
 
 .divider::before {
@@ -225,6 +396,7 @@ body {
     margin-left: 15px;
 }
 
+/* Social Buttons */
 .social-buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -233,74 +405,79 @@ body {
 }
 
 .social-btn {
-    padding: 12px;
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
+    padding: 14px;
+    border: 2px solid var(--border-color);
+    border-radius: 14px;
     background: white;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 600;
-    color: #4a5568;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-weight: 500;
+    color: var(--text-dark);
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
 }
 
 .social-btn:hover {
-    border-color: #667eea;
-    background: #f7fafc;
+    border-color: var(--primary-color);
+    background: #f8fafc;
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .social-btn i {
     font-size: 1.2rem;
 }
 
-.google i {
+.social-btn.google i {
     color: #ea4335;
 }
 
-.facebook i {
+.social-btn.facebook i {
     color: #1877f2;
 }
 
-@media (max-width: 768px) {
-    .registration-container {
-        flex-direction: column;
-        max-width: 500px;
-    }
-
-    .registration-left {
-        padding: 40px 30px;
-    }
-
-    .registration-left h1 {
-        font-size: 2.5rem;
-    }
-
-    .registration-left .illustration {
-        font-size: 5rem;
-    }
-
-    .registration-right {
-        padding: 40px 30px;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-
-    .social-buttons {
-        grid-template-columns: 1fr;
-    }
+/* Login Link */
+.login-link {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
-/* Animazione di caricamento */
-@keyframes fadeIn {
+.login-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    position: relative;
+}
+
+.login-link a::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--primary-color);
+    transition: width 0.3s ease;
+}
+
+.login-link a:hover::after {
+    width: 100%;
+}
+
+/* Campo codice nutrizionista */
+#nutritionist-code-group {
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(-10px);
     }
     to {
         opacity: 1;
@@ -308,6 +485,98 @@ body {
     }
 }
 
-.registration-container {
-    animation: fadeIn 0.5s ease;
+#nutritionist-code-group small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 6px;
+    display: block;
+    line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .registration-container {
+        flex-direction: column;
+        max-width: 500px;
+    }
+
+    .registration-left {
+        flex: none;
+        padding: 40px 30px;
+        min-height: 200px;
+    }
+
+    .registration-left h1 {
+        font-size: 2.2rem;
+    }
+
+    .registration-left .illustration {
+        width: 80px;
+        height: 80px;
+    }
+
+    .registration-left .illustration i {
+        font-size: 2rem;
+    }
+
+    .registration-right {
+        padding: 35px 30px;
+        max-height: none;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    .registration-container {
+        border-radius: 20px;
+    }
+    
+    .registration-left {
+        padding: 30px 20px;
+    }
+    
+    .registration-left h1 {
+        font-size: 1.8rem;
+    }
+    
+    .registration-right {
+        padding: 25px 20px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .social-buttons {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Focus states accessibili */
+input:focus-visible,
+button:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Scrollbar personalizzata */
+.registration-right::-webkit-scrollbar {
+    width: 6px;
+}
+
+.registration-right::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.registration-right::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.registration-right::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
 }

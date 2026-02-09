@@ -1,9 +1,28 @@
 /* ========================================
-   CALENDARIO.CSS - Tema Nutrizione
-   Design moderno con palette verde/naturale
+   CALENDARIO.CSS - Modern Green Theme
+   Calendario con design premium
    ======================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+    --primary: #10b981;
+    --primary-light: #34d399;
+    --primary-dark: #059669;
+    --secondary: #84cc16;
+    --accent: #f59e0b;
+    --bg-primary: #ecfdf5;
+    --bg-secondary: #d1fae5;
+    --text-primary: #064e3b;
+    --text-secondary: #065f46;
+    --text-muted: #6b7280;
+    --white: #ffffff;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    --shadow-glow: 0 0 40px rgba(16, 185, 129, 0.15);
+}
 
 * {
     margin: 0;
@@ -13,28 +32,43 @@
 
 body {
     font-family: 'Poppins', 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #f0f9f4 0%, #e8f5e9 50%, #f1f8f4 100%);
-    color: #2d5016;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, #f0fdf4 50%, var(--bg-secondary) 100%);
+    color: var(--text-primary);
     min-height: 100vh;
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
+}
+
+/* Sfondo decorativo */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at 20% 30%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(132, 204, 22, 0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* ========================================
-   HEADER - Tema Nutrizione con Pattern
+   HEADER MODERNO
    ======================================== */
 .dashboard-header {
-    background: linear-gradient(135deg, #4caf50 0%, #66bb6a 50%, #81c784 100%);
-    padding: 30px 40px;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--secondary) 100%);
+    padding: 25px 40px;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 6px 25px rgba(76, 175, 80, 0.3);
+    box-shadow: var(--shadow-lg);
     position: relative;
     overflow: hidden;
 }
 
-/* Pattern decorativo nell'header */
 .dashboard-header::before {
     content: '';
     position: absolute;
@@ -42,125 +76,125 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-image:
-        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
-        url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    opacity: 0.4;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
     pointer-events: none;
 }
 
+.dashboard-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
 .logo h1 {
-    font-size: 2.8rem;
-    font-weight: 900;
-    color: white;
-    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.2);
-    letter-spacing: -1px;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--white);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    letter-spacing: -0.5px;
     position: relative;
     z-index: 1;
 }
 
 .logo h1::after {
     content: '📅';
-    margin-left: 15px;
-    font-size: 2.2rem;
+    margin-left: 12px;
+    font-size: 1.6rem;
     animation: float 3s ease-in-out infinite;
+    display: inline-block;
 }
 
 @keyframes float {
-
-    0%,
-    100% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
 }
 
+/* User Info */
 .user-info {
     position: absolute;
     right: 40px;
     display: flex;
     align-items: center;
-    gap: 20px;
-    background: rgba(255, 255, 255, 0.25);
-    padding: 15px 30px;
-    border-radius: 20px;
-    backdrop-filter: blur(15px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 12px 24px;
+    border-radius: 16px;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 2;
 }
 
 .user-info:hover {
-    background: rgba(255, 255, 255, 0.35);
-    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .user-info h3 {
-    color: white;
-    font-size: 1.35rem;
+    color: var(--white);
+    font-size: 1.1rem;
     margin: 0;
-    font-weight: 700;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-weight: 600;
 }
 
-/* ========================================
-   BACK BUTTON
-   ======================================== */
+/* Back Button */
 .back-button {
     position: absolute;
-    top: 30px;
+    top: 25px;
     left: 30px;
     z-index: 100;
 }
 
 .back-button a {
-    color: white;
+    color: var(--white);
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
-    background: rgba(255, 255, 255, 0.25);
-    border-radius: 15px;
+    gap: 8px;
+    padding: 10px 18px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
     transition: all 0.3s ease;
-    font-weight: 600;
+    font-weight: 500;
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.9rem;
 }
 
 .back-button a:hover {
-    background: rgba(255, 255, 255, 0.35);
-    transform: translateX(-5px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateX(-3px);
 }
 
 /* ========================================
    MAIN CONTENT
    ======================================== */
 .container {
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 50px 30px;
+    padding: 40px 30px;
 }
 
+/* Page Title */
 .page-title {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 35px;
     animation: fadeInDown 0.8s ease;
 }
 
 @keyframes fadeInDown {
     from {
         opacity: 0;
-        transform: translateY(-30px);
+        transform: translateY(-20px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
@@ -168,22 +202,21 @@ body {
 }
 
 .page-title h2 {
-    font-size: 3.2rem;
-    background: linear-gradient(135deg, #2d5016 0%, #4caf50 100%);
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 15px;
-    font-weight: 800;
+    margin-bottom: 12px;
+    font-weight: 700;
 }
 
 .page-title p {
-    font-size: 1.25rem;
-    color: #5a7a5c;
-    max-width: 750px;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
     margin: 0 auto;
-    line-height: 1.7;
-    font-weight: 400;
+    line-height: 1.6;
 }
 
 /* ========================================
@@ -193,103 +226,107 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
-    padding: 25px 35px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
-    border: 2px solid rgba(76, 175, 80, 0.1);
+    margin-bottom: 25px;
+    background: var(--white);
+    padding: 20px 30px;
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(16, 185, 129, 0.08);
 }
 
 .calendar-nav {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     align-items: center;
 }
 
 .nav-btn {
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: white;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--white);
     border: none;
     padding: 12px 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+    font-family: 'Poppins', sans-serif;
+}
+
+.nav-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.current-month {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    min-width: 180px;
+    text-align: center;
+}
+
+.add-appointment-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--white);
+    border: none;
+    padding: 14px 28px;
     border-radius: 12px;
     cursor: pointer;
     font-size: 1rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.2);
-}
-
-.nav-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
-}
-
-.current-month {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2d5016;
-    min-width: 200px;
-    text-align: center;
-}
-
-.add-appointment-btn {
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: white;
-    border: none;
-    padding: 15px 30px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
     display: flex;
     align-items: center;
     gap: 10px;
+    font-family: 'Poppins', sans-serif;
 }
 
 .add-appointment-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 12px 35px rgba(16, 185, 129, 0.4);
 }
 
 /* ========================================
    CALENDAR GRID
    ======================================== */
 .calendar {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
-    border-radius: 25px;
-    padding: 40px;
-    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
-    border: 2px solid rgba(76, 175, 80, 0.1);
-    margin-bottom: 40px;
+    background: var(--white);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(16, 185, 129, 0.08);
+    margin-bottom: 35px;
 }
 
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 10px;
+    gap: 8px;
 }
 
 .calendar-header {
     text-align: center;
-    padding: 15px;
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: white;
-    font-weight: 700;
+    padding: 14px 10px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: var(--white);
+    font-weight: 600;
     border-radius: 10px;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .calendar-day {
     aspect-ratio: 1;
-    padding: 15px;
-    background: linear-gradient(135deg, #f0f9f4, #e8f5e9);
-    border-radius: 15px;
+    padding: 12px 8px;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--white) 100%);
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(16, 185, 129, 0.08);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -299,108 +336,116 @@ body {
 
 .calendar-day:hover {
     transform: scale(1.05);
-    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.2);
-    border-color: #4caf50;
+    box-shadow: var(--shadow);
+    border-color: rgba(16, 185, 129, 0.3);
+    background: var(--white);
 }
 
 .calendar-day.today {
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: white;
-    font-weight: 700;
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: var(--white);
+    font-weight: 600;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    border: none;
+}
+
+.calendar-day.today .day-number {
+    color: var(--white);
 }
 
 .calendar-day.has-appointment::after {
     content: '';
     position: absolute;
-    bottom: 8px;
+    bottom: 6px;
     width: 6px;
     height: 6px;
-    background: #4caf50;
+    background: var(--primary);
     border-radius: 50%;
 }
 
 .calendar-day.today.has-appointment::after {
-    background: white;
+    background: var(--white);
 }
 
 .calendar-day.other-month {
-    opacity: 0.3;
+    opacity: 0.4;
     pointer-events: none;
+    background: #f8fafc;
 }
 
 .day-number {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
-    color: #2d5016;
+    color: var(--text-primary);
 }
 
 .calendar-day.today .day-number {
-    color: white;
+    color: var(--white);
 }
 
 /* ========================================
-   APPOINTMENTS LIST
+   APPOINTMENTS SECTION
    ======================================== */
 .appointments-section {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
-    border-radius: 25px;
-    padding: 40px;
-    box-shadow: 0 10px 30px rgba(76, 175, 80, 0.12);
-    border: 2px solid rgba(76, 175, 80, 0.1);
+    background: var(--white);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(16, 185, 129, 0.08);
 }
 
 .appointments-section h3 {
-    font-size: 2rem;
-    color: #2d5016;
-    margin-bottom: 30px;
-    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 25px;
+    font-weight: 600;
     text-align: center;
 }
 
 .appointments-list {
     display: grid;
-    gap: 20px;
+    gap: 15px;
 }
 
 .appointment-card {
-    background: linear-gradient(135deg, #f0f9f4, #e8f5e9);
-    border-radius: 20px;
-    padding: 25px;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--white) 100%);
+    border-radius: 16px;
+    padding: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 2px solid transparent;
+    border: 1px solid rgba(16, 185, 129, 0.08);
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 18px;
 }
 
 .appointment-card:hover {
-    transform: translateX(10px);
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.2);
-    border-color: #4caf50;
+    transform: translateX(8px);
+    box-shadow: var(--shadow);
+    border-color: rgba(16, 185, 129, 0.2);
 }
 
 .appointment-time {
-    width: 80px;
-    height: 80px;
-    border-radius: 15px;
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
+    width: 75px;
+    height: 75px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: var(--white);
     flex-shrink: 0;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
 }
 
 .appointment-time .time {
-    font-size: 1.3rem;
+    font-size: 1.2rem;
     font-weight: 700;
 }
 
 .appointment-time .date {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     opacity: 0.9;
 }
 
@@ -409,60 +454,62 @@ body {
 }
 
 .appointment-details h4 {
-    font-size: 1.3rem;
-    color: #2d5016;
-    margin-bottom: 8px;
-    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+    font-weight: 600;
 }
 
 .appointment-details p {
-    color: #5a7a5c;
-    font-size: 1rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
     margin: 0;
 }
 
 .appointment-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
 }
 
 .action-btn {
     width: 40px;
     height: 40px;
-    border-radius: 50%;
+    border-radius: 10px;
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
 .edit-btn {
-    background: rgba(76, 175, 80, 0.2);
-    color: #4caf50;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    color: var(--primary);
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .edit-btn:hover {
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: white;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: var(--white);
     transform: scale(1.1);
 }
 
 .delete-btn {
-    background: rgba(244, 67, 54, 0.2);
-    color: #f44336;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .delete-btn:hover {
-    background: linear-gradient(135deg, #f44336, #e57373);
-    color: white;
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+    color: var(--white);
     transform: scale(1.1);
 }
 
 /* ========================================
-   MODAL
+   MODAL STYLES
    ======================================== */
 .modal {
     display: none;
@@ -471,9 +518,9 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(45, 80, 22, 0.85);
+    background: rgba(6, 78, 59, 0.9);
     z-index: 1000;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
 }
 
 .modal-content {
@@ -481,73 +528,84 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: linear-gradient(135deg, #ffffff 0%, #f8fdf9 100%);
-    border-radius: 25px;
-    padding: 45px;
+    background: var(--white);
+    border-radius: 24px;
+    padding: 35px;
     width: 95%;
-    max-width: 600px;
+    max-width: 550px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(76, 175, 80, 0.3);
-    border: 2px solid rgba(76, 175, 80, 0.2);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -45%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
 }
 
 .close-modal {
     position: absolute;
     top: 20px;
-    right: 25px;
-    background: linear-gradient(135deg, #f0f9f4, #e8f5e9);
-    border: 2px solid rgba(76, 175, 80, 0.3);
-    color: #2d5016;
-    font-size: 2rem;
+    right: 20px;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    color: var(--text-primary);
+    font-size: 1.8rem;
     cursor: pointer;
-    padding: 8px 15px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
     width: 45px;
     height: 45px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
+    transition: all 0.3s ease;
+    font-weight: 300;
 }
 
 .close-modal:hover {
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: white;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: var(--white);
     transform: rotate(90deg);
-    border-color: #4caf50;
 }
 
 .modal-content h3 {
-    font-size: 2rem;
-    color: #2d5016;
-    margin-bottom: 30px;
-    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--text-primary);
+    margin-bottom: 25px;
+    font-weight: 600;
     text-align: center;
 }
 
+/* Form Groups */
 .form-group {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .form-group label {
     display: block;
-    color: #2d5016;
-    font-weight: 600;
-    margin-bottom: 10px;
-    font-size: 1.1rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     width: 100%;
-    background: white;
-    border: 2px solid #4caf50;
-    border-radius: 10px;
-    padding: 12px;
-    color: #2d5016;
+    background: var(--bg-primary);
+    border: 2px solid rgba(16, 185, 129, 0.15);
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--text-primary);
     font-size: 1rem;
     transition: all 0.3s ease;
     font-family: 'Poppins', sans-serif;
@@ -557,8 +615,9 @@ body {
 .form-group select:focus,
 .form-group textarea:focus {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15);
-    border-color: #66bb6a;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    background: var(--white);
 }
 
 .form-group textarea {
@@ -566,81 +625,110 @@ body {
     resize: vertical;
 }
 
+/* Modal Actions */
 .modal-actions {
     display: flex;
     gap: 15px;
     justify-content: center;
-    margin-top: 30px;
+    margin-top: 25px;
     padding-top: 25px;
-    border-top: 2px solid rgba(76, 175, 80, 0.15);
+    border-top: 1px solid rgba(16, 185, 129, 0.1);
 }
 
 .save-btn {
-    background: linear-gradient(135deg, #4caf50, #66bb6a);
-    color: white;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--white);
     border: none;
-    padding: 15px 40px;
+    padding: 14px 35px;
     border-radius: 12px;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
     font-family: 'Poppins', sans-serif;
 }
 
 .save-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(76, 175, 80, 0.4);
+    box-shadow: 0 12px 35px rgba(16, 185, 129, 0.4);
 }
 
 .cancel-btn {
-    background: white;
-    color: #5a7a5c;
-    border: 2px solid rgba(76, 175, 80, 0.3);
-    padding: 15px 40px;
+    background: var(--white);
+    color: var(--text-muted);
+    border: 2px solid rgba(16, 185, 129, 0.2);
+    padding: 14px 35px;
     border-radius: 12px;
     cursor: pointer;
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1rem;
+    font-weight: 500;
     transition: all 0.3s ease;
     font-family: 'Poppins', sans-serif;
 }
 
 .cancel-btn:hover {
-    border-color: #4caf50;
-    color: #4caf50;
-    background: rgba(76, 175, 80, 0.05);
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--bg-primary);
 }
 
 /* ========================================
    RESPONSIVE DESIGN
    ======================================== */
 @media (max-width: 768px) {
+    .dashboard-header {
+        flex-direction: column;
+        padding: 20px;
+        gap: 15px;
+    }
+
+    .user-info {
+        position: static;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .logo h1 {
+        font-size: 1.8rem;
+    }
+
+    .back-button {
+        position: static;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .page-title h2 {
+        font-size: 1.8rem;
+    }
+
     .calendar-controls {
         flex-direction: column;
-        gap: 20px;
+        gap: 15px;
+        padding: 20px;
     }
 
     .calendar-grid {
-        gap: 5px;
+        gap: 4px;
     }
 
     .calendar-day {
-        padding: 10px 5px;
+        padding: 8px 4px;
     }
 
     .day-number {
-        font-size: 1rem;
+        font-size: 0.95rem;
     }
 
     .appointments-list {
-        gap: 15px;
+        gap: 12px;
     }
 
     .appointment-card {
         flex-direction: column;
         text-align: center;
+        padding: 18px;
     }
 
     .appointment-actions {
@@ -648,66 +736,75 @@ body {
     }
 
     .modal-content {
-        width: 98%;
-        padding: 25px;
-    }
-
-    .dashboard-header {
-        flex-direction: column;
         padding: 25px 20px;
+        width: 98%;
     }
 
-    .user-info {
-        position: static;
-        margin-top: 20px;
-        right: auto;
+    .container {
+        padding: 20px 15px;
     }
 
-    .logo h1 {
-        font-size: 2.2rem;
+    .modal-actions {
+        flex-direction: column;
     }
 
-    .back-button {
-        top: 15px;
-        left: 15px;
-    }
-
-    .page-title h2 {
-        font-size: 2.5rem;
+    .save-btn,
+    .cancel-btn {
+        width: 100%;
     }
 }
 
 @media (max-width: 480px) {
     .page-title h2 {
-        font-size: 2rem;
+        font-size: 1.5rem;
     }
 
     .calendar-header {
-        font-size: 0.85rem;
-        padding: 10px 5px;
+        font-size: 0.8rem;
+        padding: 10px 4px;
     }
 
     .appointment-time {
-        width: 70px;
-        height: 70px;
+        width: 65px;
+        height: 65px;
+    }
+
+    .appointment-time .time {
+        font-size: 1rem;
+    }
+
+    .current-month {
+        font-size: 1.1rem;
+        min-width: 140px;
     }
 }
 
-/* ========================================
-   ANIMAZIONI AGGIUNTIVE
-   ======================================== */
-@keyframes pulse {
+/* Focus states accessibili */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
 
-    0%,
-    100% {
-        transform: scale(1);
+/* Animazioni */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-
-    50% {
-        transform: scale(1.05);
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
-.calendar-day.today {
-    animation: pulse 2s ease infinite;
+.calendar,
+.appointments-section {
+    animation: slideUp 0.6s ease backwards;
 }
+
+.calendar { animation-delay: 0.1s; }
+.appointments-section { animation-delay: 0.2s; }
