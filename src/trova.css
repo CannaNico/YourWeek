@@ -1,0 +1,244 @@
+/* Professional gradient background */
+body {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 25%, #3b82f6 50%, #60a5fa 75%, #93c5fd 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+.trova-main {
+    position: relative;
+    z-index: 1;
+    padding: 110px 20px 60px;
+    color: #ffffff;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.trova-hero {
+    margin-bottom: 40px;
+}
+
+.trova-hero-content h1 {
+    font-size: 2.6rem;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.trova-hero-content p {
+    max-width: 640px;
+    font-size: 1.05rem;
+    color: #f0f9ff;
+    line-height: 1.6;
+}
+
+.trova-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    margin-bottom: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #ffffff;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.trova-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    margin-bottom: 50px;
+}
+
+.trova-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    color: #1e293b;
+}
+
+.trova-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+
+.trova-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.trova-card-icon i {
+    color: #ffffff;
+    font-size: 1.2rem;
+}
+
+.trova-card h2 {
+    margin: 0 0 12px;
+    font-size: 1.5rem;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.trova-card p {
+    font-size: 1rem;
+    color: #475569;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.trova-card ul {
+    margin: 12px 0 12px 20px;
+    padding: 0;
+    font-size: 0.95rem;
+    color: #475569;
+    line-height: 1.7;
+}
+
+.trova-card li {
+    margin-bottom: 6px;
+}
+
+.trova-card strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.trova-cta-section {
+    text-align: center;
+    padding: 32px 24px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.trova-cta-section h2 {
+    margin-bottom: 8px;
+    font-size: 1.75rem;
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.trova-cta-section>p {
+    margin-bottom: 24px;
+    color: #475569;
+    font-size: 1rem;
+}
+
+.trova-cta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.trova-cta-card {
+    padding: 24px 20px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    transition: background 0.2s ease;
+}
+
+.trova-cta-card:hover {
+    background: #f1f5f9;
+}
+
+.trova-cta-card h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.trova-cta-card p {
+    margin: 0 0 16px;
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.trova-cta-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trova-cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
+.trova-cta-secondary {
+    background: transparent;
+    border: 2px solid #2563eb;
+    color: #2563eb;
+    box-shadow: none;
+}
+
+.trova-cta-secondary:hover {
+    background: #eff6ff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+}
+
+@media (max-width: 900px) {
+    .trova-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .trova-main {
+        padding: 96px 16px 40px;
+    }
+
+    .trova-hero-content h1 {
+        font-size: 2.1rem;
+    }
+
+    .trova-cta-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .trova-hero-content h1 {
+        font-size: 1.8rem;
+    }
+
+    .trova-card {
+        padding: 20px;
+    }
+
+    .trova-cta-section {
+        padding: 24px 16px;
+    }
+}

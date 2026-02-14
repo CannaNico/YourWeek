@@ -248,6 +248,7 @@ function handleRegister() {
         $role = sanitizeInput($_POST['role'] ?? 'paziente');
         $birthDate = $_POST['birth_date'] ?? null;
         $nutritionistCode = sanitizeInput($_POST['nutritionist_code'] ?? '');
+        $provincia = strtoupper(trim($_POST['provincia'] ?? ''));
     } else {
         $data = json_decode(file_get_contents('php://input'), true);
         $email = sanitizeInput($data['email'] ?? '');
@@ -257,6 +258,7 @@ function handleRegister() {
         $role = sanitizeInput($data['role'] ?? 'paziente');
         $birthDate = $data['birth_date'] ?? null;
         $nutritionistCode = sanitizeInput($data['nutritionist_code'] ?? '');
+        $provincia = strtoupper(trim($data['provincia'] ?? ''));
     }
     
     // Controlli validazione
@@ -274,6 +276,11 @@ function handleRegister() {
     
     if (!in_array($role, ['paziente', 'nutrizionista'])) {
         sendJSON(['success' => false, 'error' => 'Ruolo non valido'], 400);
+    }
+
+    // Validazione provincia (deve essere un codice di 2 lettere come in search_users)
+    if (empty($provincia) || strlen($provincia) !== 2) {
+        sendJSON(['success' => false, 'error' => 'Provincia non valida'], 400);
     }
     
     try {
@@ -306,20 +313,21 @@ function handleRegister() {
         // Hash password
         $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         
-        // Inserisci nuovo utente
+        // Inserisci nuovo utente (includendo la provincia)
         $stmt = $db->prepare("
             INSERT INTO Users (
                 email, 
                 password_hash, 
                 first_name, 
-                last_name, 
+                last_name,
+                provincia,
                 role,
                 birth_date,
                 nutritionist_id,
                 registration_date,
                 is_active,
                 email_verified
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), 1, 0)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1, 0)
         ");
         
         $stmt->execute([
@@ -327,6 +335,7 @@ function handleRegister() {
             $passwordHash,
             $firstName,
             $lastName,
+            $provincia,
             $role,
             $birthDate,
             $nutritionistId

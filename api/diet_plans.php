@@ -31,6 +31,12 @@ switch ($action) {
         }
         break;
 
+    case 'get_plan_file':
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            getPlanFile();
+        }
+        break;
+
     default:
         sendJSON(['success' => false, 'error' => 'Azione non valida'], 400);
 }
@@ -233,6 +239,38 @@ function getPatientDietPlan() {
             $organizedMeals[$day][$mealType] = $meal['meal_description'];
         }
 
+        // Verifica se c'è un file associato al piano
+        $fileInfo = null;
+        $stmt = $db->prepare("
+            SELECT 
+                id,
+                file_name,
+                file_path,
+                file_type,
+                mime_type,
+                file_size,
+                uploaded_at
+            FROM Documents
+            WHERE user_id = ? 
+                AND description LIKE ?
+            ORDER BY uploaded_at DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId, 'Piano dietetico: ' . $plan['plan_name']]);
+        $file = $stmt->fetch();
+        
+        if ($file) {
+            $fileInfo = [
+                'id' => $file['id'],
+                'file_name' => $file['file_name'],
+                'file_path' => $file['file_path'],
+                'file_type' => $file['file_type'],
+                'mime_type' => $file['mime_type'],
+                'file_size' => $file['file_size'],
+                'uploaded_at' => $file['uploaded_at']
+            ];
+        }
+
         sendJSON([
             'success' => true,
             'hasPlan' => true,
@@ -243,9 +281,11 @@ function getPatientDietPlan() {
                 'end_date' => $plan['end_date'],
                 'daily_calories' => $plan['daily_calories'],
                 'notes' => $plan['notes'],
-                'created_at' => $plan['created_at']
+                'created_at' => $plan['created_at'],
+                'file_path' => $fileInfo ? $fileInfo['file_path'] : null
             ],
-            'meals' => $organizedMeals
+            'meals' => $organizedMeals,
+            'file' => $fileInfo
         ]);
 
     } catch (PDOException $e) {
@@ -291,34 +331,51 @@ function saveDietPlan() {
             sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
         }
 
-        // Disattiva il piano precedente se esiste
+        // Verifica se esiste già un piano attivo per questo paziente
         $stmt = $db->prepare("
-            UPDATE DietPlans 
-            SET is_active = 0 
-            WHERE patient_id = ? AND nutritionist_id = ?
+            SELECT id FROM DietPlans 
+            WHERE patient_id = ? AND nutritionist_id = ? AND is_active = 1
+            LIMIT 1
         ");
         $stmt->execute([$patientId, $nutritionistId]);
+        $existingPlan = $stmt->fetch();
 
-        // Crea il nuovo piano
-        $stmt = $db->prepare("
-            INSERT INTO DietPlans (
-                patient_id, 
-                nutritionist_id, 
-                plan_name, 
-                start_date, 
-                notes, 
-                is_active,
-                created_at
-            ) VALUES (?, ?, ?, CURDATE(), ?, 1, NOW())
-        ");
-        $stmt->execute([
-            $patientId,
-            $nutritionistId,
-            $planName,
-            $notes
-        ]);
+        if ($existingPlan) {
+            // Aggiorna il piano esistente invece di crearne uno nuovo
+            $dietPlanId = $existingPlan['id'];
+            
+            $stmt = $db->prepare("
+                UPDATE DietPlans 
+                SET plan_name = ?, notes = ?, updated_at = NOW()
+                WHERE id = ?
+            ");
+            $stmt->execute([$planName, $notes, $dietPlanId]);
 
-        $dietPlanId = $db->lastInsertId();
+            // Elimina i pasti esistenti per ricrearli
+            $stmt = $db->prepare("DELETE FROM DietPlanMeals WHERE diet_plan_id = ?");
+            $stmt->execute([$dietPlanId]);
+        } else {
+            // Crea un nuovo piano solo se non esiste
+            $stmt = $db->prepare("
+                INSERT INTO DietPlans (
+                    patient_id, 
+                    nutritionist_id, 
+                    plan_name, 
+                    start_date, 
+                    notes, 
+                    is_active,
+                    created_at
+                ) VALUES (?, ?, ?, CURDATE(), ?, 1, NOW())
+            ");
+            $stmt->execute([
+                $patientId,
+                $nutritionistId,
+                $planName,
+                $notes
+            ]);
+
+            $dietPlanId = $db->lastInsertId();
+        }
 
         // Se è inserimento manuale, salva i pasti
         if ($inputMethod === 'manual') {
@@ -482,6 +539,101 @@ function getMyNutritionist() {
     } catch (PDOException $e) {
         error_log("Errore get_my_nutritionist: " . $e->getMessage());
         sendJSON(['success' => false, 'error' => 'Errore durante il recupero del nutrizionista'], 500);
+    }
+}
+
+/**
+ * Ottiene il file del piano dietetico per un paziente
+ */
+function getPlanFile() {
+    // Verifica autenticazione
+    if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'Non autorizzato'], 403);
+    }
+
+    $patientId = intval($_GET['patient_id'] ?? 0);
+    $nutritionistId = $_SESSION['user_id'];
+
+    if (!$patientId) {
+        sendJSON(['success' => false, 'error' => 'ID paziente richiesto'], 400);
+    }
+
+    $db = getDB();
+
+    try {
+        // Verifica che il paziente appartenga al nutrizionista
+        $stmt = $db->prepare("
+            SELECT id FROM Users 
+            WHERE id = ? AND nutritionist_id = ? AND role = 'paziente'
+        ");
+        $stmt->execute([$patientId, $nutritionistId]);
+
+        if (!$stmt->fetch()) {
+            sendJSON(['success' => false, 'error' => 'Paziente non trovato o non autorizzato'], 404);
+        }
+
+        // Ottieni il piano dietetico attivo
+        $stmt = $db->prepare("
+            SELECT plan_name
+            FROM DietPlans
+            WHERE patient_id = ? AND nutritionist_id = ? AND is_active = 1
+            ORDER BY created_at DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId, $nutritionistId]);
+        $plan = $stmt->fetch();
+
+        if (!$plan) {
+            sendJSON([
+                'success' => true,
+                'file' => null,
+                'message' => 'Nessun piano dietetico attivo'
+            ]);
+        }
+
+        // Ottieni il file associato al piano
+        $stmt = $db->prepare("
+            SELECT 
+                id,
+                file_name,
+                file_path,
+                file_type,
+                mime_type,
+                file_size,
+                uploaded_at
+            FROM Documents
+            WHERE user_id = ? 
+                AND description LIKE ?
+            ORDER BY uploaded_at DESC
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId, 'Piano dietetico: ' . $plan['plan_name']]);
+        $file = $stmt->fetch();
+
+        if ($file) {
+            sendJSON([
+                'success' => true,
+                'file' => [
+                    'id' => $file['id'],
+                    'file_name' => $file['file_name'],
+                    'file_path' => $file['file_path'],
+                    'file_type' => $file['file_type'],
+                    'mime_type' => $file['mime_type'],
+                    'file_size' => $file['file_size'],
+                    'uploaded_at' => $file['uploaded_at']
+                ]
+            ]);
+        } else {
+            sendJSON([
+                'success' => true,
+                'file' => null,
+                'message' => 'Nessun file trovato per questo piano'
+            ]);
+        }
+
+    } catch (PDOException $e) {
+        error_log("Errore get_plan_file: " . $e->getMessage());
+        sendJSON(['success' => false, 'error' => 'Errore durante il recupero del file'], 500);
     }
 }
 

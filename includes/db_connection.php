@@ -11,14 +11,12 @@ define('DB_PASS', getenv('DB_PASS') ?: '');
 define('DB_CHARSET', 'utf8mb4');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
 
-// Configurazione sessione sicura
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
-ini_set('session.cookie_secure', 0); // Imposta a 1 se usi HTTPS
-ini_set('session.cookie_samesite', 'Strict');
-
-// Avvia la sessione se non è già attiva
+// Configurazione sessione sicura (solo se la sessione NON è ancora attiva)
 if (session_status() === PHP_SESSION_NONE) {
+    ini_set('session.cookie_httponly', 1);
+    ini_set('session.use_only_cookies', 1);
+    ini_set('session.cookie_secure', 0); // Imposta a 1 se usi HTTPS
+    ini_set('session.cookie_samesite', 'Strict');
     session_start();
 }
 
@@ -330,15 +328,12 @@ function requireRole($role) {
 // Imposta headers di sicurezza per tutte le risposte
 
 // CORS - Configura secondo le tue esigenze
-$allowedOrigins = ['http://localhost', 'http://127.0.0.1'];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 
-if (in_array($origin, $allowedOrigins)) {
+// Se c'è un origin lo riflettiamo (necessario per credentials: 'include')
+if (!empty($origin)) {
     header("Access-Control-Allow-Origin: $origin");
-} else {
-    header('Access-Control-Allow-Origin: *'); // Solo per development!
 }
-
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Credentials: true');
