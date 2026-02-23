@@ -7,6 +7,7 @@
     <title>Calendario Smart - YourWeek</title>
     <link rel="stylesheet" href="calendario.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="cookie-banner.css">
 </head>
 
 <body>
@@ -130,6 +131,7 @@
         let patients = [];
         let currentDate = new Date();
         let selectedDate = null;
+        let editingAppointmentId = null;
 
         // Funzione per caricare i pazienti dall'API
         async function loadPatients() {
@@ -194,17 +196,20 @@
                 const isToday = isSameDay(new Date(year, month, day), new Date());
                 const isPast = new Date(year, month, day) < new Date().setHours(0, 0, 0, 0);
 
+                // Calcola l'orario di fine per ogni appuntamento
+                let appointmentTimesHtml = '';
+                if (dayAppointments.length > 0) {
+                    appointmentTimesHtml = dayAppointments.map(apt => {
+                        const endTime = calculateEndTime(apt.time, apt.duration);
+                        return `<div class="appointment-time-label">Occupato ${apt.time}-${endTime}</div>`;
+                    }).join('');
+                }
+
                 html += `
                     <div class="calendar-day ${isToday ? 'today' : ''} ${isPast ? 'past' : ''}" 
                          onclick="selectDate('${dateStr}')">
                         <div class="day-number">${day}</div>
-                        ${dayAppointments.length > 0 ? `
-                            <div class="appointments-indicator">
-                                ${dayAppointments.map(apt => `
-                                    <div class="appointment-dot ${apt.type}"></div>
-                                `).join('')}
-                            </div>
-                        ` : ''}
+                        ${appointmentTimesHtml}
                     </div>
                 `;
             }
@@ -267,13 +272,62 @@
             }).join('');
         }
 
+        function calculateEndTime(startTime, durationMinutes) {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const startDate = new Date();
+            startDate.setHours(hours, minutes, 0, 0);
+            startDate.setMinutes(startDate.getMinutes() + durationMinutes);
+            return `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function checkAppointmentConflict(date, startTime, duration, excludeId = null) {
+            // Converti l'orario di inizio e fine in minuti per facilitare il confronto
+            const [startHours, startMinutes] = startTime.split(':').map(Number);
+            const startInMinutes = startHours * 60 + startMinutes;
+            const endInMinutes = startInMinutes + duration;
+
+            // Trova tutti gli appuntamenti nella stessa data (escludendo quello in modifica)
+            const sameDay = appointments.filter(apt =>
+                apt.date === date && apt.id !== excludeId
+            );
+
+            // Controlla se c'è sovrapposizione
+            for (let apt of sameDay) {
+                const [aptStartHours, aptStartMinutes] = apt.time.split(':').map(Number);
+                const aptStartInMinutes = aptStartHours * 60 + aptStartMinutes;
+                const aptEndInMinutes = aptStartInMinutes + apt.duration;
+
+                // Verifica sovrapposizione: il nuovo appuntamento inizia prima che finisca quello esistente
+                // E finisce dopo che inizi quello esistente
+                if (startInMinutes < aptEndInMinutes && endInMinutes > aptStartInMinutes) {
+                    return {
+                        conflict: true,
+                        appointment: apt,
+                        existingTime: `${apt.time}-${calculateEndTime(apt.time, apt.duration)}`
+                    };
+                }
+            }
+
+            return { conflict: false };
+        }
+
         function openAddAppointmentModal() {
+            editingAppointmentId = null;
             document.getElementById('appointmentModal').style.display = 'block';
+            document.querySelector('.modal-title').textContent = 'Nuovo Appuntamento';
             document.getElementById('appointmentDate').value = selectedDate || '';
+            // Reset form
+            document.getElementById('appointmentPatient').value = '';
+            document.getElementById('appointmentTime').value = '';
+            document.getElementById('appointmentDuration').value = '60';
+            document.getElementById('appointmentType').value = 'prima';
+            document.getElementById('appointmentNotes').value = '';
+            document.getElementById('appointmentReminder').checked = true;
         }
 
         function closeAppointmentModal() {
             document.getElementById('appointmentModal').style.display = 'none';
+            editingAppointmentId = null;
         }
 
         function saveAppointment() {
@@ -292,24 +346,89 @@
                 return;
             }
 
-            const appointment = {
-                id: Date.now(),
-                patientName,
-                date,
-                time,
-                duration,
-                type,
-                typeLabel,
-                notes,
-                reminder
-            };
+            // Controlla conflitti di orario
+            const conflictCheck = checkAppointmentConflict(date, time, duration, editingAppointmentId);
+            if (conflictCheck.conflict) {
+                const endTime = calculateEndTime(time, duration);
+                alert(`⚠️ ORARIO OCCUPATO!\n\nEsiste già un appuntamento in questa fascia oraria:\n\n` +
+                    `Paziente: ${conflictCheck.appointment.patientName}\n` +
+                    `Orario: ${conflictCheck.existingTime}\n\n` +
+                    `Il tuo appuntamento (${time}-${endTime}) si sovrappone.\n\n` +
+                    `Scegli un orario diverso.`);
+                return;
+            }
 
-            appointments.push(appointment);
+            if (editingAppointmentId) {
+                // Modifica appuntamento esistente
+                const index = appointments.findIndex(apt => apt.id === editingAppointmentId);
+                if (index !== -1) {
+                    appointments[index] = {
+                        id: editingAppointmentId,
+                        patientName,
+                        date,
+                        time,
+                        duration,
+                        type,
+                        typeLabel,
+                        notes,
+                        reminder
+                    };
+                    alert('Appuntamento modificato con successo!');
+                }
+            } else {
+                // Nuovo appuntamento
+                const appointment = {
+                    id: Date.now(),
+                    patientName,
+                    date,
+                    time,
+                    duration,
+                    type,
+                    typeLabel,
+                    notes,
+                    reminder
+                };
+                appointments.push(appointment);
+                alert('Appuntamento salvato con successo!');
+            }
+
             localStorage.setItem('appointments', JSON.stringify(appointments));
-
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
             closeAppointmentModal();
-            alert('Appuntamento salvato con successo!');
+        }
+
+        function editAppointment(id) {
+            const appointment = appointments.find(apt => apt.id === id);
+            if (!appointment) return;
+
+            editingAppointmentId = id;
+            document.getElementById('appointmentModal').style.display = 'block';
+            document.querySelector('.modal-title').textContent = 'Modifica Appuntamento';
+
+            // Trova il paziente nel dropdown
+            const patientSelect = document.getElementById('appointmentPatient');
+            for (let i = 0; i < patientSelect.options.length; i++) {
+                if (patientSelect.options[i].text === appointment.patientName) {
+                    patientSelect.selectedIndex = i;
+                    break;
+                }
+            }
+
+            document.getElementById('appointmentDate').value = appointment.date;
+            document.getElementById('appointmentTime').value = appointment.time;
+            document.getElementById('appointmentDuration').value = appointment.duration;
+            document.getElementById('appointmentType').value = appointment.type;
+            document.getElementById('appointmentNotes').value = appointment.notes || '';
+            document.getElementById('appointmentReminder').checked = appointment.reminder;
+        }
+
+        function deleteAppointment(id) {
+            if (confirm('Sei sicuro di voler eliminare questo appuntamento?')) {
+                appointments = appointments.filter(apt => apt.id !== id);
+                localStorage.setItem('appointments', JSON.stringify(appointments));
+                generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
+                alert('Appuntamento eliminato con successo!');
+            }
         }
 
         document.getElementById('prevMonth').addEventListener('click', () => {
@@ -334,6 +453,7 @@
             generateCalendar(currentDate.getFullYear(), currentDate.getMonth());
         });
     </script>
+    <script src="cookie-banner.js"></script>
 </body>
 
 </html>
