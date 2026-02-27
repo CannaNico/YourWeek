@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - YourWeek</title>
     <link rel="stylesheet" href="loginPage.css">
+    <link rel="stylesheet" href="cookie-banner.css">
 </head>
 
 <body>
@@ -104,15 +105,18 @@
 
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('remember').checked;
 
             console.log('Tentativo di login con:', email);
             console.log('Ruolo selezionato:', selectedUserType);
+            console.log('Ricordami:', rememberMe);
 
             try {
                 const formData = new FormData();
                 formData.append('email', email);
                 formData.append('password', password);
                 formData.append('selected_role', selectedUserType);
+                if (rememberMe) formData.append('remember_me', '1');
 
                 const response = await fetch('../api/auth.php?action=login', {
                     method: 'POST',
@@ -122,11 +126,9 @@
 
                 console.log('Response status:', response.status);
 
-                // Prova sempre a parsare la risposta come JSON
                 const result = await response.json();
                 console.log('Risultato:', result);
 
-                // Controlla se la risposta non è OK e non è un errore di ruolo
                 if (!response.ok && result.error_code !== 'ROLE_MISMATCH') {
                     console.error('Errore dal server:', result);
                     alert('Errore del server (status ' + response.status + '). Controlla la console.');
@@ -134,16 +136,19 @@
                 }
 
                 if (result.success) {
+                    // Cookie "Ricordami": il server ha già impostato il cookie httponly
+                    if (rememberMe && result.remember_token && window.YWCookies) {
+                        window.YWCookies.setRememberMe(result.remember_token);
+                    }
+
                     alert('Login effettuato con successo!');
 
-                    // Reindirizza in base al ruolo
                     if (result.user.role === 'nutrizionista') {
                         window.location.href = 'nutrizionistaPage.html';
                     } else {
                         window.location.href = 'clientePage.html';
                     }
                 } else {
-                    // Gestisci errore di ruolo errato con messaggio specifico
                     if (result.error_code === 'ROLE_MISMATCH') {
                         alert('Hai sbagliato ruolo');
                     } else {
@@ -156,6 +161,7 @@
             }
         });
     </script>
+    <script src="cookie-banner.js"></script>
 </body>
 
 </html>

@@ -4,12 +4,796 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Cliente - YourWeek</title>
+    <title>La Mia Dashboard - YourWeek</title>
     <link rel="stylesheet" href="clientePage.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="cookie-banner.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* ========================================
+           EXTENDED CLIENT DASHBOARD STYLES
+           ======================================== */
+
+        /* Section Wrapper */
+        .section-block {
+            background: var(--white);
+            border-radius: 22px;
+            padding: 28px 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(59, 130, 246, 0.08);
+            margin-bottom: 28px;
+        }
+
+        .section-block h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--bg-secondary);
+        }
+
+        .section-block h3 .sh-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        /* ---- Progressi ---- */
+        .progress-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 860px) {
+            .progress-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-box {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 20px;
+            position: relative;
+            height: 250px;
+        }
+
+        .progress-table-wrap {
+            overflow-x: auto;
+        }
+
+        .progress-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .progress-table th {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .progress-table th:first-child {
+            border-radius: 10px 0 0 10px;
+        }
+
+        .progress-table th:last-child {
+            border-radius: 0 10px 10px 0;
+        }
+
+        .progress-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .progress-table tr:hover td {
+            background: var(--bg-primary);
+        }
+
+        .bmi-badge {
+            padding: 2px 9px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .bmi-normal {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .bmi-ideal {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary-dark);
+        }
+
+        .bmi-sovrappeso {
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+        }
+
+        .bmi-obeso {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+        }
+
+        .bmi-sottopeso {
+            background: rgba(139, 92, 246, 0.12);
+            color: #8b5cf6;
+        }
+
+        .no-data-msg {
+            text-align: center;
+            padding: 35px 20px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .no-data-msg i {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 12px;
+            opacity: 0.35;
+        }
+
+        /* ---- Nutrizionista Card ---- */
+        .nut-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: linear-gradient(135deg, var(--bg-primary), white);
+            border-radius: 18px;
+            padding: 22px 26px;
+            border: 1px solid rgba(59, 130, 246, 0.12);
+        }
+
+        .nut-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .nut-info {
+            flex: 1;
+        }
+
+        .nut-name {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .nut-email {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .nut-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .no-nut-card {
+            text-align: center;
+            padding: 30px;
+            background: var(--bg-primary);
+            border-radius: 16px;
+        }
+
+        .no-nut-card p {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+
+        .find-nut-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            box-shadow: 0 6px 18px rgba(59, 130, 246, 0.3);
+        }
+
+        .find-nut-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(59, 130, 246, 0.4);
+        }
+
+        /* ---- Appuntamenti ---- */
+        .appt-legend {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .appt-tab-btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            color: var(--text-muted);
+            background: var(--bg-primary);
+        }
+
+        .appt-tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .appt-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .appt-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 15px 18px;
+            background: var(--bg-primary);
+            border-radius: 14px;
+            border: 1px solid rgba(59, 130, 246, 0.08);
+            transition: all 0.25s;
+        }
+
+        .appt-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+
+        .appt-date-badge {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 12px;
+            padding: 10px 12px;
+            text-align: center;
+            min-width: 54px;
+            flex-shrink: 0;
+        }
+
+        .appt-date-badge .day {
+            font-size: 1.4rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .appt-date-badge .month {
+            font-size: 0.65rem;
+            font-weight: 500;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+
+        .appt-info {
+            flex: 1;
+        }
+
+        .appt-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .appt-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .appt-type-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .type-prima-visita {
+            background: rgba(139, 92, 246, 0.12);
+            color: #8b5cf6;
+        }
+
+        .type-controllo-mensile {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--primary);
+        }
+
+        .type-follow-up {
+            background: rgba(6, 182, 212, 0.12);
+            color: var(--secondary);
+        }
+
+        .type-urgente {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+        }
+
+        .appt-status-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-scheduled {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .status-cancelled {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+
+        .status-no-show {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .already-reviewed {
+            font-size: 1.1rem;
+        }
+
+        /* ---- Le mie recensioni ---- */
+        .my-reviews-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+        }
+
+        .my-review-card {
+            background: var(--bg-primary);
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid rgba(59, 130, 246, 0.1);
+            transition: all 0.3s;
+        }
+
+        .my-review-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .my-review-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .my-review-nut {
+            font-weight: 700;
+            font-size: 0.92rem;
+            color: var(--text-primary);
+        }
+
+        .my-review-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .apple-display {
+            font-size: 1.25rem;
+            letter-spacing: 2px;
+        }
+
+        .my-review-comment {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            line-height: 1.5;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--bg-secondary);
+        }
+
+        .my-review-type {
+            font-size: 0.73rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* ---- Tab navigation internal ---- */
+        .inner-tab-group {
+            margin-bottom: 20px;
+        }
+
+        /* ---- POST-VISIT REVIEW OVERLAY ---- */
+        #reviewOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #reviewOverlay.open {
+            display: flex;
+        }
+
+        #reviewModal {
+            background: #fff;
+            border-radius: 32px;
+            padding: 45px 40px;
+            max-width: 500px;
+            width: 94%;
+            text-align: center;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.3);
+            animation: reviewIn 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        @keyframes reviewIn {
+            from {
+                opacity: 0;
+                transform: scale(0.88) translateY(25px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .review-illustration {
+            font-size: 4rem;
+            margin-bottom: 12px;
+        }
+
+        .review-modal-title {
+            font-size: 1.7rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #0f172a, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .review-modal-sub {
+            color: #6b7280;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .apple-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .apple-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 2.8rem;
+            transition: all 0.2s ease;
+            filter: grayscale(0.75);
+            padding: 4px;
+        }
+
+        .apple-btn:hover {
+            filter: grayscale(0);
+            transform: scale(1.25);
+        }
+
+        .review-comment-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--bg-secondary);
+            border-radius: 14px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.93rem;
+            resize: none;
+            min-height: 80px;
+            outline: none;
+            color: var(--text-primary);
+            transition: border-color 0.3s;
+            margin-bottom: 18px;
+        }
+
+        .review-comment-input:focus {
+            border-color: var(--primary);
+        }
+
+        .review-submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
+        }
+
+        .review-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(59, 130, 246, 0.45);
+        }
+
+        .review-skip-btn {
+            margin-top: 12px;
+            display: block;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            color: #9ca3af;
+            font-size: 0.88rem;
+            text-decoration: underline;
+        }
+
+        .review-success-msg {
+            display: none;
+            margin-top: 18px;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(6, 182, 212, 0.1));
+            border-radius: 12px;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Spinner */
+        .ld-spin {
+            font-size: 1.8rem;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-box {
+            padding: 40px;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        /* ========================================
+           WIDGETS (Water Tracker & Tip)
+           ======================================== */
+        .water-tracker-card {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            padding: 24px 30px;
+            color: white;
+            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.3);
+            margin-bottom: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .water-tracker-card::after {
+            content: '\f043';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: -20px;
+            bottom: -30px;
+            font-size: 8rem;
+            opacity: 0.1;
+            transform: rotate(-15deg);
+            pointer-events: none;
+        }
+
+        .water-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .water-header h3 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: white;
+            border: none;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .water-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+
+        .water-progress-text {
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .water-glasses {
+            display: flex;
+            gap: 12px;
+            position: relative;
+            z-index: 2;
+            flex-wrap: wrap;
+        }
+
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            width: 45px;
+            height: 55px;
+            border-radius: 8px 8px 15px 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .glass-btn:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .glass-btn::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -5px;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.8));
+            transition: height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .glass-btn.filled {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.9);
+        }
+
+        .glass-btn.filled::after {
+            height: 80%;
+            border-radius: 4px;
+        }
+
+        .glass-btn i {
+            color: rgba(6, 182, 212, 0.8);
+            font-size: 1.2rem;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .glass-btn.filled i {
+            opacity: 1;
+            transform: translateY(-15px);
+        }
+
+        .tip-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+            border-left: 4px solid #8b5cf6;
+            border-radius: 12px;
+            padding: 20px 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 25px;
+            transition: transform 0.3s;
+        }
+
+        .tip-card:hover {
+            transform: translateX(5px);
+        }
+
+        .tip-icon {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: #8b5cf6;
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2);
+            flex-shrink: 0;
+        }
+
+        .tip-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tip-content h4 {
+            color: #4c1d95;
+            font-size: 1.05rem;
+            margin: 0;
+            font-weight: 700;
+            border: none;
+            padding: 0;
+        }
+
+        .tip-content p {
+            color: #5b21b6;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+    </style>
 </head>
 
 <body>
+    <!-- Back Button -->
     <div class="back-to-login">
         <a href="loginPage.html">
             <i class="fas fa-arrow-left"></i>
@@ -17,50 +801,54 @@
         </a>
     </div>
 
+    <!-- Header -->
     <header class="dashboard-header">
         <div class="logo">
             <h1>YourWeek</h1>
         </div>
         <div class="user-info">
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
+            <div class="user-avatar"><i class="fas fa-user"></i></div>
             <div>
-                <h3 id="userName">Benvenuto Cliente!</h3>
-                <p>Accesso effettuato con successo</p>
+                <h3 id="userName">Benvenuto!</h3>
+                <p id="userSubtitle">La tua dashboard personale</p>
             </div>
         </div>
     </header>
 
+    <!-- Main Content -->
     <main class="dashboard-content">
+
+        <!-- Welcome -->
         <div class="welcome-section">
-            <h2>La Tua Dashboard Personale</h2>
-            <p>Gestisci il tuo piano alimentare e monitora i tuoi progressi</p>
+            <h2>La Tua Dashboard 🌟</h2>
+            <p>Monitora i tuoi progressi, gestisci gli appuntamenti e tieni traccia del tuo percorso</p>
         </div>
 
-        <div class="stats-section">
+        <!-- STAT CARDS (dinamiche) -->
+        <div class="stats-section" id="statsSection">
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-weight"></i></div>
-                <div class="stat-value">-3.5</div>
-                <div class="stat-label">Kg Persi</div>
+                <div class="stat-value" id="statWeight">—</div>
+                <div class="stat-label">Peso Attuale (kg)</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-                <div class="stat-value">24</div>
-                <div class="stat-label">Piani Seguiti</div>
+                <div class="stat-icon"><i class="fas fa-arrow-trend-down"></i></div>
+                <div class="stat-value" id="statChange">—</div>
+                <div class="stat-label">Variazione Peso</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-flame"></i></div>
-                <div class="stat-value">2,150</div>
-                <div class="stat-label">Cal. Medie</div>
+                <div class="stat-icon"><i class="fas fa-calculator"></i></div>
+                <div class="stat-value" id="statBMI">—</div>
+                <div class="stat-label">BMI Attuale</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-target"></i></div>
-                <div class="stat-value">87%</div>
-                <div class="stat-label">Obiettivo Mese</div>
+                <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+                <div class="stat-value" id="statNextAppt">—</div>
+                <div class="stat-label">Prossima Visita</div>
             </div>
         </div>
 
+        <!-- Feature Cards -->
         <div class="features-grid">
             <div class="feature-card" onclick="location.href='pianoAlimentare.html'">
                 <i class="fas fa-utensils"></i>
@@ -68,92 +856,612 @@
                 <p>Visualizza il tuo piano alimentare personalizzato creato dal nutrizionista</p>
                 <button class="btn-small">Vai al Piano</button>
             </div>
-
-            <div class="feature-card">
+            <div class="feature-card" onclick="scrollToSection('progressi')">
                 <i class="fas fa-chart-line"></i>
-                <h3>Progressi</h3>
-                <p>Monitora i tuoi progressi e raggiungi i tuoi obiettivi di benessere</p>
+                <h3>I Miei Progressi</h3>
+                <p>Grafico del tuo andamento peso e storico completo delle misurazioni</p>
                 <button class="btn-small">Visualizza</button>
             </div>
-
-            <div class="feature-card">
+            <div class="feature-card" onclick="scrollToSection('appuntamenti')">
                 <i class="fas fa-calendar-alt"></i>
                 <h3>Appuntamenti</h3>
-                <p>Prenota e gestisci i tuoi appuntamenti con il nutrizionista</p>
-                <button class="btn-small">Prenota Ora</button>
+                <p>Visualizza le tue visite passate e quelle programmate con il nutrizionista</p>
+                <button class="btn-small">Vedi Visite</button>
             </div>
-
-            <div class="feature-card">
-                <i class="fas fa-comments"></i>
-                <h3>Messaggi</h3>
-                <p>Comunica direttamente con il tuo nutrizionista per consigli personalizzati</p>
-                <button class="btn-small">Apri Chat</button>
+            <div class="feature-card" onclick="scrollToSection('nutrizionista')">
+                <i class="fas fa-user-md"></i>
+                <h3>Il Mio Nutrizionista</h3>
+                <p>Informazioni sul tuo nutrizionista o cerca un professionista nella tua zona</p>
+                <button class="btn-small">Visualizza</button>
             </div>
         </div>
 
-        <div class="activity-section">
-            <h3><i class="fas fa-history"></i> Attività Recente</h3>
-            <ul class="activity-list">
-                <li class="activity-item">
-                    <div class="activity-icon"><i class="fas fa-check-circle"></i></div>
-                    <div class="activity-content">
-                        <div class="activity-title">Piano settimanale completato</div>
-                        <div class="activity-date">Completato 2 giorni fa</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon"><i class="fas fa-pencil-alt"></i></div>
-                    <div class="activity-content">
-                        <div class="activity-title">Piano alimentare aggiornato</div>
-                        <div class="activity-date">Aggiornato 5 giorni fa</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon"><i class="fas fa-dumbbell"></i></div>
-                    <div class="activity-content">
-                        <div class="activity-title">Nuovo appuntamento prenotato</div>
-                        <div class="activity-date">Prenotato 1 settimana fa</div>
-                    </div>
-                </li>
-                <li class="activity-item">
-                    <div class="activity-icon"><i class="fas fa-chart-bar"></i></div>
-                    <div class="activity-content">
-                        <div class="activity-title">Obiettivo mensile raggiunto al 87%</div>
-                        <div class="activity-date">Aggiornato oggi</div>
-                    </div>
-                </li>
-            </ul>
+        <!-- WIDGETS INTERATTIVI -->
+        <div class="tip-card" id="dailyTipCard">
+            <div class="tip-icon"><i class="fas fa-lightbulb"></i></div>
+            <div class="tip-content">
+                <h4 id="tipTitle">Consiglio del giorno</h4>
+                <p id="tipText">Caricamento consiglio...</p>
+            </div>
         </div>
+
+        <div class="water-tracker-card" id="waterTracker">
+            <div class="water-header">
+                <div>
+                    <h3><i class="fas fa-tint" style="color:white;"></i> Idratazione Giornaliera</h3>
+                    <p>Obiettivo giornaliero: 2 Litri (8 Bicchieri)</p>
+                </div>
+                <div class="water-progress-text"><span id="waterCount">0</span> / 8</div>
+            </div>
+            <div class="water-glasses" id="waterGlasses">
+                <!-- Generato via JS -->
+            </div>
+        </div>
+
+        <!-- =====================================
+             SEZIONE 1: PROGRESSI
+             ===================================== -->
+        <div class="section-block" id="progressi">
+            <h3>
+                <span class="sh-icon"><i class="fas fa-chart-line"></i></span>
+                I Miei Progressi
+            </h3>
+            <div id="progressiContent">
+                <div class="loading-box"><i class="fas fa-spinner ld-spin"></i></div>
+            </div>
+        </div>
+
+        <!-- =====================================
+             SEZIONE 2: NUTRIZIONISTA
+             ===================================== -->
+        <div class="section-block" id="nutrizionista">
+            <h3>
+                <span class="sh-icon"><i class="fas fa-user-md"></i></span>
+                Il Mio Nutrizionista
+            </h3>
+            <div id="nutrizionistaContent">
+                <div class="loading-box"><i class="fas fa-spinner ld-spin"></i></div>
+            </div>
+        </div>
+
+        <!-- =====================================
+             SEZIONE 3: APPUNTAMENTI
+             ===================================== -->
+        <div class="section-block" id="appuntamenti">
+            <h3>
+                <span class="sh-icon"><i class="fas fa-calendar-alt"></i></span>
+                I Miei Appuntamenti
+            </h3>
+            <div class="inner-tab-group">
+                <button class="appt-tab-btn active" id="btnUpcoming" onclick="showAppts('upcoming')">
+                    <i class="fas fa-calendar-check"></i> Prossime visite
+                </button>
+                <button class="appt-tab-btn" id="btnPast" onclick="showAppts('past')">
+                    <i class="fas fa-history"></i> Visite passate
+                </button>
+            </div>
+            <div id="apptsUpcoming">
+                <div class="loading-box"><i class="fas fa-spinner ld-spin"></i></div>
+            </div>
+            <div id="apptsPast" style="display:none;"></div>
+        </div>
+
+        <!-- =====================================
+             SEZIONE 4: LE MIE VALUTAZIONI
+             ===================================== -->
+        <div class="section-block" id="leValutazioni">
+            <h3>
+                <span class="sh-icon"><i class="fas fa-apple-alt"></i></span>
+                Le Mie Valutazioni 🍎
+            </h3>
+            <div id="myReviewsContent">
+                <div class="loading-box"><i class="fas fa-spinner ld-spin"></i></div>
+            </div>
+        </div>
+
     </main>
 
+    <!-- =====================================
+         POST-VISIT REVIEW OVERLAY
+         ===================================== -->
+    <div id="reviewOverlay">
+        <div id="reviewModal">
+            <div class="review-illustration">🍎</div>
+            <div class="review-modal-title">Com'è andata la visita?</div>
+            <div class="review-modal-sub" id="reviewModalSub">
+                Valuta la tua esperienza con il piano alimentare.<br>
+                Quante <strong>mele</strong> vuoi dare? Più mele = più soddisfazione! 🍏
+            </div>
+            <div class="apple-selector" id="appleSelector">
+                <button class="apple-btn" data-val="1" onclick="selectApples(1)">🍎</button>
+                <button class="apple-btn" data-val="2" onclick="selectApples(2)">🍎</button>
+                <button class="apple-btn" data-val="3" onclick="selectApples(3)">🍎</button>
+                <button class="apple-btn" data-val="4" onclick="selectApples(4)">🍎</button>
+                <button class="apple-btn" data-val="5" onclick="selectApples(5)">🍎</button>
+            </div>
+            <textarea class="review-comment-input" id="reviewComment"
+                placeholder="Commento opzionale: come ti sei trovato con il piano?"></textarea>
+            <button class="review-submit-btn" onclick="submitAppleReview()">
+                <i class="fas fa-paper-plane"></i> Invia Valutazione
+            </button>
+            <button class="review-skip-btn" onclick="document.getElementById('reviewOverlay').classList.remove('open')">
+                Salta per ora
+            </button>
+            <div class="review-success-msg" id="reviewSuccessMsg">
+                🎉 Grazie per la tua valutazione! Il tuo nutrizionista ti ringrazia.
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Verifica autenticazione e carica dati utente
-        async function checkAuthAndLoadUser() {
+        // ============================================
+        // STATE
+        // ============================================
+        let dashboardData = null;
+        let weightChart = null;
+        let selectedApples = 0;
+        let pendingApptId = null;
+
+        const typeLabels = {
+            'prima-visita': 'Prima Visita',
+            'controllo-mensile': 'Controllo Mensile',
+            'follow-up': 'Follow-up',
+            'urgente': 'Urgente'
+        };
+        const typeClasses = {
+            'prima-visita': 'type-prima-visita',
+            'controllo-mensile': 'type-controllo-mensile',
+            'follow-up': 'type-follow-up',
+            'urgente': 'type-urgente'
+        };
+        const months = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+        // ACQUA E CONSIGLI STATE
+        let waterCount = 0;
+        const targetWater = 8;
+        const tipsList = [
+            "Bevi almeno 2 litri d'acqua al giorno per un metabolismo attivo 💧.",
+            "Mastica lentamente: aiuta la digestione e aumenta il senso di sazietà 🍎.",
+            "Una camminata di 30 minuti al giorno migliora salute e umore 🚶‍♂️.",
+            "Dormire 7-8 ore a notte è fondamentale per il recupero fisico 😴.",
+            "Scegli cibi integrali per un apporto prolungato di energia 🌾.",
+            "Inserisci porzioni di verdura colorata a ogni pasto principale 🥗.",
+            "Non saltare mai la colazione per iniziare la giornata col piede giusto 🍳.",
+            "Evita schermi luminosi prima di dormire per migliorare la qualità del sonno 🌙."
+        ];
+
+        // ============================================
+        // INIT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            initWaterTracker();
+            renderDailyTip();
+            await checkAuth();
+            await Promise.all([loadDashboard(), checkPendingReview()]);
+        });
+
+        // ============================================
+        // DAILY WIDGETS LOGIC
+        // ============================================
+        function initWaterTracker() {
+            const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+            const today = (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+            const storedDate = localStorage.getItem('yw_water_date');
+
+            if (storedDate === today) {
+                waterCount = parseInt(localStorage.getItem('yw_water_count') || '0');
+            } else {
+                waterCount = 0;
+                localStorage.setItem('yw_water_date', today);
+                localStorage.setItem('yw_water_count', '0');
+            }
+            renderWaterTracker();
+        }
+
+        function toggleWater(index) {
+            if (index < waterCount && index === waterCount - 1) {
+                waterCount = index; // deseleziona se clicco l'ultimo selezionato
+            } else {
+                waterCount = index + 1; // riempi fino a quello cliccato
+            }
+
+            localStorage.setItem('yw_water_count', waterCount);
+            renderWaterTracker();
+        }
+
+        function renderWaterTracker() {
+            document.getElementById('waterCount').innerText = waterCount;
+            let html = '';
+            for (let i = 0; i < targetWater; i++) {
+                const filledClass = i < waterCount ? 'filled' : '';
+                html += `<div class="glass-btn ${filledClass}" onclick="toggleWater(${i})" title="${i + 1}° bicchiere (250ml)">
+                            <i class="fas fa-tint"></i>
+                         </div>`;
+            }
+            document.getElementById('waterGlasses').innerHTML = html;
+        }
+
+        function renderDailyTip() {
+            const today = new Date();
+            const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            const tipIndex = dayOfYear % tipsList.length;
+            document.getElementById('tipText').innerText = tipsList[tipIndex];
+        }
+
+        async function checkAuth() {
             try {
-                const response = await fetch('../api/auth.php?action=check', {
-                    method: 'GET',
-                    credentials: 'include'
-                });
-
-                const result = await response.json();
-
-                if (result.success && result.authenticated) {
-                    // Aggiorna il nome utente nell'header
-                    const userName = result.user.name || 'Cliente';
-                    document.getElementById('userName').textContent = `Benvenuto ${userName}!`;
-                } else {
-                    // Se non autenticato, reindirizza al login
+                const res = await fetch('../api/auth.php?action=check', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.success || !data.authenticated) {
                     alert('Sessione scaduta. Effettua nuovamente il login.');
                     window.location.href = 'loginPage.html';
+                    return;
                 }
-            } catch (error) {
-                console.error('Errore verifica autenticazione:', error);
+                document.getElementById('userName').textContent = 'Ciao, ' + (data.user.name || 'Utente') + '!';
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadDashboard() {
+            try {
+                const res = await fetch('../api/reports.php?action=get_patient_dashboard', { credentials: 'include' });
+                const data = await res.json();
+
+                if (!data.success) {
+                    console.warn('Dashboard error:', data.error);
+                    setAllEmpty();
+                    return;
+                }
+                dashboardData = data;
+                renderStats(data);
+                renderProgressi(data.history);
+                renderNutrizionista(data.profile);
+                renderAppointments(data.upcoming, data.past);
+                renderMyReviews(data.my_reviews);
+                // Update subtitle with nutritionist name
+                if (data.profile.nut_first_name) {
+                    document.getElementById('userSubtitle').textContent =
+                        'Nutrizionista: Dott. ' + data.profile.nut_first_name + ' ' + data.profile.nut_last_name;
+                }
+            } catch (e) {
+                console.error(e);
+                setAllEmpty();
             }
         }
 
-        // Carica i dati utente al caricamento della pagina
-        document.addEventListener('DOMContentLoaded', checkAuthAndLoadUser);
+        // ============================================
+        // STATS
+        // ============================================
+        function renderStats(data) {
+            const history = data.history || [];
+            const latest = history.length > 0 ? history[history.length - 1] : null;
+
+            document.getElementById('statWeight').textContent =
+                latest ? latest.weight_kg + ' kg' : '—';
+
+            const wc = data.weight_change;
+            if (wc !== null && wc !== undefined) {
+                const el = document.getElementById('statChange');
+                el.textContent = (wc > 0 ? '+' : '') + wc + ' kg';
+                el.style.color = wc < 0 ? '#10b981' : wc > 0 ? '#ef4444' : 'inherit';
+            }
+
+            const bmi = latest ? parseFloat(latest.bmi) : null;
+            document.getElementById('statBMI').textContent = bmi ? bmi.toFixed(1) : '—';
+
+            const upcoming = data.upcoming || [];
+            if (upcoming.length > 0) {
+                const d = new Date(upcoming[0].appointment_date);
+                document.getElementById('statNextAppt').textContent =
+                    d.getDate() + ' ' + months[d.getMonth()];
+            } else {
+                document.getElementById('statNextAppt').textContent = '—';
+            }
+        }
+
+        // ============================================
+        // PROGRESSI
+        // ============================================
+        function renderProgressi(history) {
+            const c = document.getElementById('progressiContent');
+            if (!history || history.length === 0) {
+                c.innerHTML = `<div class="no-data-msg">
+                    <i class="fas fa-chart-line"></i>
+                    Nessuna misurazione registrata ancora. Il tuo nutrizionista aggiornerà i tuoi dati dopo ogni visita.
+                </div>`;
+                return;
+            }
+
+            // Build table rows
+            let rows = '';
+            [...history].reverse().forEach(h => {
+                const bmi = h.bmi ? parseFloat(h.bmi).toFixed(1) : null;
+                let bmiClass = '';
+                if (bmi) {
+                    const b = parseFloat(bmi);
+                    if (b < 18.5) bmiClass = 'bmi-sottopeso';
+                    else if (b < 25) bmiClass = 'bmi-ideal';
+                    else if (b < 30) bmiClass = 'bmi-sovrappeso';
+                    else bmiClass = 'bmi-obeso';
+                }
+                rows += `<tr>
+                    <td>${new Date(h.measurement_date).toLocaleDateString('it-IT')}</td>
+                    <td><strong>${h.weight_kg} kg</strong></td>
+                    <td>${h.body_fat_percent ? h.body_fat_percent + '%' : '—'}</td>
+                    <td>${h.muscle_mass_percent ? h.muscle_mass_percent + '%' : '—'}</td>
+                    <td>${bmi ? `<span class="bmi-badge ${bmiClass}">${bmi}</span>` : '—'}</td>
+                    <td style="font-size:0.8rem;color:var(--text-muted)">${h.notes || '—'}</td>
+                </tr>`;
+            });
+
+            c.innerHTML = `<div class="progress-grid">
+                <div>
+                    ${history.length > 1 ? `
+                    <div class="chart-box">
+                        <canvas id="weightChart"></canvas>
+                    </div>` : `<div class="no-data-msg" style="padding:20px">
+                        <i class="fas fa-chart-line" style="font-size:1.5rem"></i>
+                        <p style="font-size:0.85rem">Aggiungi più di una misurazione per vedere il grafico</p>
+                    </div>`}
+                </div>
+                <div class="progress-table-wrap">
+                    <table class="progress-table">
+                        <thead>
+                            <tr><th>Data</th><th>Peso</th><th>Massa Grassa</th><th>Massa Musc.</th><th>BMI</th><th>Note</th></tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            </div>`;
+
+            if (history.length > 1) {
+                setTimeout(() => {
+                    const ctx = document.getElementById('weightChart');
+                    if (!ctx) return;
+                    if (weightChart) weightChart.destroy();
+                    weightChart = new Chart(ctx.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: history.map(h => new Date(h.measurement_date).toLocaleDateString('it-IT')),
+                            datasets: [{
+                                label: 'Peso (kg)',
+                                data: history.map(h => h.weight_kg),
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59,130,246,0.08)',
+                                borderWidth: 3, fill: true, tension: 0.4,
+                                pointBackgroundColor: '#3b82f6',
+                                pointBorderColor: '#fff', pointBorderWidth: 2,
+                                pointRadius: 5, pointHoverRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { labels: { color: '#0f172a', font: { size: 12, weight: 'bold' } } } },
+                            scales: {
+                                y: { grid: { color: 'rgba(59,130,246,0.08)' }, ticks: { color: '#475569' } },
+                                x: { grid: { color: 'rgba(59,130,246,0.08)' }, ticks: { color: '#475569' } }
+                            }
+                        }
+                    });
+                }, 150);
+            }
+        }
+
+        // ============================================
+        // NUTRIZIONISTA
+        // ============================================
+        function renderNutrizionista(profile) {
+            const c = document.getElementById('nutrizionistaContent');
+            if (!profile.nutritionist_id) {
+                c.innerHTML = `<div class="no-nut-card">
+                    <p><i class="fas fa-user-md" style="font-size:2rem;color:var(--text-muted);display:block;margin-bottom:10px"></i>
+                    Non hai ancora un nutrizionista assegnato.</p>
+                    <a class="find-nut-btn" href="trovaNutrizionista.html">
+                        <i class="fas fa-search"></i> Trova un Nutrizionista
+                    </a>
+                </div>`;
+                return;
+            }
+            const initials = (profile.nut_first_name[0] + profile.nut_last_name[0]).toUpperCase();
+            c.innerHTML = `<div class="nut-card">
+                <div class="nut-avatar">${initials}</div>
+                <div class="nut-info">
+                    <div class="nut-name">Dott. ${profile.nut_first_name} ${profile.nut_last_name}</div>
+                    <div class="nut-email"><i class="fas fa-envelope" style="color:var(--primary);margin-right:5px"></i>${profile.nut_email || ''}</div>
+                    <div class="nut-badge"><i class="fas fa-check-circle"></i> Nutrizionista assegnato</div>
+                </div>
+                <div>
+                    <a class="find-nut-btn" href="trovaNutrizionista.html" style="font-size:0.82rem;padding:10px 18px;">
+                        <i class="fas fa-search"></i> Cambia nutrizionista
+                    </a>
+                </div>
+            </div>`;
+        }
+
+        // ============================================
+        // APPUNTAMENTI
+        // ============================================
+        function renderAppointments(upcoming, past) {
+            renderApptList('apptsUpcoming', upcoming, true);
+            renderApptList('apptsPast', past, false);
+        }
+
+        function renderApptList(containerId, appts, isFuture) {
+            const c = document.getElementById(containerId);
+            if (!appts || appts.length === 0) {
+                c.innerHTML = `<div class="no-data-msg">
+                    <i class="fas fa-calendar${isFuture ? '-plus' : '-check'}"></i>
+                    ${isFuture ? 'Nessuna visita programmata. Il tuo nutrizionista creerà un appuntamento per te.' : 'Nessuna visita passata trovata.'}
+                </div>`;
+                return;
+            }
+
+            const list = document.createElement('div');
+            list.className = 'appt-list';
+            appts.forEach(a => {
+                const d = new Date(a.appointment_date);
+                const timeStr = a.start_time ? a.start_time.substring(0, 5) : '';
+                const nutName = a.nut_first + ' ' + a.nut_last;
+                const statusClass = 'status-' + (a.status || 'scheduled').replace('-', '');
+                const statusLabels = {
+                    scheduled: 'Programmata', completed: 'Completata',
+                    cancelled: 'Annullata', 'no-show': 'Non presentato'
+                };
+                const reviewedBadge = (!isFuture && a.review_rating)
+                    ? `<span class="already-reviewed" title="Hai già valutato questa visita">${'🍎'.repeat(a.review_rating)}</span>`
+                    : '';
+
+                const item = document.createElement('div');
+                item.className = 'appt-item';
+                item.innerHTML = `
+                    <div class="appt-date-badge">
+                        <div class="day">${d.getDate()}</div>
+                        <div class="month">${months[d.getMonth()]}</div>
+                    </div>
+                    <div class="appt-info">
+                        <div class="appt-name">Dott. ${nutName}</div>
+                        <div class="appt-meta">
+                            ${timeStr ? '<span>🕐 ' + timeStr + '</span>' : ''}
+                            <span class="appt-type-badge ${typeClasses[a.appointment_type] || 'type-follow-up'}">${typeLabels[a.appointment_type] || a.appointment_type}</span>
+                            <span class="appt-status-badge status-${a.status || 'scheduled'}">${statusLabels[a.status] || a.status}</span>
+                        </div>
+                        ${a.notes ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">📝 ${a.notes}</div>` : ''}
+                    </div>
+                    ${reviewedBadge}
+                `;
+                list.appendChild(item);
+            });
+            c.innerHTML = '';
+            c.appendChild(list);
+        }
+
+        function showAppts(which) {
+            document.getElementById('apptsUpcoming').style.display = which === 'upcoming' ? 'block' : 'none';
+            document.getElementById('apptsPast').style.display = which === 'past' ? 'block' : 'none';
+            document.getElementById('btnUpcoming').classList.toggle('active', which === 'upcoming');
+            document.getElementById('btnPast').classList.toggle('active', which === 'past');
+        }
+
+        // ============================================
+        // LE MIE RECENSIONI
+        // ============================================
+        function renderMyReviews(reviews) {
+            const c = document.getElementById('myReviewsContent');
+            if (!reviews || reviews.length === 0) {
+                c.innerHTML = `<div class="no-data-msg">
+                    <i class="fas fa-apple-alt"></i>
+                    Non hai ancora inviato nessuna valutazione. Dopo ogni visita completata, potrai valutare la tua esperienza!
+                </div>`;
+                return;
+            }
+
+            const typeLabelsLocal = {
+                'prima-visita': 'Prima Visita', 'controllo-mensile': 'Controllo',
+                'follow-up': 'Follow-up', 'urgente': 'Urgente'
+            };
+
+            const grid = document.createElement('div');
+            grid.className = 'my-reviews-grid';
+            reviews.forEach(r => {
+                const apples = '🍎'.repeat(r.rating) + '🍏'.repeat(5 - r.rating);
+                const date = new Date(r.created_at).toLocaleDateString('it-IT');
+                const apptDate = new Date(r.appointment_date).toLocaleDateString('it-IT');
+                const card = document.createElement('div');
+                card.className = 'my-review-card';
+                card.innerHTML = `
+                    <div class="my-review-top">
+                        <div>
+                            <div class="my-review-nut">Dott. ${r.nut_first} ${r.nut_last}</div>
+                            <div class="my-review-date">📅 ${date}</div>
+                        </div>
+                        <div class="apple-display">${apples}</div>
+                    </div>
+                    ${r.comment ? `<div class="my-review-comment">"${r.comment}"</div>` : ''}
+                    <div class="my-review-type">
+                        <i class="fas fa-stethoscope" style="color:var(--primary)"></i>
+                        ${typeLabelsLocal[r.appointment_type] || r.appointment_type} — Visita del ${apptDate}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            c.innerHTML = '';
+            c.appendChild(grid);
+        }
+
+        // ============================================
+        // EMPTY STATE FALLBACK
+        // ============================================
+        function setAllEmpty() {
+            ['progressiContent', 'nutrizionistaContent', 'apptsUpcoming', 'apptsPast', 'myReviewsContent'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = `<div class="no-data-msg"><i class="fas fa-inbox"></i>Dati non disponibili</div>`;
+            });
+        }
+
+        // ============================================
+        // SCROLL HELPER
+        // ============================================
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // ============================================
+        // POST-VISIT REVIEW SYSTEM
+        // ============================================
+        async function checkPendingReview() {
+            try {
+                const res = await fetch('../api/reports.php?action=get_pending_review', { credentials: 'include' });
+                const data = await res.json();
+                if (data.success && data.pending) {
+                    pendingApptId = data.pending.id;
+                    const nutName = data.pending.nutritionist_first + ' ' + data.pending.nutritionist_last;
+                    const apptDate = new Date(data.pending.appointment_date).toLocaleDateString('it-IT');
+                    document.getElementById('reviewModalSub').innerHTML =
+                        `Visita con <strong>Dott. ${nutName}</strong> del <strong>${apptDate}</strong>.<br>
+                         Quante <strong>mele</strong> vuoi dare? Più mele = più soddisfazione! 🍏`;
+                    setTimeout(() => document.getElementById('reviewOverlay').classList.add('open'), 1000);
+                }
+            } catch (e) { console.error('Review check error:', e); }
+        }
+
+        function selectApples(value) {
+            selectedApples = value;
+            document.querySelectorAll('.apple-btn').forEach(b => {
+                const v = parseInt(b.dataset.val);
+                if (v <= value) {
+                    b.style.filter = 'grayscale(0)';
+                    b.style.transform = v === value ? 'scale(1.3)' : 'scale(1.08)';
+                } else {
+                    b.style.filter = 'grayscale(0.75)';
+                    b.style.transform = 'scale(1)';
+                }
+            });
+        }
+
+        async function submitAppleReview() {
+            if (selectedApples < 1) { alert('Seleziona almeno una mela! 🍎'); return; }
+            const comment = document.getElementById('reviewComment').value;
+            try {
+                const res = await fetch('../api/reports.php?action=submit_review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ appointment_id: pendingApptId, rating: selectedApples, comment })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('reviewSuccessMsg').style.display = 'block';
+                    document.querySelector('.review-submit-btn').style.display = 'none';
+                    document.querySelector('.review-skip-btn').style.display = 'none';
+                    setTimeout(() => {
+                        document.getElementById('reviewOverlay').classList.remove('open');
+                        loadDashboard(); // Refresh to show new review
+                    }, 2800);
+                } else { alert('Errore: ' + data.error); }
+            } catch (e) { alert('Errore di connessione'); }
+        }
     </script>
+    <script src="cookie-banner.js"></script>
 </body>
 
 </html>

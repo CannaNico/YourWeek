@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="pianiDietetici.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <base target="_blank">
+    <link rel="stylesheet" href="cookie-banner.css">
 </head>
 
 <body>
@@ -228,53 +229,188 @@
         }
 
         // Funzione per aprire il modal con il piano dietetico
-        function openDietModal(patient) {
+        async function openDietModal(patient) {
             currentEditingPatient = patient;
 
             const modal = document.getElementById('dietModal');
             const modalContent = document.getElementById('modalContent');
 
-            modalContent.innerHTML = `
-                <div class="patient-detail-header">
-                    <div class="patient-detail-avatar">${patient.avatar}</div>
-                    <div>
-                        <h2>${patient.name} ${patient.surname}</h2>
-                        <p>${patient.description}</p>
+            // Carica i dati aggiornati dal database
+            try {
+                const response = await fetch(`../api/diet_plans.php?action=get_patient_plan&patient_id=${patient.id}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const result = await response.json();
+
+                if (result.success && result.hasPlan) {
+                    // Se è un file, mostra il file
+                    if (result.file && result.file.file_path) {
+                        const fileExt = result.file.file_type.toLowerCase();
+                        const isPdf = fileExt === 'pdf';
+                        const isWord = ['doc', 'docx'].includes(fileExt);
+                        
+                        let fileViewer = '';
+                        if (isPdf) {
+                            fileViewer = `<iframe src="../${result.file.file_path}" 
+                                style="width: 100%; height: 600px; border: 2px solid #10b981; border-radius: 10px;"
+                                frameborder="0">
+                            </iframe>`;
+                        } else if (isWord) {
+                            // Per file Word, mostra un link per scaricare/aprire
+                            fileViewer = `
+                                <div style="padding: 40px; background: #f0fdf4; border-radius: 10px; border: 2px dashed #10b981;">
+                                    <i class="fas fa-file-word" style="font-size: 4rem; color: #064e3b; margin-bottom: 20px;"></i>
+                                    <h3 style="color: #064e3b; margin-bottom: 10px;">${result.file.file_name}</h3>
+                                    <p style="color: #065f46; margin-bottom: 20px;">File Word - ${formatFileSize(result.file.file_size)}</p>
+                                    <p style="color: #6b7280; font-size: 0.9rem;">I file Word devono essere scaricati e aperti con Microsoft Word o un editor compatibile.</p>
+                                </div>
+                            `;
+                        } else {
+                            fileViewer = `
+                                <div style="padding: 40px; background: #f0fdf4; border-radius: 10px; border: 2px dashed #10b981;">
+                                    <i class="fas fa-file-alt" style="font-size: 4rem; color: #064e3b; margin-bottom: 20px;"></i>
+                                    <h3 style="color: #064e3b; margin-bottom: 10px;">${result.file.file_name}</h3>
+                                    <p style="color: #065f46; margin-bottom: 20px;">${formatFileSize(result.file.file_size)}</p>
+                                </div>
+                            `;
+                        }
+                        
+                        modalContent.innerHTML = `
+                            <div class="patient-detail-header">
+                                <div class="patient-detail-avatar">${patient.avatar}</div>
+                                <div>
+                                    <h2>${patient.name} ${patient.surname}</h2>
+                                    <p>${patient.description}</p>
+                                </div>
+                            </div>
+                            <div style="text-align: center; padding: 40px;">
+                                <h3 style="margin-bottom: 20px; color: #064e3b;">
+                                    <i class="fas fa-file-${isPdf ? 'pdf' : isWord ? 'word' : 'alt'}"></i> Piano Dietetico - File
+                                </h3>
+                                ${fileViewer}
+                                <div style="margin-top: 20px;">
+                                    <a href="../${result.file.file_path}" ${isPdf ? '' : 'download'} target="_blank" class="save-btn" style="display: inline-block; text-decoration: none; margin-right: 10px;">
+                                        <i class="fas fa-${isPdf ? 'eye' : 'download'}"></i> ${isPdf ? 'Visualizza' : 'Scarica'} File
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    } else if (result.meals && Object.keys(result.meals).length > 0) {
+                        // Se ci sono pasti, mostra la tabella
+                        const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+                        const convertedMeals = {};
+                        days.forEach(day => {
+                            convertedMeals[day] = {
+                                colazione: result.meals[day]?.['colazione'] || '',
+                                pranzo: result.meals[day]?.['pranzo'] || '',
+                                cena: result.meals[day]?.['cena'] || '',
+                                spuntini: [
+                                    result.meals[day]?.['spuntino-mattina'],
+                                    result.meals[day]?.['spuntino-pomeriggio'],
+                                    result.meals[day]?.['spuntino-sera']
+                                ].filter(Boolean).join('\n')
+                            };
+                        });
+
+                        // Aggiorna i dati del paziente in memoria
+                        patient.mealPlan.days = convertedMeals;
+                        patient.mealPlan.planName = result.plan.plan_name;
+                        // Salva l'ID del piano per l'aggiornamento
+                        patient.currentPlanId = result.plan.id;
+
+                        modalContent.innerHTML = `
+                            <div class="patient-detail-header">
+                                <div class="patient-detail-avatar">${patient.avatar}</div>
+                                <div>
+                                    <h2>${patient.name} ${patient.surname}</h2>
+                                    <p>${patient.description}</p>
+                                </div>
+                            </div>
+
+                            <div class="weekly-plan">
+                                <div class="week-title">
+                                    <i class="fas fa-calendar-week"></i> ${result.plan.plan_name || patient.mealPlan.week}
+                                </div>
+
+                                <table class="meal-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Giorno</th>
+                                            <th><i class="fas fa-coffee"></i> Colazione</th>
+                                            <th><i class="fas fa-utensils"></i> Pranzo</th>
+                                            <th><i class="fas fa-moon"></i> Cena</th>
+                                            <th><i class="fas fa-apple-alt"></i> Spuntini</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${generateMealRows(convertedMeals)}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="modal-actions">
+                                <button class="save-btn" onclick="saveMealPlan()">
+                                    <i class="fas fa-save"></i> Salva Modifiche
+                                </button>
+                            </div>
+                        `;
+
+                        // Aggiungi event listeners per l'editing
+                        setTimeout(() => {
+                            addEditListeners();
+                        }, 100);
+                    } else {
+                        // Nessun piano trovato
+                        modalContent.innerHTML = `
+                            <div class="patient-detail-header">
+                                <div class="patient-detail-avatar">${patient.avatar}</div>
+                                <div>
+                                    <h2>${patient.name} ${patient.surname}</h2>
+                                    <p>${patient.description}</p>
+                                </div>
+                            </div>
+                            <div style="text-align: center; padding: 40px;">
+                                <i class="fas fa-info-circle" style="font-size: 3rem; color: #6b7280; margin-bottom: 20px;"></i>
+                                <h3 style="color: #6b7280;">Nessun piano dietetico assegnato</h3>
+                                <p style="color: #9ca3af;">Assegna un piano dietetico a questo paziente per visualizzarlo qui.</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    // Nessun piano trovato
+                    modalContent.innerHTML = `
+                        <div class="patient-detail-header">
+                            <div class="patient-detail-avatar">${patient.avatar}</div>
+                            <div>
+                                <h2>${patient.name} ${patient.surname}</h2>
+                                <p>${patient.description}</p>
+                            </div>
+                        </div>
+                        <div style="text-align: center; padding: 40px;">
+                            <i class="fas fa-info-circle" style="font-size: 3rem; color: #6b7280; margin-bottom: 20px;"></i>
+                            <h3 style="color: #6b7280;">Nessun piano dietetico assegnato</h3>
+                            <p style="color: #9ca3af;">Assegna un piano dietetico a questo paziente per visualizzarlo qui.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Errore caricamento piano:', error);
+                modalContent.innerHTML = `
+                    <div class="patient-detail-header">
+                        <div class="patient-detail-avatar">${patient.avatar}</div>
+                        <div>
+                            <h2>${patient.name} ${patient.surname}</h2>
+                            <p>${patient.description}</p>
+                        </div>
                     </div>
-                </div>
-
-                <div class="weekly-plan">
-                    <div class="week-title">
-                        <i class="fas fa-calendar-week"></i> ${patient.mealPlan.week}
+                    <div style="text-align: center; padding: 40px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ef4444; margin-bottom: 20px;"></i>
+                        <h3 style="color: #ef4444;">Errore nel caricamento</h3>
+                        <p style="color: #9ca3af;">Si è verificato un errore durante il caricamento del piano dietetico.</p>
                     </div>
-
-                    <table class="meal-table">
-                        <thead>
-                            <tr>
-                                <th>Giorno</th>
-                                <th><i class="fas fa-coffee"></i> Colazione</th>
-                                <th><i class="fas fa-utensils"></i> Pranzo</th>
-                                <th><i class="fas fa-moon"></i> Cena</th>
-                                <th><i class="fas fa-apple-alt"></i> Spuntini</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${generateMealRows(patient.mealPlan.days)}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="modal-actions">
-                    <button class="save-btn" onclick="saveMealPlan()">
-                        <i class="fas fa-save"></i> Salva Modifiche
-                    </button>
-                </div>
-            `;
-
-            // Aggiungi event listeners per l'editing
-            setTimeout(() => {
-                addEditListeners();
-            }, 100);
+                `;
+            }
 
             modal.style.display = 'block';
         }
@@ -291,6 +427,20 @@
                 domenica: 'Domenica'
             };
 
+            // Funzione helper per formattare il testo (converte \n in <br>)
+            function formatText(text) {
+                if (!text || text.trim() === '') return '<div class="empty-meal">Clicca per aggiungere</div>';
+                return text.replace(/\n/g, '<br>');
+            }
+
+            // Funzione helper per escape HTML nel textarea
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
             let html = '';
             for (const [dayKey, dayName] of Object.entries(dayNames)) {
                 const meals = days[dayKey] || {};
@@ -299,26 +449,26 @@
                         <td><strong>${dayName}</strong></td>
                         <td>
                             <div class="meal-content" data-day="${dayKey}" data-meal="colazione">
-                                <span class="meal-text">${meals.colazione || '<div class="empty-meal">Clicca per aggiungere</div>'}</span>
-                                <textarea class="meal-edit" style="display: none;">${meals.colazione || ''}</textarea>
+                                <span class="meal-text">${formatText(meals.colazione)}</span>
+                                <textarea class="meal-edit" style="display: none;">${escapeHtml(meals.colazione || '')}</textarea>
                             </div>
                         </td>
                         <td>
                             <div class="meal-content" data-day="${dayKey}" data-meal="pranzo">
-                                <span class="meal-text">${meals.pranzo || '<div class="empty-meal">Clicca per aggiungere</div>'}</span>
-                                <textarea class="meal-edit" style="display: none;">${meals.pranzo || ''}</textarea>
+                                <span class="meal-text">${formatText(meals.pranzo)}</span>
+                                <textarea class="meal-edit" style="display: none;">${escapeHtml(meals.pranzo || '')}</textarea>
                             </div>
                         </td>
                         <td>
                             <div class="meal-content" data-day="${dayKey}" data-meal="cena">
-                                <span class="meal-text">${meals.cena || '<div class="empty-meal">Clicca per aggiungere</div>'}</span>
-                                <textarea class="meal-edit" style="display: none;">${meals.cena || ''}</textarea>
+                                <span class="meal-text">${formatText(meals.cena)}</span>
+                                <textarea class="meal-edit" style="display: none;">${escapeHtml(meals.cena || '')}</textarea>
                             </div>
                         </td>
                         <td>
                             <div class="meal-content" data-day="${dayKey}" data-meal="spuntini">
-                                <span class="meal-text">${meals.spuntini || '<div class="empty-meal">Clicca per aggiungere</div>'}</span>
-                                <textarea class="meal-edit" style="display: none;">${meals.spuntini || ''}</textarea>
+                                <span class="meal-text">${formatText(meals.spuntini)}</span>
+                                <textarea class="meal-edit" style="display: none;">${escapeHtml(meals.spuntini || '')}</textarea>
                             </div>
                         </td>
                     </tr>
@@ -388,15 +538,68 @@
         }
 
         // Salva l'intero piano alimentare
-        function saveMealPlan() {
-            if (currentEditingPatient) {
-                // Qui potresti salvare i dati su un server
-                console.log('Piano alimentare salvato:', currentEditingPatient);
-                renderPatients(); // Aggiorna la vista
-                closeModal();
+        async function saveMealPlan() {
+            if (!currentEditingPatient) return;
 
-                // Mostra un messaggio di conferma più elegante
-                showNotification('Piano alimentare aggiornato con successo!');
+            // Raccogli i dati dalla tabella
+            const mealPlan = {};
+            const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+            const meals = ['colazione', 'pranzo', 'cena', 'spuntini'];
+
+            days.forEach(day => {
+                mealPlan[day] = {};
+                meals.forEach(meal => {
+                    const mealContent = document.querySelector(`[data-day="${day}"][data-meal="${meal}"]`);
+                    if (mealContent) {
+                        const textElement = mealContent.querySelector('.meal-text');
+                        const editElement = mealContent.querySelector('.meal-edit');
+                        // Prendi il valore dal textarea se è in editing, altrimenti dal testo
+                        let value = '';
+                        if (editElement && editElement.style.display !== 'none') {
+                            value = editElement.value.trim();
+                        } else if (textElement) {
+                            value = textElement.textContent.trim();
+                            // Rimuovi il testo "Clicca per aggiungere" se presente
+                            if (value === 'Clicca per aggiungere') {
+                                value = '';
+                            }
+                        }
+                        if (value) {
+                            mealPlan[day][meal] = value.replace(/<br>/g, '\n');
+                        }
+                    }
+                });
+            });
+
+            // Usa il nome del piano esistente se disponibile, altrimenti crea uno nuovo
+            const planName = currentEditingPatient.mealPlan?.planName || 
+                            'Piano Dietetico - ' + new Date().toLocaleDateString('it-IT');
+
+            const formData = new FormData();
+            formData.append('patient_id', currentEditingPatient.id);
+            formData.append('input_method', 'manual');
+            formData.append('plan_name', planName);
+            formData.append('meal_plan', JSON.stringify(mealPlan));
+
+            try {
+                const response = await fetch('../api/diet_plans.php?action=save_plan', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showNotification('Piano alimentare aggiornato con successo!');
+                    closeModal();
+                    loadPatients(); // Ricarica la lista
+                } else {
+                    alert('Errore: ' + (result.error || 'Errore durante il salvataggio'));
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                alert('Errore durante il salvataggio del piano');
             }
         }
 
@@ -471,7 +674,7 @@
 
         // Formatta la dimensione del file
         function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
+            if (!bytes || bytes === 0) return '0 Bytes';
             const k = 1024;
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -486,7 +689,7 @@
         }
 
         // Apre il modal per aggiungere un piano dietetico
-        function openAddPlanModal(patient) {
+        async function openAddPlanModal(patient) {
             currentPatientForPlan = patient;
 
             // Mostra info paziente
@@ -500,15 +703,50 @@
             setInputMethod('manual');
             removeFile();
 
-            // Genera la tabella per l'inserimento manuale
-            generateManualMealTable();
+            // Carica il piano esistente se presente
+            try {
+                const response = await fetch(`../api/diet_plans.php?action=get_patient_plan&patient_id=${patient.id}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                const result = await response.json();
+
+                let existingMealPlan = null;
+                if (result.success && result.hasPlan && result.meals) {
+                    // Converti i pasti dal formato database al formato frontend
+                    const days = ['lunedi', 'martedi', 'mercoledi', 'giovedi', 'venerdi', 'sabato', 'domenica'];
+                    existingMealPlan = {};
+                    days.forEach(day => {
+                        if (result.meals[day]) {
+                            existingMealPlan[day] = {
+                                colazione: result.meals[day]['colazione'] || '',
+                                pranzo: result.meals[day]['pranzo'] || '',
+                                cena: result.meals[day]['cena'] || '',
+                                spuntini: [
+                                    result.meals[day]['spuntino-mattina'],
+                                    result.meals[day]['spuntino-pomeriggio'],
+                                    result.meals[day]['spuntino-sera']
+                                ].filter(Boolean).join('\n')
+                            };
+                        }
+                    });
+                }
+
+                // Genera la tabella per l'inserimento manuale con i dati esistenti
+                generateManualMealTable(existingMealPlan);
+
+            } catch (error) {
+                console.error('Errore caricamento piano esistente:', error);
+                // Se c'è un errore, genera la tabella vuota
+                generateManualMealTable();
+            }
 
             // Mostra il modal
             document.getElementById('addPlanModal').style.display = 'block';
         }
 
         // Genera la tabella per l'inserimento manuale
-        function generateManualMealTable() {
+        function generateManualMealTable(existingMealPlan = null) {
             const tbody = document.getElementById('manualMealTableBody');
             const dayNames = {
                 lunedi: 'Lunedì',
@@ -520,26 +758,35 @@
                 domenica: 'Domenica'
             };
 
+            // Funzione helper per escape HTML nel textarea
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
             let html = '';
             for (const [dayKey, dayName] of Object.entries(dayNames)) {
+                const meals = existingMealPlan && existingMealPlan[dayKey] ? existingMealPlan[dayKey] : {};
                 html += `
                     <tr>
                         <td><strong>${dayName}</strong></td>
                         <td>
                             <textarea class="meal-edit" id="${dayKey}_colazione" 
-                                placeholder="Clicca per aggiungere" rows="2"></textarea>
+                                placeholder="Clicca per aggiungere" rows="2">${escapeHtml(meals.colazione || '')}</textarea>
                         </td>
                         <td>
                             <textarea class="meal-edit" id="${dayKey}_pranzo" 
-                                placeholder="Clicca per aggiungere" rows="2"></textarea>
+                                placeholder="Clicca per aggiungere" rows="2">${escapeHtml(meals.pranzo || '')}</textarea>
                         </td>
                         <td>
                             <textarea class="meal-edit" id="${dayKey}_cena" 
-                                placeholder="Clicca per aggiungere" rows="2"></textarea>
+                                placeholder="Clicca per aggiungere" rows="2">${escapeHtml(meals.cena || '')}</textarea>
                         </td>
                         <td>
                             <textarea class="meal-edit" id="${dayKey}_spuntini" 
-                                placeholder="Clicca per aggiungere" rows="2"></textarea>
+                                placeholder="Clicca per aggiungere" rows="2">${escapeHtml(meals.spuntini || '')}</textarea>
                         </td>
                     </tr>
                 `;
@@ -634,6 +881,7 @@
             }
         }
     </style>
+    <script src="cookie-banner.js"></script>
 </body>
 
 </html>

@@ -808,3 +808,54 @@ textarea:focus-visible {
 
 .calendar { animation-delay: 0.1s; }
 .appointments-section { animation-delay: 0.2s; }
+
+/* ========================================
+   APPOINTMENT TIME LABELS IN CALENDAR
+   ======================================== */
+.appointment-time-label {
+    font-size: 0.65rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: var(--white);
+    padding: 3px 6px;
+    border-radius: 6px;
+    margin-top: 4px;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+    transition: all 0.3s ease;
+}
+
+.calendar-day:hover .appointment-time-label {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.calendar-day.today .appointment-time-label {
+    background: linear-gradient(135deg, var(--white) 0%, rgba(255, 255, 255, 0.9) 100%);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Stili per celle con più appuntamenti */
+.calendar-day .appointment-time-label + .appointment-time-label {
+    margin-top: 2px;
+}
+
+/* Responsive per schermi piccoli */
+@media (max-width: 768px) {
+    .appointment-time-label {
+        font-size: 0.55rem;
+        padding: 2px 4px;
+        margin-top: 2px;
+    }
+}
+
+@media (max-width: 480px) {
+    .appointment-time-label {
+        font-size: 0.5rem;
+        padding: 2px 3px;
+    }
+}

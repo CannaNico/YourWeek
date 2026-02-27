@@ -145,53 +145,105 @@ body {
     left: 0;
     right: 0;
     z-index: 100;
-    padding: 20px 40px;
-    background: rgba(10, 10, 10, 0.3);
-    backdrop-filter: blur(15px);
+    padding: 14px 32px;
+    background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.25), transparent 55%),
+        rgba(10, 10, 10, 0.65);
+    backdrop-filter: blur(18px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #e5e7eb;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.95rem;
+}
+
+.logo-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #6366f1, #ec4899);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    box-shadow: 0 0 18px rgba(236, 72, 153, 0.7);
+}
+
+.logo-text {
+    opacity: 0.9;
 }
 
 .header-nav {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    gap: 15px;
-    max-width: 1400px;
-    margin: 0 auto;
+    gap: 14px;
 }
 
 .nav-button {
-    padding: 12px 28px;
-    font-size: 0.95rem;
+    position: relative;
+    padding: 10px 22px;
+    font-size: 0.9rem;
     font-weight: 500;
     color: white;
     text-decoration: none;
-    border: 1.5px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(10px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    letter-spacing: 0.3px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    backdrop-filter: blur(14px);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.nav-button::after {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: inherit;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.nav-button:hover::after {
+    opacity: 1;
 }
 
 .nav-button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background: rgba(15, 23, 42, 0.95);
+    border-color: rgba(244, 244, 245, 0.8);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.8);
 }
 
 .nav-button-primary {
-    background: rgba(255, 255, 255, 0.95);
-    color: #0a0a0a;
+    background: linear-gradient(135deg, #e5e7eb, #ffffff);
+    color: #020617;
     border-color: transparent;
     font-weight: 600;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.9);
 }
 
 .nav-button-primary:hover {
-    background: white;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+    background: #ffffff;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 1);
 }
 
 /* Pulsante Call-to-Action */
@@ -834,17 +886,31 @@ body {
         padding: 0 30px;
     }
 
+    .main-header {
+        padding: 10px 14px;
+    }
+
+    .header-inner {
+        gap: 12px;
+    }
+
+    .header-logo {
+        font-size: 0.8rem;
+    }
+
+    .logo-mark {
+        width: 30px;
+        height: 30px;
+        font-size: 0.75rem;
+    }
+
     .header-nav {
-        gap: 10px;
+        gap: 8px;
     }
 
     .nav-button {
-        padding: 10px 20px;
-        font-size: 0.85rem;
-    }
-
-    .main-header {
-        padding: 15px 20px;
+        padding: 8px 14px;
+        font-size: 0.75rem;
     }
 }
 
@@ -869,14 +935,20 @@ body {
         font-size: 0.95rem;
     }
 
+    .header-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
     .header-nav {
+        width: 100%;
+        justify-content: space-between;
         flex-wrap: wrap;
-        gap: 8px;
     }
 
     .nav-button {
-        padding: 8px 16px;
-        font-size: 0.8rem;
+        flex: 1 1 calc(50% - 8px);
+        text-align: center;
     }
 
     .hero-description {

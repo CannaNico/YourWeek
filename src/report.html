@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisi e Report - YourWeek</title>
+    <link rel="stylesheet" href="report.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="cookie-banner.css">
+</head>
+
+<body>
+    <!-- Back Button -->
+    <div class="back-button">
+        <a href="nutrizionistaPage.html">
+            <i class="fas fa-arrow-left"></i>
+            Torna alla Dashboard
+        </a>
+    </div>
+
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="logo">
+            <h1>YourWeek</h1>
+        </div>
+        <div class="header-title">
+            <i class="fas fa-chart-line"></i>
+            Analisi e Report
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="report-container">
+
+        <div class="page-title">
+            <h2>📊 Analisi e Report</h2>
+            <p>Monitora i progressi dei pazienti e le statistiche del tuo studio</p>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('pazienti')" id="tab-pazienti">
+                <i class="fas fa-users"></i> Dati Pazienti
+            </button>
+            <button class="tab-btn" onclick="switchTab('studio')" id="tab-studio">
+                <i class="fas fa-briefcase-medical"></i> Statistiche Studio
+            </button>
+            <button class="tab-btn" onclick="switchTab('recensioni')" id="tab-recensioni">
+                <i class="fas fa-apple-alt"></i> Valutazioni
+            </button>
+        </div>
+
+        <!-- ==========================================
+             TAB 1: DATI PAZIENTI
+             ========================================== -->
+        <div class="tab-panel active" id="panel-pazienti">
+            <div class="section-card">
+                <h3>
+                    <i class="fas fa-users"></i>
+                    I Tuoi Pazienti — Storico e Progressi
+                </h3>
+                <div id="patientsContainer">
+                    <div class="loading-spinner"><i class="fas fa-spinner"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 2: STATISTICHE STUDIO
+             ========================================== -->
+        <div class="tab-panel" id="panel-studio">
+            <!-- Stats cards -->
+            <div class="stats-row" id="studioStats">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-number" id="stat-active">—</div>
+                    <div class="stat-label">Pazienti Attivi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="fas fa-calendar-check"></i></div>
+                    <div class="stat-number" id="stat-month">—</div>
+                    <div class="stat-label">Visite questo Mese</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fas fa-user-plus"></i></div>
+                    <div class="stat-number" id="stat-new">—</div>
+                    <div class="stat-label">Nuovi questo Mese</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon gold"><i class="fas fa-apple-alt"></i></div>
+                    <div class="stat-number" id="stat-rating">—</div>
+                    <div class="stat-label">Media Valutazioni</div>
+                </div>
+            </div>
+
+            <!-- Upcoming appointments -->
+            <div class="section-card">
+                <h3>
+                    <i class="fas fa-calendar-alt"></i>
+                    Prossime Visite
+                </h3>
+                <div id="upcomingContainer">
+                    <div class="loading-spinner"><i class="fas fa-spinner"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 3: VALUTAZIONI
+             ========================================== -->
+        <div class="tab-panel" id="panel-recensioni">
+            <!-- Rating overview -->
+            <div class="rating-overview" id="ratingOverview" style="display:none;">
+                <div>
+                    <div class="rating-big-number" id="overviewAvg">0.0</div>
+                    <div class="rating-stars-row" id="overviewStars">🍎🍎🍎🍎🍎</div>
+                    <div class="rating-count" id="overviewCount">0 valutazioni</div>
+                </div>
+                <div class="rating-bars" id="ratingBars"></div>
+            </div>
+
+            <div class="section-card">
+                <h3>
+                    <i class="fas fa-apple-alt"></i>
+                    Valutazioni dei Pazienti
+                </h3>
+                <div id="reviewsContainer">
+                    <div class="loading-spinner"><i class="fas fa-spinner"></i></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ==========================================
+         MODAL: STORICO PAZIENTE (dettaglio + grafico)
+         ========================================== -->
+    <div class="history-modal-overlay" id="historyOverlay">
+        <div class="history-modal" id="historyModal">
+            <button class="close-modal-btn" onclick="closeHistoryModal()">✕</button>
+            <div id="historyModalContent"></div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         OVERLAY: VALUTAZIONE POST-VISITA (paziente)
+         Visualizzato anche su questa pagina se utente è paziente
+         ========================================== -->
+    <div id="reviewOverlay">
+        <div id="reviewModal">
+            <div class="review-illustration">🍎</div>
+            <div class="review-modal-title">Com'è andata la visita?</div>
+            <div class="review-modal-sub" id="reviewModalSub">
+                Valuta la tua esperienza con il piano alimentare!
+                Usa le mele — più ne selezioni, meglio è! 🍏
+            </div>
+
+            <div class="apple-selector" id="appleSelector">
+                <button class="apple-btn" data-value="1" onclick="selectApples(1)" title="1 mela">🍎</button>
+                <button class="apple-btn" data-value="2" onclick="selectApples(2)" title="2 mele">🍎</button>
+                <button class="apple-btn" data-value="3" onclick="selectApples(3)" title="3 mele">🍎</button>
+                <button class="apple-btn" data-value="4" onclick="selectApples(4)" title="4 mele">🍎</button>
+                <button class="apple-btn" data-value="5" onclick="selectApples(5)" title="5 mele">🍎</button>
+            </div>
+
+            <textarea class="review-comment-input" id="reviewComment"
+                placeholder="Aggiungi un commento (opzionale)... Come ti sei trovato con il piano?"></textarea>
+
+            <button class="review-submit-btn" onclick="submitReview()">
+                <i class="fas fa-paper-plane"></i> Invia Valutazione
+            </button>
+            <button class="review-skip-btn" onclick="skipReview()">Salta per ora</button>
+
+            <div class="review-success-msg" id="reviewSuccessMsg">
+                🎉 Grazie per la tua valutazione! Il tuo nutrizionista ti ringrazia.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        //  STATE
+        // =============================================
+        let reportData = null;
+        let selectedApples = 0;
+        let pendingAppointmentId = null;
+        let historyCharts = {};
+
+        // =============================================
+        //  INIT
+        // =============================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkRole();
+            await loadReportData();
+        });
+
+        async function checkRole() {
+            try {
+                const res = await fetch('../api/auth.php?action=check', { credentials: 'include' });
+                const data = await res.json();
+                if (!data.success || !data.authenticated) {
+                    window.location.href = 'loginPage.html';
+                    return;
+                }
+                // Se paziente: controlla recensione in sospeso
+                if (data.user.role === 'paziente') {
+                    checkPendingReview();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // =============================================
+        //  TAB SWITCHING
+        // =============================================
+        function switchTab(name) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('panel-' + name).classList.add('active');
+            document.getElementById('tab-' + name).classList.add('active');
+        }
+
+        // =============================================
+        //  LOAD REPORT DATA (nutrizionista)
+        // =============================================
+        async function loadReportData() {
+            try {
+                const res = await fetch('../api/reports.php?action=get_report_data', { credentials: 'include' });
+                const data = await res.json();
+
+                if (!data.success) {
+                    // Probably patient, hide nutrizionista UI gracefully
+                    document.getElementById('patientsContainer').innerHTML = renderEmpty('Accedi come nutrizionista per vedere i report');
+                    return;
+                }
+
+                reportData = data;
+                renderPatients(data.patients);
+                renderUpcoming(data.upcoming);
+                renderStats(data.stats);
+                renderReviews(data.reviews, data.stats);
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('patientsContainer').innerHTML = renderEmpty('Errore nel caricamento dei dati');
+            }
+        }
+
+        // =============================================
+        //  RENDER: PAZIENTI
+        // =============================================
+        function renderPatients(patients) {
+            const c = document.getElementById('patientsContainer');
+            if (!patients || patients.length === 0) {
+                c.innerHTML = renderEmpty('Nessun paziente attivo');
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'patients-list';
+
+            patients.forEach(p => {
+                const initials = (p.first_name[0] + p.last_name[0]).toUpperCase();
+                const curW = p.current_weight || p.initial_weight;
+                const curBf = p.current_body_fat || p.initial_body_fat;
+                const curMm = p.current_muscle_mass || p.initial_muscle_mass;
+                const curBmi = p.current_bmi;
+
+                const weightChange = (p.initial_weight && p.current_weight)
+                    ? (p.current_weight - p.initial_weight).toFixed(1)
+                    : null;
+
+                let changeHtml = '';
+                if (weightChange !== null) {
+                    if (parseFloat(weightChange) < 0) {
+                        changeHtml = `<div class="weight-change loss"><i class="fas fa-arrow-down"></i> ${Math.abs(weightChange)} kg persi</div>`;
+                    } else if (parseFloat(weightChange) > 0) {
+                        changeHtml = `<div class="weight-change gain"><i class="fas fa-arrow-up"></i> +${weightChange} kg guadagnati</div>`;
+                    } else {
+                        changeHtml = `<div class="weight-change same"><i class="fas fa-minus"></i> Peso stabile</div>`;
+                    }
+                }
+
+                let age = 'N/D';
+                if (p.birth_date) {
+                    const bd = new Date(p.birth_date);
+                    age = new Date().getFullYear() - bd.getFullYear() + ' anni';
+                }
+
+                const lastMeas = p.last_measurement_date
+                    ? new Date(p.last_measurement_date).toLocaleDateString('it-IT')
+                    : 'N/D';
+
+                const card = document.createElement('div');
+                card.className = 'patient-report-card';
+                card.onclick = () => openHistoryModal(p);
+                card.innerHTML = `
+                    <div class="patient-card-header">
+                        <div class="patient-avatar">${initials}</div>
+                        <div>
+                            <div class="patient-card-name">${p.first_name} ${p.last_name}</div>
+                            <div class="patient-card-sub">${p.email} · ${age}</div>
+                        </div>
+                    </div>
+                    <div class="patient-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">${curW ? curW + ' kg' : 'N/D'}</div>
+                            <div class="metric-label">Peso</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${curBf ? curBf + '%' : 'N/D'}</div>
+                            <div class="metric-label">Massa Grassa</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${curMm ? curMm + '%' : 'N/D'}</div>
+                            <div class="metric-label">Massa Musc.</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${curBmi ? Number(curBmi).toFixed(1) : 'N/D'}</div>
+                            <div class="metric-label">BMI</div>
+                        </div>
+                    </div>
+                    ${changeHtml}
+                    <div class="last-visit-tag">
+                        <i class="fas fa-clock" style="color:var(--primary)"></i>
+                        Ultima misurazione: ${lastMeas}
+                        ${p.history && p.history.length > 0 ? `· <strong>${p.history.length} misurazioni</strong>` : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            c.innerHTML = '';
+            c.appendChild(grid);
+        }
+
+        // =============================================
+        //  MODAL: STORICO PAZIENTE
+        // =============================================
+        function openHistoryModal(patient) {
+            const overlay = document.getElementById('historyOverlay');
+            const content = document.getElementById('historyModalContent');
+
+            const initials = (patient.first_name[0] + patient.last_name[0]).toUpperCase();
+            let age = 'N/D';
+            if (patient.birth_date) {
+                age = new Date().getFullYear() - new Date(patient.birth_date).getFullYear() + ' anni';
+            }
+
+            // Build history table rows
+            let historyRows = '';
+            if (patient.history && patient.history.length > 0) {
+                patient.history.slice().reverse().forEach(h => {
+                    const bmi = h.bmi ? Number(h.bmi).toFixed(1) : null;
+                    let bmiClass = '';
+                    if (bmi) {
+                        const b = parseFloat(bmi);
+                        if (b < 18.5) bmiClass = 'bmi-sottopeso';
+                        else if (b < 25) bmiClass = 'bmi-normal';
+                        else if (b < 30) bmiClass = 'bmi-sovrappeso';
+                        else bmiClass = 'bmi-obeso';
+                    }
+                    historyRows += `
+                        <tr>
+                            <td>${new Date(h.measurement_date).toLocaleDateString('it-IT')}</td>
+                            <td><strong>${h.weight_kg} kg</strong></td>
+                            <td>${h.body_fat_percent ? h.body_fat_percent + '%' : 'N/D'}</td>
+                            <td>${h.muscle_mass_percent ? h.muscle_mass_percent + '%' : 'N/D'}</td>
+                            <td>${bmi ? `<span class="bmi-badge ${bmiClass}">${bmi}</span>` : 'N/D'}</td>
+                            <td style="font-size:0.82rem;color:var(--text-muted)">${h.notes || '—'}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            content.innerHTML = `
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:25px;">
+                    <div class="patient-avatar" style="width:60px;height:60px;font-size:1.4rem;border-radius:16px;">${initials}</div>
+                    <div>
+                        <h2 style="color:var(--text-primary);font-size:1.5rem;">${patient.first_name} ${patient.last_name}</h2>
+                        <p style="color:var(--text-muted);font-size:0.9rem;">${patient.email} · ${age}${patient.height_cm ? ' · Altezza: ' + patient.height_cm + ' cm' : ''}</p>
+                    </div>
+                </div>
+
+                ${patient.history && patient.history.length > 1 ? `
+                <div style="margin-bottom:28px;">
+                    <h4 style="color:var(--text-primary);margin-bottom:14px;font-weight:600;">📈 Andamento del Peso</h4>
+                    <div style="position:relative;height:220px;">
+                        <canvas id="patientWeightChart_${patient.id}"></canvas>
+                    </div>
+                </div>` : ''}
+
+                ${patient.history && patient.history.length > 0 ? `
+                <h4 style="color:var(--text-primary);margin-bottom:14px;font-weight:600;">📋 Storico Misurazioni</h4>
+                <div style="overflow-x:auto;">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Data</th><th>Peso</th><th>Massa Grassa</th><th>Massa Musc.</th><th>BMI</th><th>Note</th>
+                            </tr>
+                        </thead>
+                        <tbody>${historyRows}</tbody>
+                    </table>
+                </div>` : '<div class="empty-state"><i class="fas fa-chart-line"></i><p>Nessuna misurazione registrata ancora</p></div>'}
+            `;
+
+            overlay.classList.add('open');
+
+            // Draw chart
+            if (patient.history && patient.history.length > 1) {
+                setTimeout(() => {
+                    const ctx = document.getElementById(`patientWeightChart_${patient.id}`);
+                    if (!ctx) return;
+                    if (historyCharts[patient.id]) {
+                        historyCharts[patient.id].destroy();
+                    }
+                    const sorted = [...patient.history].sort((a, b) => new Date(a.measurement_date) - new Date(b.measurement_date));
+                    historyCharts[patient.id] = new Chart(ctx.getContext('2d'), {
+                        type: 'line',
+                        data: {
+                            labels: sorted.map(h => new Date(h.measurement_date).toLocaleDateString('it-IT')),
+                            datasets: [{
+                                label: 'Peso (kg)',
+                                data: sorted.map(h => h.weight_kg),
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16,185,129,0.08)',
+                                borderWidth: 3, fill: true, tension: 0.4,
+                                pointBackgroundColor: '#10b981',
+                                pointBorderColor: '#fff', pointBorderWidth: 2,
+                                pointRadius: 5, pointHoverRadius: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: {
+                                legend: { labels: { color: '#064e3b', font: { size: 13, weight: 'bold' } } }
+                            },
+                            scales: {
+                                y: { grid: { color: 'rgba(16,185,129,0.1)' }, ticks: { color: '#064e3b' } },
+                                x: { grid: { color: 'rgba(16,185,129,0.1)' }, ticks: { color: '#064e3b' } }
+                            }
+                        }
+                    });
+                }, 150);
+            }
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyOverlay').classList.remove('open');
+        }
+        document.getElementById('historyOverlay').addEventListener('click', function (e) {
+            if (e.target === this) closeHistoryModal();
+        });
+
+        // =============================================
+        //  RENDER: UPCOMING APPOINTMENTS
+        // =============================================
+        function renderUpcoming(upcoming) {
+            const c = document.getElementById('upcomingContainer');
+            if (!upcoming || upcoming.length === 0) {
+                c.innerHTML = renderEmpty('Nessuna visita programmata');
+                return;
+            }
+
+            const typeLabels = {
+                'prima-visita': 'Prima Visita',
+                'controllo-mensile': 'Controllo',
+                'follow-up': 'Follow-up',
+                'urgente': 'Urgente'
+            };
+            const typeClass = {
+                'prima-visita': 'type-prima-visita',
+                'controllo-mensile': 'type-controllo-mensile',
+                'follow-up': 'type-follow-up',
+                'urgente': 'type-urgente'
+            };
+            const months = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+
+            const list = document.createElement('div');
+            list.className = 'appointments-list';
+
+            upcoming.forEach(a => {
+                const d = new Date(a.appointment_date);
+                const timeStr = a.start_time ? a.start_time.substring(0, 5) : '';
+                const item = document.createElement('div');
+                item.className = 'appointment-item';
+                item.innerHTML = `
+                    <div class="appointment-date-badge">
+                        <div class="day">${d.getDate()}</div>
+                        <div class="month">${months[d.getMonth()]}</div>
+                    </div>
+                    <div class="appointment-info">
+                        <div class="appointment-name">${a.first_name} ${a.last_name}</div>
+                        <div class="appointment-meta">
+                            ${timeStr ? '🕐 ' + timeStr + ' · ' : ''}
+                            <span class="appt-type-badge ${typeClass[a.appointment_type] || 'type-follow-up'}">${typeLabels[a.appointment_type] || a.appointment_type}</span>
+                            ${a.notes ? ' · ' + a.notes : ''}
+                        </div>
+                    </div>
+                    <button class="mark-complete-btn" onclick="markCompleted(event, ${a.id})">
+                        <i class="fas fa-check"></i> Completa Visita
+                    </button>
+                `;
+                list.appendChild(item);
+            });
+
+            c.innerHTML = '';
+            c.appendChild(list);
+        }
+
+        async function markCompleted(event, appointmentId) {
+            event.stopPropagation();
+            const btn = event.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completamento...';
+
+            try {
+                const res = await fetch('../api/reports.php?action=mark_appointment_completed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ appointment_id: appointmentId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> Completata!';
+                    btn.style.background = '#6b7280';
+                    setTimeout(() => loadReportData(), 1500);
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-check"></i> Completa Visita';
+                    alert('Errore: ' + data.error);
+                }
+            } catch (e) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check"></i> Completa Visita';
+            }
+        }
+
+        // =============================================
+        //  RENDER: STATS
+        // =============================================
+        function renderStats(stats) {
+            if (!stats) return;
+            document.getElementById('stat-active').textContent = stats.active_patients;
+            document.getElementById('stat-month').textContent = stats.month_appointments;
+            document.getElementById('stat-new').textContent = stats.new_this_month;
+            document.getElementById('stat-rating').textContent =
+                stats.avg_rating > 0 ? stats.avg_rating.toFixed(1) + ' 🍎' : 'N/D';
+        }
+
+        // =============================================
+        //  RENDER: REVIEWS
+        // =============================================
+        function renderReviews(reviews, stats) {
+            const c = document.getElementById('reviewsContainer');
+
+            // Rating overview
+            if (reviews && reviews.length > 0) {
+                const overview = document.getElementById('ratingOverview');
+                overview.style.display = 'flex';
+                document.getElementById('overviewAvg').textContent = stats.avg_rating.toFixed(1);
+                document.getElementById('overviewCount').textContent = reviews.length + ' valutazioni ricevute';
+
+                // Stars display
+                const filled = Math.round(stats.avg_rating);
+                document.getElementById('overviewStars').textContent = '🍎'.repeat(filled) + '🍏'.repeat(5 - filled);
+
+                // Bar chart by rating
+                const counts = [0, 0, 0, 0, 0];
+                reviews.forEach(r => { counts[r.rating - 1]++; });
+                const maxCount = Math.max(...counts);
+                let barsHtml = '';
+                for (let i = 5; i >= 1; i--) {
+                    const pct = maxCount > 0 ? ((counts[i - 1] / reviews.length) * 100).toFixed(0) : 0;
+                    barsHtml += `
+                        <div class="rating-bar-row">
+                            <span class="rating-bar-label">${'🍎'.repeat(i)}</span>
+                            <div class="rating-bar-bg">
+                                <div class="rating-bar-fill" style="width:${pct}%"></div>
+                            </div>
+                            <span style="min-width:30px;font-size:0.8rem;">${counts[i - 1]}</span>
+                        </div>
+                    `;
+                }
+                document.getElementById('ratingBars').innerHTML = barsHtml;
+            }
+
+            if (!reviews || reviews.length === 0) {
+                c.innerHTML = renderEmpty('Nessuna valutazione ricevuta ancora. Completate alcune visite per invitare i pazienti a valutare!');
+                return;
+            }
+
+            const typeLabels = {
+                'prima-visita': 'Prima Visita', 'controllo-mensile': 'Controllo',
+                'follow-up': 'Follow-up', 'urgente': 'Urgente'
+            };
+
+            const grid = document.createElement('div');
+            grid.className = 'reviews-grid';
+
+            reviews.forEach(r => {
+                const apples = '🍎'.repeat(r.rating) + '🍏'.repeat(5 - r.rating);
+                const date = new Date(r.created_at).toLocaleDateString('it-IT');
+                const card = document.createElement('div');
+                card.className = 'review-card';
+                card.innerHTML = `
+                    <div class="review-header">
+                        <div>
+                            <div class="reviewer-name">${r.first_name} ${r.last_name}</div>
+                            <div class="reviewer-date">${date}</div>
+                        </div>
+                        <div class="apple-rating">${apples.split('').map(a => `<span>${a}</span>`).join('')}</div>
+                    </div>
+                    ${r.comment ? `<div class="review-comment">"${r.comment}"</div>` : ''}
+                    <div class="review-visit-type">
+                        <i class="fas fa-stethoscope" style="color:var(--primary)"></i>
+                        ${typeLabels[r.appointment_type] || r.appointment_type}
+                        · ${new Date(r.appointment_date).toLocaleDateString('it-IT')}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            c.innerHTML = '';
+            c.appendChild(grid);
+        }
+
+        // =============================================
+        //  EMPTY STATE HELPER
+        // =============================================
+        function renderEmpty(msg) {
+            return `<div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>${msg}</p>
+            </div>`;
+        }
+
+        // =============================================
+        //  POST-VISIT REVIEW SYSTEM (paziente)
+        // =============================================
+        async function checkPendingReview() {
+            try {
+                const res = await fetch('../api/reports.php?action=get_pending_review', { credentials: 'include' });
+                const data = await res.json();
+                if (data.success && data.pending) {
+                    showReviewOverlay(data.pending);
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function showReviewOverlay(appt) {
+            pendingAppointmentId = appt.id;
+            const nutName = appt.nutritionist_first + ' ' + appt.nutritionist_last;
+            const apptDate = new Date(appt.appointment_date).toLocaleDateString('it-IT');
+            document.getElementById('reviewModalSub').innerHTML =
+                `Visita con <strong>Dott. ${nutName}</strong> del <strong>${apptDate}</strong>.<br>
+                 Seleziona quante mele vuoi dare — più mele = più soddisfazione! 🍏`;
+            selectedApples = 0;
+            document.querySelectorAll('.apple-btn').forEach(b => b.classList.remove('selected', 'preselect'));
+            document.getElementById('reviewComment').value = '';
+            document.getElementById('reviewSuccessMsg').style.display = 'none';
+            document.getElementById('reviewOverlay').classList.add('open');
+        }
+
+        function selectApples(value) {
+            selectedApples = value;
+            document.querySelectorAll('.apple-btn').forEach(b => {
+                const v = parseInt(b.dataset.value);
+                b.classList.toggle('selected', v === value);
+                b.classList.toggle('preselect', v <= value && v !== value);
+            });
+            // Re-render: all up to value get full apple effect
+            document.querySelectorAll('.apple-btn').forEach(b => {
+                const v = parseInt(b.dataset.value);
+                if (v <= value) {
+                    b.style.filter = 'grayscale(0)';
+                    b.style.transform = v === value ? 'scale(1.3)' : 'scale(1.1)';
+                } else {
+                    b.style.filter = 'grayscale(0.7)';
+                    b.style.transform = 'scale(1)';
+                }
+            });
+        }
+
+        async function submitReview() {
+            if (selectedApples < 1) {
+                // Shake the apples
+                document.getElementById('appleSelector').style.animation = 'none';
+                requestAnimationFrame(() => {
+                    document.getElementById('appleSelector').style.animation = 'shake 0.4s ease';
+                });
+                alert('Per favore seleziona almeno una mela! 🍎');
+                return;
+            }
+            const comment = document.getElementById('reviewComment').value;
+            try {
+                const res = await fetch('../api/reports.php?action=submit_review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        appointment_id: pendingAppointmentId,
+                        rating: selectedApples,
+                        comment: comment
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('reviewSuccessMsg').style.display = 'block';
+                    document.querySelector('#reviewModal .review-submit-btn').style.display = 'none';
+                    document.querySelector('#reviewModal .review-skip-btn').style.display = 'none';
+                    setTimeout(() => {
+                        document.getElementById('reviewOverlay').classList.remove('open');
+                    }, 2500);
+                } else {
+                    alert('Errore: ' + data.error);
+                }
+            } catch (e) {
+                alert('Errore di connessione');
+            }
+        }
+
+        function skipReview() {
+            document.getElementById('reviewOverlay').classList.remove('open');
+        }
+    </script>
+
+    <script src="cookie-banner.js"></script>
+</body>
+
+</html>

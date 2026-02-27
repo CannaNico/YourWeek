@@ -7,6 +7,7 @@
     <title>Dashboard Nutrizionista - YourWeek</title>
     <link rel="stylesheet" href="nutrizionistaPage.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="cookie-banner.css">
 </head>
 
 <body>
@@ -145,6 +146,15 @@
                 <h3>Area Personale</h3>
                 <p>Gestisci i tuoi appunti, documenti e immagini necessari per lo svolgimento della tua attività</p>
                 <span class="feature-badge">Appunti Personali</span>
+            </div>
+
+            <div class="feature-card" onclick="location.href='trovaCliente.html'">
+                <div class="feature-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3>Trova Clienti</h3>
+                <p>Scopri i clienti che stanno cercando un nutrizionista nella tua provincia e contattali facilmente</p>
+                <span class="feature-badge">Nuovi potenziali pazienti</span>
             </div>
         </div>
 
@@ -333,6 +343,7 @@
         // Carica i dati all'avvio
         updateDashboardStats();
     </script>
+    <script src="cookie-banner.js"></script>
 </body>
 
 </html>

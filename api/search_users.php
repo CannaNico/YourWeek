@@ -10,20 +10,17 @@
  * Returns: JSON with user list
  */
 
-// Enable error reporting for debugging
+// Enable error reporting for debugging (sviluppo)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Set JSON header
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET');
-header('Access-Control-Allow-Headers: Content-Type');
+// Set JSON header (gli header CORS sono gestiti da db_connection.php)
+header('Content-Type: application/json; charset=utf-8');
 
 // Start session
 session_start();
 
-// Database connection
+// Database connection (PDO + session + CORS)
 require_once '../includes/db_connection.php';
 
 /**
@@ -100,7 +97,7 @@ function getProvinciaFullName($code) {
 /**
  * Search users by provincia and role
  */
-function searchUsers($conn, $provincia, $role) {
+function searchUsers($db, $provincia, $role, $onlyWithoutNutritionist = false) {
     try {
         // Prepare SQL query
         $sql = "SELECT 
@@ -112,23 +109,29 @@ function searchUsers($conn, $provincia, $role) {
                     provincia,
                     nutritionist_code
                 FROM Users 
-                WHERE provincia = ? 
+                WHERE UPPER(provincia) = ? 
                 AND role = ? 
-                AND is_active = TRUE
-                ORDER BY last_name ASC, first_name ASC";
-        
-        $stmt = $conn->prepare($sql);
-        
-        if (!$stmt) {
-            throw new Exception('Errore nella preparazione della query: ' . $conn->error);
+                AND is_active = TRUE";
+
+        // If requested, for patients show only those without an assigned nutritionist
+        if ($onlyWithoutNutritionist && $role === 'paziente') {
+            $sql .= " AND (nutritionist_id IS NULL OR nutritionist_id = 0)";
         }
-        
-        $stmt->bind_param('ss', $provincia, $role);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        
+
+        $sql .= " ORDER BY last_name ASC, first_name ASC";
+
         $users = [];
-        while ($row = $result->fetch_assoc()) {
+        
+        // Log the query for debugging
+        error_log("Search Query: " . $sql);
+        error_log("Parameters: provincia=" . $provincia . ", role=" . $role . ", onlyWithoutNutritionist=" . ($onlyWithoutNutritionist ? 'true' : 'false'));
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$provincia, $role]);
+        
+        $rowCount = 0;
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $rowCount++;
             // Add full province name
             $row['provincia_full'] = getProvinciaFullName($row['provincia']);
             
@@ -148,7 +151,8 @@ function searchUsers($conn, $provincia, $role) {
             $users[] = $row;
         }
         
-        $stmt->close();
+        error_log("Search Results: Found " . $rowCount . " users");
+        
         return $users;
         
     } catch (Exception $e) {
@@ -168,6 +172,7 @@ try {
     // Get parameters
     $provincia = isset($_GET['provincia']) ? trim($_GET['provincia']) : '';
     $role = isset($_GET['role']) ? trim($_GET['role']) : '';
+    $onlyWithoutNutritionist = isset($_GET['only_without_nutritionist']) && $_GET['only_without_nutritionist'] == '1';
     
     // Validate parameters
     if (empty($provincia)) {
@@ -200,17 +205,16 @@ try {
     }
     
     // Search users
-    $users = searchUsers($conn, strtoupper($provincia), $role);
+    $db = getDB();
+    $users = searchUsers($db, strtoupper($provincia), $role, $onlyWithoutNutritionist);
     
-    // Log search activity
+    // Log search activity (usiamo PDO come nel resto del progetto)
     $userId = $_SESSION['user_id'];
     $logSql = "INSERT INTO ActivityLog (user_id, action, description) 
                VALUES (?, 'user_search', ?)";
-    $logStmt = $conn->prepare($logSql);
+    $logStmt = $db->prepare($logSql);
     $logDesc = "Ricerca utenti: provincia=$provincia, role=$role, risultati=" . count($users);
-    $logStmt->bind_param('is', $userId, $logDesc);
-    $logStmt->execute();
-    $logStmt->close();
+    $logStmt->execute([$userId, $logDesc]);
     
     // Send success response
     sendResponse(true, $users, null, 200);
@@ -220,8 +224,5 @@ try {
     sendResponse(false, null, 'Errore del server: ' . $e->getMessage(), 500);
 }
 
-// Close database connection
-if (isset($conn)) {
-    $conn->close();
-}
+// Connessione gestita dal singleton PDO (nessuna chiusura esplicita necessaria)
 ?>
