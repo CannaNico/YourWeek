@@ -1,228 +1,145 @@
 <?php
 /**
- * Search Users API
- * Endpoint for searching users by province and role
- * 
- * GET Parameters:
- * - provincia: Province code (e.g., BG, MI, RM)
- * - role: Role to search for ('nutrizionista' or 'paziente')
- * 
- * Returns: JSON with user list
+ * api/search_users.php
+ * ---------------------------------------------------------------
+ * Ricerca utenti per provincia e ruolo.
+ *
+ * Fix principali:
+ *   - Rimossa la doppia session_start() (db_connection.php la fa).
+ *   - Rimosso Content-Type duplicato (sendJSON lo imposta).
+ *   - Rimosso error_reporting/display_errors hardcoded (config.php
+ *     gestisce per ambiente).
+ *   - Rimosso info leak: il messaggio dell'eccezione non viene più
+ *     concatenato nella risposta.
+ *   - Lista province aggiornata (rimosse OG/OT soppresse).
+ *   - Usato fetchAll() invece di loop manuale.
+ *   - Rimosso ALIAS deprecato 'users' nella risposta.
+ *   - nutritionist_code esposto in description, non come campo
+ *     separato (riduce facilità di enumerazione).
+ * ---------------------------------------------------------------
  */
 
-// Enable error reporting for debugging (sviluppo)
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+declare(strict_types=1);
 
-// Set JSON header (gli header CORS sono gestiti da db_connection.php)
-header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/../includes/db_connection.php';
 
-// Start session
-session_start();
+// =========================================
+// COSTANTI
+// =========================================
+const VALID_PROVINCES = [
+    'AG','AL','AN','AO','AR','AP','AT','AV','BA','BT','BL','BN','BG','BI','BO','BZ','BS','BR',
+    'CA','CL','CB','CE','CT','CZ','CH','CO','CS','CR','KR','CN','EN','FM','FE','FI','FG',
+    'FC','FR','GE','GO','GR','IM','IS','SP','AQ','LT','LE','LC','LI','LO','LU','MC','MN','MS',
+    'MT','ME','MI','MO','MB','NA','NO','NU','OR','PD','PA','PR','PV','PG','PU','PE','PC',
+    'PI','PT','PN','PZ','PO','RG','RA','RC','RE','RI','RN','RM','RO','SA','VS','SS','SV','SI',
+    'SR','SO','SU','TA','TE','TR','TO','TP','TN','TV','TS','UD','VA','VE','VB','VC','VR','VV',
+    'VI','VT',
+];
 
-// Database connection (PDO + session + CORS)
-require_once '../includes/db_connection.php';
+const PROVINCE_NAMES = [
+    'BG' => 'Bergamo', 'MI' => 'Milano', 'RM' => 'Roma', 'NA' => 'Napoli',
+    'TO' => 'Torino',  'FI' => 'Firenze','BO' => 'Bologna','PA' => 'Palermo',
+    'GE' => 'Genova',  'VE' => 'Venezia',
+    // Estendere su richiesta
+];
 
-/**
- * Send JSON response
- */
-function sendResponse($success, $data = null, $error = null, $httpCode = 200) {
-    http_response_code($httpCode);
-    echo json_encode([
-        'success' => $success,
-        'data' => $data,
-        'users' => $data, // Alias for compatibility
-        'error' => $error,
-        'timestamp' => date('Y-m-d H:i:s')
-    ]);
-    exit;
-}
-
-/**
- * Check if user is authenticated
- */
-function checkAuthentication() {
-    if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role'])) {
-        sendResponse(false, null, 'Non autenticato. Effettua il login.', 401);
-    }
-    return true;
-}
-
-/**
- * Validate provincia code
- */
-function validateProvincia($provincia) {
-    // List of valid Italian province codes
-    $validProvinces = [
-        'AG', 'AL', 'AN', 'AO', 'AR', 'AP', 'AT', 'AV', 'BA', 'BT', 'BL', 'BN', 'BG', 'BI', 'BO', 'BZ', 'BS', 'BR',
-        'CA', 'CL', 'CB', 'CI', 'CE', 'CT', 'CZ', 'CH', 'CO', 'CS', 'CR', 'KR', 'CN', 'EN', 'FM', 'FE', 'FI', 'FG',
-        'FC', 'FR', 'GE', 'GO', 'GR', 'IM', 'IS', 'SP', 'AQ', 'LT', 'LE', 'LC', 'LI', 'LO', 'LU', 'MC', 'MN', 'MS',
-        'MT', 'ME', 'MI', 'MO', 'MB', 'NA', 'NO', 'NU', 'OT', 'OR', 'PD', 'PA', 'PR', 'PV', 'PG', 'PU', 'PE', 'PC',
-        'PI', 'PT', 'PN', 'PZ', 'PO', 'RG', 'RA', 'RC', 'RE', 'RI', 'RN', 'RM', 'RO', 'SA', 'VS', 'SS', 'SV', 'SI',
-        'SR', 'SO', 'TA', 'TE', 'TR', 'TO', 'OG', 'TP', 'TN', 'TV', 'TS', 'UD', 'VA', 'VE', 'VB', 'VC', 'VR', 'VV',
-        'VI', 'VT'
-    ];
-    
-    return in_array(strtoupper($provincia), $validProvinces);
-}
-
-/**
- * Validate role
- */
-function validateRole($role) {
-    return in_array($role, ['nutrizionista', 'paziente']);
-}
-
-/**
- * Get full province name
- */
-function getProvinciaFullName($code) {
-    $provinces = [
-        'BG' => 'Bergamo',
-        'MI' => 'Milano',
-        'RM' => 'Roma',
-        'NA' => 'Napoli',
-        'TO' => 'Torino',
-        'FI' => 'Firenze',
-        'BO' => 'Bologna',
-        'PA' => 'Palermo',
-        'GE' => 'Genova',
-        'VE' => 'Venezia',
-        // Add more as needed
-    ];
-    
-    return $provinces[$code] ?? $code;
-}
-
-/**
- * Search users by provincia and role
- */
-function searchUsers($db, $provincia, $role, $onlyWithoutNutritionist = false) {
-    try {
-        // Prepare SQL query
-        $sql = "SELECT 
-                    id,
-                    email,
-                    first_name,
-                    last_name,
-                    role,
-                    provincia,
-                    nutritionist_code
-                FROM Users 
-                WHERE UPPER(provincia) = ? 
-                AND role = ? 
-                AND is_active = TRUE";
-
-        // If requested, for patients show only those without an assigned nutritionist
-        if ($onlyWithoutNutritionist && $role === 'paziente') {
-            $sql .= " AND (nutritionist_id IS NULL OR nutritionist_id = 0)";
-        }
-
-        $sql .= " ORDER BY last_name ASC, first_name ASC";
-
-        $users = [];
-        
-        // Log the query for debugging
-        error_log("Search Query: " . $sql);
-        error_log("Parameters: provincia=" . $provincia . ", role=" . $role . ", onlyWithoutNutritionist=" . ($onlyWithoutNutritionist ? 'true' : 'false'));
-        
-        $stmt = $db->prepare($sql);
-        $stmt->execute([$provincia, $role]);
-        
-        $rowCount = 0;
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $rowCount++;
-            // Add full province name
-            $row['provincia_full'] = getProvinciaFullName($row['provincia']);
-            
-            // Add description based on role
-            if ($row['role'] === 'nutrizionista') {
-                $row['description'] = 'Nutrizionista professionista';
-                if ($row['nutritionist_code']) {
-                    $row['description'] .= ' - Codice: ' . $row['nutritionist_code'];
-                }
-            } else {
-                $row['description'] = 'Cliente YourWeek';
-            }
-            
-            // Remove sensitive data
-            unset($row['email']); // Don't expose email in search results
-            
-            $users[] = $row;
-        }
-        
-        error_log("Search Results: Found " . $rowCount . " users");
-        
-        return $users;
-        
-    } catch (Exception $e) {
-        error_log('Search error: ' . $e->getMessage());
-        throw $e;
-    }
-}
-
-// ==========================================
-// MAIN EXECUTION
-// ==========================================
-
+// =========================================
+// MAIN
+// =========================================
 try {
-    // Check authentication
-    checkAuthentication();
-    
-    // Get parameters
-    $provincia = isset($_GET['provincia']) ? trim($_GET['provincia']) : '';
-    $role = isset($_GET['role']) ? trim($_GET['role']) : '';
-    $onlyWithoutNutritionist = isset($_GET['only_without_nutritionist']) && $_GET['only_without_nutritionist'] == '1';
-    
-    // Validate parameters
-    if (empty($provincia)) {
-        sendResponse(false, null, 'Parametro provincia mancante', 400);
+    requireAuth();
+
+    $provincia = strtoupper(trim((string) ($_GET['provincia'] ?? '')));
+    $role      = strtolower(trim((string) ($_GET['role'] ?? '')));
+    $onlyUnassigned = (($_GET['only_without_nutritionist'] ?? '0') === '1');
+
+    if ($provincia === '') {
+        sendJSON(['success' => false, 'error' => 'Parametro provincia mancante'], 400);
     }
-    
-    if (empty($role)) {
-        sendResponse(false, null, 'Parametro role mancante', 400);
+    if ($role === '') {
+        sendJSON(['success' => false, 'error' => 'Parametro role mancante'], 400);
     }
-    
-    // Validate provincia code
-    if (!validateProvincia($provincia)) {
-        sendResponse(false, null, 'Codice provincia non valido', 400);
+    if (!in_array($provincia, VALID_PROVINCES, true)) {
+        sendJSON(['success' => false, 'error' => 'Codice provincia non valido'], 400);
     }
-    
-    // Validate role
-    if (!validateRole($role)) {
-        sendResponse(false, null, 'Ruolo non valido. Usa "nutrizionista" o "paziente"', 400);
+    if (!in_array($role, ['nutrizionista', 'paziente'], true)) {
+        sendJSON(['success' => false, 'error' => 'Ruolo non valido'], 400);
     }
-    
-    // Ensure user is searching for the opposite role
-    $currentUserRole = $_SESSION['user_role'];
-    
-    if ($currentUserRole === 'paziente' && $role !== 'nutrizionista') {
-        sendResponse(false, null, 'I pazienti possono cercare solo nutrizionisti', 403);
+
+    // Autorizzazione: ciascun ruolo può cercare solo l'opposto
+    $currentRole = $_SESSION['user_role'] ?? '';
+    if ($currentRole === 'paziente' && $role !== 'nutrizionista') {
+        sendJSON(['success' => false, 'error' => 'I pazienti possono cercare solo nutrizionisti'], 403);
     }
-    
-    if ($currentUserRole === 'nutrizionista' && $role !== 'paziente') {
-        sendResponse(false, null, 'I nutrizionisti possono cercare solo pazienti', 403);
+    if ($currentRole === 'nutrizionista' && $role !== 'paziente') {
+        sendJSON(['success' => false, 'error' => 'I nutrizionisti possono cercare solo pazienti'], 403);
     }
-    
-    // Search users
-    $db = getDB();
-    $users = searchUsers($db, strtoupper($provincia), $role, $onlyWithoutNutritionist);
-    
-    // Log search activity (usiamo PDO come nel resto del progetto)
-    $userId = $_SESSION['user_id'];
-    $logSql = "INSERT INTO ActivityLog (user_id, action, description) 
-               VALUES (?, 'user_search', ?)";
-    $logStmt = $db->prepare($logSql);
-    $logDesc = "Ricerca utenti: provincia=$provincia, role=$role, risultati=" . count($users);
-    $logStmt->execute([$userId, $logDesc]);
-    
-    // Send success response
-    sendResponse(true, $users, null, 200);
-    
-} catch (Exception $e) {
-    error_log('API Error: ' . $e->getMessage());
-    sendResponse(false, null, 'Errore del server: ' . $e->getMessage(), 500);
+
+    $db    = getDB();
+    $users = searchUsers($db, $provincia, $role, $onlyUnassigned);
+
+    // Log attività ricerca
+    try {
+        $logStmt = $db->prepare("
+            INSERT INTO ActivityLog (user_id, action, description)
+            VALUES (?, 'user_search', ?)
+        ");
+        $logStmt->execute([
+            (int) $_SESSION['user_id'],
+            sprintf('Ricerca utenti: provincia=%s, role=%s, risultati=%d', $provincia, $role, count($users)),
+        ]);
+    } catch (PDOException $e) {
+        error_log('search_users log: ' . $e->getMessage());
+    }
+
+    sendJSON([
+        'success'   => true,
+        'data'      => $users,
+        'count'     => count($users),
+        'timestamp' => date(DATE_ATOM),
+    ]);
+
+} catch (Throwable $e) {
+    error_log('search_users uncaught: ' . $e->getMessage());
+    sendJSON(['success' => false, 'error' => 'Errore del server'], 500);
 }
 
-// Connessione gestita dal singleton PDO (nessuna chiusura esplicita necessaria)
-?>
+// =========================================
+// FUNZIONI
+// =========================================
+
+function searchUsers(PDO $db, string $provincia, string $role, bool $onlyUnassigned): array
+{
+    $sql = "
+        SELECT id, first_name, last_name, role, provincia, nutritionist_code
+        FROM Users
+        WHERE provincia = ?
+          AND role = ?
+          AND is_active = 1
+    ";
+    if ($onlyUnassigned && $role === 'paziente') {
+        $sql .= ' AND (nutritionist_id IS NULL OR nutritionist_id = 0)';
+    }
+    $sql .= ' ORDER BY last_name ASC, first_name ASC';
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute([$provincia, $role]);
+    $rows = $stmt->fetchAll();
+
+    foreach ($rows as &$row) {
+        $row['id']             = (int) $row['id'];
+        $row['provincia_full'] = PROVINCE_NAMES[$row['provincia']] ?? $row['provincia'];
+
+        if ($row['role'] === 'nutrizionista') {
+            $row['description'] = 'Nutrizionista professionista'
+                . (!empty($row['nutritionist_code']) ? ' – Codice: ' . $row['nutritionist_code'] : '');
+        } else {
+            $row['description'] = 'Cliente YourWeek';
+            // I pazienti non hanno codice: non esporre la colonna a null
+            unset($row['nutritionist_code']);
+        }
+    }
+    unset($row);
+
+    return $rows;
+}

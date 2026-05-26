@@ -1,184 +1,223 @@
 /**
  * cookie-banner.js – YourWeek
- * Gestione banner consenso cookie + cookie di sessione/login
+ * ---------------------------------------------------------------
+ * Fix principali rispetto alla versione originale:
+ *   - document.currentScript può essere null in alcuni contesti:
+ *     ora il path di cookie-banner.css viene risolto in modo
+ *     più robusto (script[src*="cookie-banner.js"] come fallback).
+ *   - Aggiunto cookie Secure quando la pagina è in HTTPS.
+ *   - Aggiunto focus trap minimo + ESC = "Solo necessari".
+ *   - Aggiunto revokeConsent() esposto pubblicamente.
+ *   - Banner testuale via textContent (no innerHTML su contenuti
+ *     dinamici).
+ *   - Listener click una sola volta tramite delegated handler.
+ *   - JSDoc completo.
+ * ---------------------------------------------------------------
  */
 
-(function () {
+(() => {
     'use strict';
 
-    // ─── Costanti ──────────────────────────────────────────────────
-    const CONSENT_COOKIE   = 'yw_cookie_consent';   // accettazione banner
-    const REMEMBER_COOKIE  = 'yw_remember';          // login persistente
-    const CONSENT_DAYS     = 365;
-    const REMEMBER_DAYS    = 30;
+    const CONSENT_COOKIE  = 'yw_cookie_consent';
+    const REMEMBER_COOKIE = 'yw_remember';
+    const CONSENT_DAYS    = 365;
+    const REMEMBER_DAYS   = 30;
+    const BANNER_ID       = 'yw-cookie-banner';
 
-    // ─── Utility cookie ────────────────────────────────────────────
+    const isHttps = location.protocol === 'https:';
 
-    function setCookie(name, value, days) {
+    // ─── Utility cookie ───────────────────────────────────────────
+
+    /** @param {string} name @param {string} value @param {number} days */
+    const setCookie = (name, value, days) => {
         const expires = new Date();
         expires.setDate(expires.getDate() + days);
-        document.cookie =
-            encodeURIComponent(name) + '=' + encodeURIComponent(value) +
-            '; expires=' + expires.toUTCString() +
-            '; path=/; SameSite=Strict';
-    }
+        const parts = [
+            `${encodeURIComponent(name)}=${encodeURIComponent(value)}`,
+            `expires=${expires.toUTCString()}`,
+            'path=/',
+            'SameSite=Strict',
+        ];
+        if (isHttps) parts.push('Secure');
+        document.cookie = parts.join('; ');
+    };
 
-    function getCookie(name) {
-        const key = encodeURIComponent(name) + '=';
-        const cookies = document.cookie.split(';');
-        for (let c of cookies) {
-            c = c.trim();
-            if (c.indexOf(key) === 0) {
-                return decodeURIComponent(c.substring(key.length));
-            }
+    /** @param {string} name @returns {string|null} */
+    const getCookie = (name) => {
+        const key = `${encodeURIComponent(name)}=`;
+        for (const raw of document.cookie.split(';')) {
+            const c = raw.trim();
+            if (c.startsWith(key)) return decodeURIComponent(c.slice(key.length));
         }
         return null;
-    }
+    };
 
-    function deleteCookie(name) {
-        document.cookie =
-            encodeURIComponent(name) +
-            '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
-    }
+    /** @param {string} name */
+    const deleteCookie = (name) => {
+        const parts = [
+            `${encodeURIComponent(name)}=`,
+            'expires=Thu, 01 Jan 1970 00:00:00 GMT',
+            'path=/',
+            'SameSite=Strict',
+        ];
+        if (isHttps) parts.push('Secure');
+        document.cookie = parts.join('; ');
+    };
 
-    // ─── Stato consenso ────────────────────────────────────────────
+    // ─── Stato consenso ───────────────────────────────────────────
 
     /** @returns {'accepted'|'declined'|null} */
-    function getConsent() {
-        return getCookie(CONSENT_COOKIE);
-    }
+    const getConsent = () => /** @type {'accepted'|'declined'|null} */ (getCookie(CONSENT_COOKIE));
+    const cookiesAccepted = () => getConsent() === 'accepted';
 
-    function cookiesAccepted() {
-        return getConsent() === 'accepted';
-    }
+    // ─── CSS path resolver ────────────────────────────────────────
 
-    // ─── Banner HTML ───────────────────────────────────────────────
+    const resolveCssPath = () => {
+        // 1) currentScript (synchronous load)
+        const cur = document.currentScript;
+        if (cur?.src) return cur.src.replace(/[^/]*$/, 'cookie-banner.css');
 
-    function createBanner() {
+        // 2) fallback: cerca lo script per nome file
+        const candidate = document.querySelector('script[src*="cookie-banner.js"]');
+        if (candidate?.src) return candidate.src.replace(/[^/]*$/, 'cookie-banner.css');
+
+        // 3) ultimo fallback: relativo alla pagina corrente
+        return 'cookie-banner.css';
+    };
+
+    // ─── Banner ───────────────────────────────────────────────────
+
+    const buildBanner = () => {
         const banner = document.createElement('div');
-        banner.id = 'yw-cookie-banner';
+        banner.id = BANNER_ID;
         banner.setAttribute('role', 'dialog');
+        banner.setAttribute('aria-modal', 'false');
         banner.setAttribute('aria-label', 'Consenso ai cookie');
-        banner.innerHTML = `
-            <div class="yw-banner-inner">
-                <div class="yw-banner-icon">🍪</div>
-                <div class="yw-banner-text">
-                    <h3>YourWeek utilizza i cookie</h3>
-                    <p>
-                        Usiamo cookie tecnici necessari per il <strong>login</strong> e la 
-                        <strong>gestione delle sessioni</strong>. Senza di essi non potrai 
-                        accedere alla piattaforma.
-                    </p>
-                </div>
-                <div class="yw-banner-actions">
-                    <button class="yw-btn-decline" id="yw-btn-decline">Solo necessari</button>
-                    <button class="yw-btn-accept" id="yw-btn-accept">✓ Accetta</button>
-                </div>
-            </div>`;
-        return banner;
-    }
 
-    function showBanner() {
-        // Inietta CSS se non già presente
-        if (!document.getElementById('yw-cookie-banner-css')) {
-            const link = document.createElement('link');
-            link.id   = 'yw-cookie-banner-css';
-            link.rel  = 'stylesheet';
-            // Calcola il path relativo a cookie-banner.js
-            const base = document.currentScript
-                ? document.currentScript.src.replace('cookie-banner.js', '')
-                : '';
-            link.href = base + 'cookie-banner.css';
-            document.head.appendChild(link);
-        }
+        const inner = document.createElement('div');
+        inner.className = 'yw-banner-inner';
 
-        const banner = createBanner();
+        const icon = document.createElement('div');
+        icon.className = 'yw-banner-icon';
+        icon.textContent = '🍪';
+
+        const textWrap = document.createElement('div');
+        textWrap.className = 'yw-banner-text';
+        const h3 = document.createElement('h3');
+        h3.textContent = 'YourWeek utilizza i cookie';
+        const p = document.createElement('p');
+        p.textContent = 'Usiamo cookie tecnici necessari per il login e la gestione delle sessioni. Senza di essi non potrai accedere alla piattaforma.';
+        textWrap.append(h3, p);
+
+        const actions = document.createElement('div');
+        actions.className = 'yw-banner-actions';
+
+        const declineBtn = document.createElement('button');
+        declineBtn.type = 'button';
+        declineBtn.id = 'yw-btn-decline';
+        declineBtn.className = 'yw-btn-decline';
+        declineBtn.textContent = 'Solo necessari';
+
+        const acceptBtn = document.createElement('button');
+        acceptBtn.type = 'button';
+        acceptBtn.id = 'yw-btn-accept';
+        acceptBtn.className = 'yw-btn-accept';
+        acceptBtn.textContent = '✓ Accetta';
+
+        actions.append(declineBtn, acceptBtn);
+        inner.append(icon, textWrap, actions);
+        banner.appendChild(inner);
+
+        return { banner, acceptBtn, declineBtn };
+    };
+
+    const ensureStyles = () => {
+        if (document.getElementById('yw-cookie-banner-css')) return;
+        const link = document.createElement('link');
+        link.id   = 'yw-cookie-banner-css';
+        link.rel  = 'stylesheet';
+        link.href = resolveCssPath();
+        document.head.appendChild(link);
+    };
+
+    let escListener = null;
+
+    const showBanner = () => {
+        if (document.getElementById(BANNER_ID)) return;
+
+        ensureStyles();
+        const { banner, acceptBtn, declineBtn } = buildBanner();
         document.body.appendChild(banner);
 
-        // Animazione entrata (piccolo delay per permettere il paint iniziale)
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                banner.classList.add('yw-banner-visible');
-            });
-        });
+        // doppio rAF per garantire il transition-in
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            banner.classList.add('yw-banner-visible');
+            acceptBtn.focus({ preventScroll: true });
+        }));
 
-        // ── Accetta ────────────────────────────────────────────────
-        document.getElementById('yw-btn-accept').addEventListener('click', function () {
-            setCookie(CONSENT_COOKIE, 'accepted', CONSENT_DAYS);
+        const close = (choice) => {
+            setCookie(CONSENT_COOKIE, choice, CONSENT_DAYS);
             hideBanner(banner);
-            // Emette evento custom per altri script che potrebbero ascoltare
-            document.dispatchEvent(new CustomEvent('yw:cookieAccepted'));
-        });
+            document.dispatchEvent(new CustomEvent(
+                choice === 'accepted' ? 'yw:cookieAccepted' : 'yw:cookieDeclined'
+            ));
+            if (escListener) document.removeEventListener('keydown', escListener);
+        };
 
-        // ── Rifiuta (solo cookie tecnici minimi) ───────────────────
-        document.getElementById('yw-btn-decline').addEventListener('click', function () {
-            setCookie(CONSENT_COOKIE, 'declined', CONSENT_DAYS);
-            hideBanner(banner);
-            document.dispatchEvent(new CustomEvent('yw:cookieDeclined'));
-        });
-    }
+        acceptBtn.addEventListener('click',  () => close('accepted'));
+        declineBtn.addEventListener('click', () => close('declined'));
 
-    function hideBanner(banner) {
-        banner.classList.remove('yw-banner-visible');
-        banner.addEventListener('transitionend', function () {
-            banner.remove();
-        }, { once: true });
-    }
-
-    // ─── Cookie "Ricordami" (login persistente) ────────────────────
-
-    /**
-     * Imposta il cookie "ricordami" dopo il login.
-     * Chiama questa funzione dal form di login se il checkbox è spuntato.
-     *
-     * @param {string} token  Token sicuro restituito dal server dopo il login
-     */
-    function setRememberMe(token) {
-        if (cookiesAccepted()) {
-            setCookie(REMEMBER_COOKIE, token, REMEMBER_DAYS);
-        }
-    }
-
-    /**
-     * Legge il token "ricordami" salvato, se esiste.
-     * @returns {string|null}
-     */
-    function getRememberToken() {
-        return getCookie(REMEMBER_COOKIE);
-    }
-
-    /**
-     * Elimina il cookie "ricordami" (usato al logout).
-     */
-    function clearRememberMe() {
-        deleteCookie(REMEMBER_COOKIE);
-    }
-
-    // ─── Init ──────────────────────────────────────────────────────
-
-    function init() {
-        // Mostra il banner solo se l'utente non ha ancora risposto
-        if (getConsent() === null) {
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', showBanner);
-            } else {
-                showBanner();
-            }
-        }
-    }
-
-    // ─── Esposizione pubblica ──────────────────────────────────────
-
-    window.YWCookies = {
-        isAccepted:       cookiesAccepted,
-        getConsent:       getConsent,
-        setRememberMe:    setRememberMe,
-        getRememberToken: getRememberToken,
-        clearRememberMe:  clearRememberMe,
-        setCookie:        setCookie,
-        getCookie:        getCookie,
-        deleteCookie:     deleteCookie
+        escListener = (e) => { if (e.key === 'Escape') close('declined'); };
+        document.addEventListener('keydown', escListener);
     };
+
+    const hideBanner = (banner) => {
+        banner.classList.remove('yw-banner-visible');
+        banner.addEventListener('transitionend', () => banner.remove(), { once: true });
+        // Safety net se transitionend non scatta (es. display:none CSS)
+        setTimeout(() => banner.isConnected && banner.remove(), 1000);
+    };
+
+    // ─── Remember-me ──────────────────────────────────────────────
+
+    /** @param {string} token */
+    const setRememberMe = (token) => {
+        if (cookiesAccepted()) setCookie(REMEMBER_COOKIE, token, REMEMBER_DAYS);
+    };
+    const getRememberToken = () => getCookie(REMEMBER_COOKIE);
+    const clearRememberMe  = () => deleteCookie(REMEMBER_COOKIE);
+
+    /** Reset esplicito del consenso (utile per "Modifica preferenze") */
+    const revokeConsent = () => {
+        deleteCookie(CONSENT_COOKIE);
+        clearRememberMe();
+        showBanner();
+    };
+
+    // ─── Init ─────────────────────────────────────────────────────
+
+    const init = () => {
+        if (getConsent() !== null) return;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', showBanner, { once: true });
+        } else {
+            showBanner();
+        }
+    };
+
+    // ─── API pubblica ─────────────────────────────────────────────
+
+    window.YWCookies = Object.freeze({
+        isAccepted:       cookiesAccepted,
+        getConsent,
+        setRememberMe,
+        getRememberToken,
+        clearRememberMe,
+        revokeConsent,
+        setCookie,
+        getCookie,
+        deleteCookie,
+    });
 
     init();
 })();

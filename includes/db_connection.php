@@ -1,275 +1,249 @@
 <?php
-// includes/db_connection.php
-// File di connessione al database con best practices
+/**
+ * includes/db_connection.php
+ * ---------------------------------------------------------------
+ * - Singleton PDO (con flag persistenti opzionali via env).
+ * - Helper di risposta JSON, sanitizzazione e auth.
+ * - Headers di sicurezza (CORS allow-list, X-Frame, ecc.).
+ * - Avvio sessione sicuro (HTTPS-aware).
+ *
+ * NB: include sempre PRIMA config.php per evitare le doppie
+ *     definizioni di costanti del file legacy.
+ * ---------------------------------------------------------------
+ */
 
-// === CONFIGURAZIONE DATABASE ===
-// IMPORTANTE: In produzione, usa variabili d'ambiente invece di costanti hardcoded
-define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
-define('DB_NAME', getenv('DB_NAME') ?: 'yourweek_db');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') ?: '');
-define('DB_CHARSET', 'utf8mb4');
-define('DB_PORT', getenv('DB_PORT') ?: '3306');
+declare(strict_types=1);
 
-// Configurazione sessione sicura (solo se la sessione NON è ancora attiva)
+require_once __DIR__ . '/config.php';
+
+// =========================================
+// SESSIONE  (HTTPS-aware, lockdown cookie)
+// =========================================
 if (session_status() === PHP_SESSION_NONE) {
-    ini_set('session.cookie_httponly', 1);
-    ini_set('session.use_only_cookies', 1);
-    ini_set('session.cookie_secure', 0); // Imposta a 1 se usi HTTPS
-    ini_set('session.cookie_samesite', 'Strict');
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+        || ((int)($_SERVER['SERVER_PORT'] ?? 0) === 443);
+
+    session_name(SESSION_NAME);
+    session_set_cookie_params([
+        'lifetime' => SESSION_LIFETIME,
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => $isHttps,
+        'httponly' => true,
+        'samesite' => 'Strict',
+    ]);
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
     session_start();
 }
 
-// === CLASSE DATABASE (SINGLETON PATTERN) ===
-class Database {
-    private static $instance = null;
-    private $conn;
-    private $transactionCount = 0;
-    
-    private function __construct() {
+// =========================================
+// SINGLETON DB
+// =========================================
+final class Database
+{
+    private static ?Database $instance = null;
+    private PDO $conn;
+    private int $transactionCount = 0;
+
+    private function __construct()
+    {
         try {
             $dsn = sprintf(
-                "mysql:host=%s;port=%s;dbname=%s;charset=%s",
-                DB_HOST,
-                DB_PORT,
-                DB_NAME,
-                DB_CHARSET
+                'mysql:host=%s;port=%s;dbname=%s;charset=%s',
+                DB_HOST, DB_PORT, DB_NAME, DB_CHARSET
             );
-            
-            $options = [
-                // Modalità errore: lancia eccezioni
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                
-                // Fetch mode di default: array associativo
+
+            $this->conn = new PDO(DB_USER ? $dsn : $dsn, DB_USER, DB_PASS, [
+                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                
-                // Disabilita prepared statements emulati per maggiore sicurezza
-                PDO::ATTR_EMULATE_PREPARES => false,
-                
-                // Usa buffer per le query
+                PDO::ATTR_EMULATE_PREPARES   => false,          // prepared statements reali
+                PDO::ATTR_TIMEOUT            => 5,
                 PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
-                
-                // Connessioni persistenti (opzionale, commentato per default)
-                // PDO::ATTR_PERSISTENT => true,
-                
-                // Timeout connessione
-                PDO::ATTR_TIMEOUT => 5,
-                
-                // Set charset nella connessione
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
-            ];
-            
-            $this->conn = new PDO($dsn, DB_USER, DB_PASS, $options);
-            
-            // Log connessione riuscita (solo in development)
-            if (getenv('APP_ENV') === 'development') {
-                error_log("Connessione database stabilita con successo");
+                PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci',
+            ]);
+
+            if (isDevelopment()) {
+                error_log('DB connection established.');
             }
-            
         } catch (PDOException $e) {
-            // Log errore (non mostrare dettagli all'utente)
-            error_log("Errore connessione database: " . $e->getMessage());
-            
-            // In produzione, mostra messaggio generico
-            if (getenv('APP_ENV') === 'production') {
-                die(json_encode([
-                    'success' => false,
-                    'error' => 'Servizio temporaneamente non disponibile'
-                ]));
-            } else {
-                // In development, mostra dettagli
-                die(json_encode([
-                    'success' => false,
-                    'error' => 'Errore di connessione al database',
-                    'details' => $e->getMessage()
-                ]));
+            error_log('DB connection failure: ' . $e->getMessage());
+
+            $payload = ['success' => false, 'error' => 'Servizio temporaneamente non disponibile'];
+            if (isDevelopment()) {
+                $payload['details'] = $e->getMessage();
             }
+            http_response_code(503);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($payload);
+            exit;
         }
     }
-    
-    /**
-     * Ottieni istanza singleton
-     */
-    public static function getInstance() {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+
+    public static function getInstance(): self
+    {
+        return self::$instance ??= new self();
     }
-    
-    /**
-     * Ottieni connessione PDO
-     */
-    public function getConnection() {
+
+    public function getConnection(): PDO
+    {
         return $this->conn;
     }
-    
-    /**
-     * Inizia transazione (supporta transazioni nidificate)
-     */
-    public function beginTransaction() {
+
+    /** Inizio transazione nidificabile. */
+    public function beginTransaction(): bool
+    {
         if ($this->transactionCount === 0) {
             $this->conn->beginTransaction();
         }
         $this->transactionCount++;
-        return $this->transactionCount >= 0;
+        return true;
     }
-    
-    /**
-     * Commit transazione
-     */
-    public function commit() {
+
+    public function commit(): bool
+    {
+        if ($this->transactionCount <= 0) return false;
+
         if ($this->transactionCount === 1) {
             $this->conn->commit();
         }
-        $this->transactionCount = max(0, $this->transactionCount - 1);
-        return $this->transactionCount >= 0;
+        $this->transactionCount--;
+        return true;
     }
-    
-    /**
-     * Rollback transazione
-     */
-    public function rollback() {
-        if ($this->transactionCount === 1) {
+
+    public function rollback(): bool
+    {
+        if ($this->transactionCount <= 0) return false;
+
+        // Un solo rollback porta lo stack a zero (semantica corretta).
+        if ($this->conn->inTransaction()) {
             $this->conn->rollBack();
         }
-        $this->transactionCount = max(0, $this->transactionCount - 1);
-        return $this->transactionCount >= 0;
+        $this->transactionCount = 0;
+        return true;
     }
-    
-    /**
-     * Verifica se in transazione
-     */
-    public function inTransaction() {
+
+    public function inTransaction(): bool
+    {
         return $this->transactionCount > 0;
     }
-    
-    /**
-     * Previeni clonazione
-     */
+
     private function __clone() {}
-    
-    /**
-     * Previeni unserialize
-     */
-    public function __wakeup() {
-        throw new Exception("Cannot unserialize singleton");
+    public function __wakeup() { throw new RuntimeException('Cannot unserialize singleton'); }
+}
+
+// =========================================
+// HELPER DB
+// =========================================
+function getDB(): PDO          { return Database::getInstance()->getConnection(); }
+function beginTransaction(): bool { return Database::getInstance()->beginTransaction(); }
+function commit(): bool        { return Database::getInstance()->commit(); }
+function rollback(): bool      { return Database::getInstance()->rollback(); }
+
+// =========================================
+// HELPER RISPOSTA JSON
+// =========================================
+function sendJSON(array $data, int $statusCode = 200): void
+{
+    if (!headers_sent()) {
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=utf-8');
+        header('X-Content-Type-Options: nosniff');
     }
-}
-
-// === FUNZIONI HELPER ===
-
-/**
- * Ottieni connessione database
- * @return PDO
- */
-function getDB() {
-    return Database::getInstance()->getConnection();
-}
-
-/**
- * Inizia transazione
- */
-function beginTransaction() {
-    return Database::getInstance()->beginTransaction();
-}
-
-/**
- * Commit transazione
- */
-function commit() {
-    return Database::getInstance()->commit();
-}
-
-/**
- * Rollback transazione
- */
-function rollback() {
-    return Database::getInstance()->rollback();
-}
-
-/**
- * Invia risposta JSON e termina esecuzione
- * @param array $data Dati da inviare
- * @param int $statusCode Codice HTTP
- */
-function sendJSON($data, $statusCode = 200) {
-    http_response_code($statusCode);
-    header('Content-Type: application/json; charset=utf-8');
-    header('X-Content-Type-Options: nosniff'); // Security header
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
 
 /**
- * Sanitizza input per prevenire XSS
- * @param string $data Input da sanitizzare
- * @return string Input sanitizzato
+ * Legge e decodifica il body JSON UNA SOLA volta (caching).
+ * Compatibile con la coesistenza di POST tradizionale (mantiene $_POST come priorità).
  */
-function sanitizeInput($data) {
-    if ($data === null) {
-        return null;
-    }
-    $data = trim($data);
-    $data = stripslashes($data);
-    $data = htmlspecialchars($data, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    return $data;
+function getJsonInput(): array
+{
+    static $cache = null;
+    if ($cache !== null) return $cache;
+
+    $raw = file_get_contents('php://input');
+    if ($raw === false || $raw === '') return $cache = [];
+
+    $decoded = json_decode($raw, true);
+    return $cache = (is_array($decoded) ? $decoded : []);
 }
 
 /**
- * Valida email
- * @param string $email
- * @return bool
+ * Estrae un parametro accettando sia $_POST sia JSON body.
  */
-function validateEmail($email) {
+function input(string $key, $default = null)
+{
+    if (array_key_exists($key, $_POST)) {
+        return $_POST[$key];
+    }
+    $json = getJsonInput();
+    return $json[$key] ?? $default;
+}
+
+// =========================================
+// HELPER SICUREZZA
+// =========================================
+
+/**
+ * Sanitizza testo per OUTPUT HTML (mai per il DB!).
+ * Per il DB usa SEMPRE prepared statements.
+ */
+function escapeHtml(?string $data): string
+{
+    return $data === null ? '' : htmlspecialchars($data, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+}
+
+/**
+ * Pulizia leggera per input lato server: trim + strip control char.
+ * Non altera caratteri visibili (es. & in &amp;) → sicuro per email/nomi.
+ */
+function cleanInput(?string $data): ?string
+{
+    if ($data === null) return null;
+    $data = trim($data);
+    // Rimuove caratteri di controllo invisibili (tranne tab/newline)
+    return preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $data);
+}
+
+function validateEmail(string $email): bool
+{
     return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
-/**
- * Genera token casuale sicuro
- * @param int $length Lunghezza token
- * @return string Token
- */
-function generateSecureToken($length = 32) {
+function generateSecureToken(int $length = 32): string
+{
     return bin2hex(random_bytes($length));
 }
 
-/**
- * Hash password in modo sicuro
- * @param string $password
- * @return string Hash
- */
-function hashPassword($password) {
+function hashPassword(string $password): string
+{
     return password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
 }
 
-/**
- * Verifica password contro hash
- * @param string $password Password in chiaro
- * @param string $hash Hash da verificare
- * @return bool
- */
-function verifyPassword($password, $hash) {
+function verifyPassword(string $password, string $hash): bool
+{
     return password_verify($password, $hash);
 }
 
-/**
- * Verifica se l'hash della password necessita rehash
- * @param string $hash
- * @return bool
- */
-function needsPasswordRehash($hash) {
+function needsPasswordRehash(string $hash): bool
+{
     return password_needs_rehash($hash, PASSWORD_BCRYPT, ['cost' => 12]);
 }
 
 /**
- * Log attività nel database
- * @param PDO $db Connessione database
- * @param int $userId ID utente
- * @param string $action Azione eseguita
- * @param string $description Descrizione
+ * Hash di un token (es. remember-me) per lo storage in DB.
+ * Salviamo solo l'hash: in caso di leak il token in chiaro non basta.
  */
-function logActivity($db, $userId, $action, $description) {
+function hashToken(string $token): string
+{
+    return hash('sha256', $token);
+}
+
+function logActivity(PDO $db, int $userId, string $action, string $description): void
+{
     try {
         $stmt = $db->prepare("
             INSERT INTO ActivityLog (user_id, action, description, ip_address, user_agent, created_at)
@@ -280,83 +254,103 @@ function logActivity($db, $userId, $action, $description) {
             $action,
             $description,
             $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-            $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+            substr($_SERVER['HTTP_USER_AGENT'] ?? 'unknown', 0, 255),
         ]);
     } catch (PDOException $e) {
-        error_log("Errore log attività: " . $e->getMessage());
+        error_log('logActivity: ' . $e->getMessage());
     }
 }
 
-/**
- * Verifica se utente è autenticato
- * @return bool
- */
-function isAuthenticated() {
+// =========================================
+// HELPER AUTH
+// =========================================
+function isAuthenticated(): bool
+{
     return isset($_SESSION['user_id']);
 }
 
-/**
- * Richiedi autenticazione (invia errore se non autenticato)
- */
-function requireAuth() {
+function requireAuth(): void
+{
     if (!isAuthenticated()) {
         sendJSON(['success' => false, 'error' => 'Autenticazione richiesta'], 401);
     }
+    // Verifica timeout sessione
+    if (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time']) > SESSION_LIFETIME) {
+        session_unset();
+        session_destroy();
+        sendJSON(['success' => false, 'error' => 'Sessione scaduta'], 401);
+    }
 }
 
-/**
- * Verifica ruolo utente
- * @param string $role Ruolo richiesto
- * @return bool
- */
-function hasRole($role) {
-    return isset($_SESSION['user_role']) && $_SESSION['user_role'] === $role;
+function hasRole(string $role): bool
+{
+    return ($_SESSION['user_role'] ?? null) === $role;
 }
 
-/**
- * Richiedi ruolo specifico
- * @param string $role Ruolo richiesto
- */
-function requireRole($role) {
+function requireRole(string $role): void
+{
     requireAuth();
     if (!hasRole($role)) {
         sendJSON(['success' => false, 'error' => 'Permessi insufficienti'], 403);
     }
 }
 
-// === HEADERS SICUREZZA ===
-// Imposta headers di sicurezza per tutte le risposte
+/**
+ * CSRF: genera/recupera token salvato in sessione.
+ * Il client deve inviarlo nell'header X-CSRF-Token (o campo csrf_token).
+ */
+function getCsrfToken(): string
+{
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = generateSecureToken(32);
+    }
+    return $_SESSION['csrf_token'];
+}
 
-// CORS - Configura secondo le tue esigenze
+function requireCsrf(): void
+{
+    $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+    if (!in_array($method, ['POST', 'PUT', 'DELETE', 'PATCH'], true)) {
+        return;
+    }
+    $sent = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? input('csrf_token', '');
+    if (!is_string($sent) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $sent)) {
+        sendJSON(['success' => false, 'error' => 'CSRF token non valido'], 419);
+    }
+}
+
+// =========================================
+// HEADERS SICUREZZA + CORS allow-list
+// =========================================
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-
-// Se c'è un origin lo riflettiamo (necessario per credentials: 'include')
-if (!empty($origin)) {
+if ($origin !== '' && in_array($origin, ALLOWED_ORIGINS, true)) {
     header("Access-Control-Allow-Origin: $origin");
+    header('Vary: Origin');
+    header('Access-Control-Allow-Credentials: true');
 }
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-header('Access-Control-Allow-Credentials: true');
-header('Access-Control-Max-Age: 86400'); // Cache preflight per 24 ore
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-CSRF-Token');
+header('Access-Control-Max-Age: 86400');
 
-// Security headers
-header('X-Frame-Options: DENY'); // Previene clickjacking
-header('X-Content-Type-Options: nosniff'); // Previene MIME sniffing
-header('X-XSS-Protection: 1; mode=block'); // XSS protection (legacy)
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+if (
+    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https')
+) {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
 
-// Content Security Policy (personalizza secondo necessità)
-// header("Content-Security-Policy: default-src 'self'");
-
-// Gestione richieste OPTIONS (preflight CORS)
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
+// Preflight CORS
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(204);
     exit;
 }
 
-// Verifica metodo HTTP supportato
+// Metodo HTTP supportato
 $allowedMethods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
-if (!in_array($_SERVER['REQUEST_METHOD'], $allowedMethods)) {
+if (!in_array($_SERVER['REQUEST_METHOD'] ?? '', $allowedMethods, true)) {
     sendJSON(['success' => false, 'error' => 'Metodo HTTP non supportato'], 405);
 }
-?>

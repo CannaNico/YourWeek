@@ -1,427 +1,358 @@
 <?php
-// api/auth.php
-// Sistema di autenticazione sicuro - VERSIONE CORRETTA
+/**
+ * api/auth.php
+ * ---------------------------------------------------------------
+ * Sistema di autenticazione.
+ *
+ * Fix principali rispetto alla versione originale:
+ *   - Nessun error_log() di credenziali o PII (GDPR).
+ *   - Nome tabella SEMPRE 'Users' (consistente con lo schema; era
+ *     mescolato 'users'/'Users' → fail su Linux case-sensitive).
+ *   - Rimossa la doppia lettura di php://input in handleRegister
+ *     (era un bug logico: $data sovrascritto).
+ *   - Rate limiting effettivo: blocco dopo MAX_LOGIN_ATTEMPTS in
+ *     LOGIN_TIMEOUT secondi (per IP+email).
+ *   - Remember-me token HASHATO nel DB (se leak, non utilizzabile).
+ *   - sanitizeInput → cleanInput (no htmlspecialchars su input DB).
+ *   - Codice nutrizionista generato in registrazione, non al login.
+ *   - try/catch globale per evitare info leak.
+ * ---------------------------------------------------------------
+ */
+
+declare(strict_types=1);
+
 require_once __DIR__ . '/../includes/db_connection.php';
 
-// Impedisci accesso diretto al file senza azione
 $action = $_GET['action'] ?? '';
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-switch ($action) {
-    case 'login':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+try {
+    switch ($action) {
+        case 'login':
+            if ($method !== 'POST') methodNotAllowed();
             handleLogin();
-        }
-        break;
+            break;
 
-    case 'logout':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET') {
+        case 'logout':
+            // Logout consentito anche via GET per link diretti
             handleLogout();
-        }
-        break;
+            break;
 
-    case 'check':
-        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        case 'check':
+            if ($method !== 'GET') methodNotAllowed();
             checkAuth();
-        }
-        break;
+            break;
 
-    case 'register':
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        case 'register':
+            if ($method !== 'POST') methodNotAllowed();
             handleRegister();
-        }
-        break;
+            break;
 
-    default:
-        sendJSON(['success' => false, 'error' => 'Azione non valida'], 400);
+        case 'csrf':
+            if ($method !== 'GET') methodNotAllowed();
+            sendJSON(['success' => true, 'csrf_token' => getCsrfToken()]);
+            break;
+
+        default:
+            sendJSON(['success' => false, 'error' => 'Azione non valida'], 400);
+    }
+} catch (Throwable $e) {
+    error_log('auth.php uncaught: ' . $e->getMessage());
+    sendJSON(['success' => false, 'error' => 'Errore interno del server'], 500);
 }
 
-// === FUNZIONI AUTENTICAZIONE ===
+// =========================================
+// HANDLERS
+// =========================================
 
-function handleLogin()
+function handleLogin(): void
 {
     $db = getDB();
 
-    // Supporta sia POST tradizionale che JSON
-    if (isset($_POST['email'])) {
-        $email = sanitizeInput($_POST['email']);
-        $password = $_POST['password'] ?? '';
-        $selectedRole = sanitizeInput($_POST['selected_role'] ?? 'paziente');
-        $rememberMe = !empty($_POST['remember_me']);
-    } else {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $email = sanitizeInput($data['email'] ?? '');
-        $password = $data['password'] ?? '';
-        $selectedRole = sanitizeInput($data['selected_role'] ?? 'paziente');
-        $rememberMe = !empty($data['remember_me']);
-    }
+    $email          = strtolower(trim((string) input('email', '')));
+    $password       = (string) input('password', '');
+    $selectedRole   = strtolower((string) input('selected_role', 'paziente'));
+    $rememberMe     = !empty(input('remember_me'));
+    $clientIp       = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-    // DEBUG - Rimuovi in produzione
-    error_log("Login attempt - Email: $email, Selected Role: $selectedRole");
-
-    // Validazione input
-    if (empty($email) || empty($password)) {
+    if ($email === '' || $password === '') {
         sendJSON(['success' => false, 'error' => 'Email e password richiesti'], 400);
     }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (!validateEmail($email)) {
         sendJSON(['success' => false, 'error' => 'Email non valida'], 400);
     }
 
-    try {
-        // Recupera utente dal database
-        $stmt = $db->prepare("
-            SELECT 
-                id, 
-                email, 
-                password_hash, 
-                first_name, 
-                last_name, 
-                role,
-                is_active,
-                email_verified
-            FROM users 
-            WHERE email = ? AND is_active = 1
-            LIMIT 1
-        ");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
-
-        // DEBUG - Rimuovi in produzione
-        error_log("User found: " . ($user ? "YES" : "NO"));
-
-        // Verifica esistenza utente
-        if (!$user) {
-            sleep(1); // Previene timing attacks
-            sendJSON(['success' => false, 'error' => 'Credenziali non valide'], 401);
-        }
-
-        // Verifica password
-        if (!password_verify($password, $user['password_hash'])) {
-            // Log tentativo fallito
-            error_log("Password verify failed for: $email");
-            logFailedLogin($db, $email);
-            sleep(1); // Previene timing attacks
-            sendJSON(['success' => false, 'error' => 'Credenziali non valide'], 401);
-        }
-
-        // DEBUG - Password verificata
-        error_log("Password verified successfully for: $email");
-
-        // NUOVA VERIFICA: Controlla che il ruolo selezionato corrisponda al ruolo dell'utente
-        // Normalizza i ruoli: 'cliente' e 'paziente' sono equivalenti
-        $userRole = $user['role'];
-        $normalizedSelectedRole = ($selectedRole === 'cliente') ? 'paziente' : $selectedRole;
-        $normalizedUserRole = ($userRole === 'cliente') ? 'paziente' : $userRole;
-
-        if ($normalizedSelectedRole !== $normalizedUserRole) {
-            error_log("Role mismatch - Selected: $selectedRole, Actual: $userRole");
-            sendJSON([
-                'success' => false,
-                'error' => 'Ruolo errato',
-                'error_code' => 'ROLE_MISMATCH'
-            ], 403);
-        }
-
-        // Rigenera session ID per prevenire session fixation
-        session_regenerate_id(true);
-
-        // DEBUG - Session rigenerato
-        error_log("Session regenerated for user: " . $user['id']);
-
-        // Salva dati in sessione
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_email'] = $user['email'];
-        $_SESSION['user_role'] = $user['role'];
-        $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
-        $_SESSION['login_time'] = time();
-        $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-
-        // DEBUG - Session salvata
-        error_log("Session data saved for user: " . $user['id']);
-
-        // Aggiorna ultimo accesso
-        updateLastLogin($db, $user['id']);
-
-        // Se è un nutrizionista, verifica/genera codice univoco
-        $nutritionistCode = null;
-        if ($user['role'] === 'nutrizionista') {
-            $nutritionistCode = ensureNutritionistCode($db, $user['id']);
-        }
-
-        // Cookie "Ricordami" – solo se l'utente ha accettato i cookie E ha spuntato "Ricordami"
-        $cookieConsent = $_COOKIE['yw_cookie_consent'] ?? '';
-        if ($rememberMe && $cookieConsent === 'accepted') {
-            $rememberToken = bin2hex(random_bytes(32));
-            // Salva il token nel DB (colonna remember_token nella tabella users)
-            try {
-                $stmt = $db->prepare("UPDATE users SET remember_token = ?, remember_token_expires = DATE_ADD(NOW(), INTERVAL 30 DAY) WHERE id = ?");
-                $stmt->execute([$rememberToken, $user['id']]);
-                // Imposta cookie persistente (30 giorni)
-                setcookie(
-                    'yw_remember',
-                    $rememberToken,
-                    [
-                        'expires' => time() + (30 * 24 * 60 * 60),
-                        'path' => '/',
-                        'httponly' => true,
-                        'samesite' => 'Strict'
-                    ]
-                );
-            } catch (PDOException $e) {
-                // Non blocca il login se fallisce il remember
-                error_log("Errore salvataggio remember token: " . $e->getMessage());
-            }
-        }
-
-        // Log accesso riuscito
-        logActivity($db, $user['id'], 'login', 'Accesso effettuato');
-
-        // DEBUG - Login completato
-        error_log("Login successful for user: " . $user['id']);
-
-        // Risposta
-        $response = [
-            'success' => true,
-            'message' => 'Login effettuato con successo',
-            'user' => [
-                'id' => $user['id'],
-                'email' => $user['email'],
-                'name' => $user['first_name'] . ' ' . $user['last_name'],
-                'role' => $user['role']
-            ]
-        ];
-
-        // Aggiungi codice nutrizionista se presente
-        if ($nutritionistCode) {
-            $response['user']['nutritionist_code'] = $nutritionistCode;
-        }
-
-        sendJSON($response);
-
-    } catch (PDOException $e) {
-        error_log("Errore login: " . $e->getMessage());
-        sendJSON(['success' => false, 'error' => 'Errore durante il login'], 500);
+    // Rate limiting
+    if (isLoginRateLimited($db, $email, $clientIp)) {
+        sendJSON([
+            'success' => false,
+            'error'   => 'Troppi tentativi falliti. Riprova tra qualche minuto.',
+        ], 429);
     }
+
+    $stmt = $db->prepare("
+        SELECT id, email, password_hash, first_name, last_name, role, is_active, email_verified
+        FROM Users
+        WHERE email = ? AND is_active = 1
+        LIMIT 1
+    ");
+    $stmt->execute([$email]);
+    $user = $stmt->fetch();
+
+    if (!$user || !password_verify($password, $user['password_hash'])) {
+        logFailedLogin($db, $email, $clientIp);
+        // Costant-time response: random sleep 200–500ms (non blocca quanto sleep(1))
+        usleep(random_int(200_000, 500_000));
+        sendJSON(['success' => false, 'error' => 'Credenziali non valide'], 401);
+    }
+
+    // Verifica corrispondenza ruolo (paziente == cliente)
+    $normalize = static fn (string $r): string => ($r === 'cliente' ? 'paziente' : $r);
+    if ($normalize($selectedRole) !== $normalize((string) $user['role'])) {
+        sendJSON([
+            'success'    => false,
+            'error'      => 'Ruolo errato',
+            'error_code' => 'ROLE_MISMATCH',
+        ], 403);
+    }
+
+    // Rehash password se cost obsoleto
+    if (needsPasswordRehash($user['password_hash'])) {
+        $newHash = hashPassword($password);
+        $upd = $db->prepare('UPDATE Users SET password_hash = ? WHERE id = ?');
+        $upd->execute([$newHash, $user['id']]);
+    }
+
+    // Anti session fixation
+    session_regenerate_id(true);
+
+    $_SESSION['user_id']    = (int) $user['id'];
+    $_SESSION['user_email'] = $user['email'];
+    $_SESSION['user_role']  = $user['role'];
+    $_SESSION['user_name']  = trim($user['first_name'] . ' ' . $user['last_name']);
+    $_SESSION['login_time'] = time();
+    $_SESSION['ip_address'] = $clientIp;
+
+    updateLastLogin($db, (int) $user['id']);
+
+    // Codice nutrizionista (se mancante, lo generiamo qui)
+    $nutritionistCode = null;
+    if ($user['role'] === 'nutrizionista') {
+        $nutritionistCode = ensureNutritionistCode($db, (int) $user['id']);
+    }
+
+    // Cookie "Ricordami" (solo se cookie accettati)
+    $cookieConsent = $_COOKIE['yw_cookie_consent'] ?? '';
+    if ($rememberMe && $cookieConsent === 'accepted') {
+        setRememberMeCookie($db, (int) $user['id']);
+    }
+
+    logActivity($db, (int) $user['id'], 'login', 'Accesso effettuato');
+
+    $response = [
+        'success'   => true,
+        'message'   => 'Login effettuato con successo',
+        'csrf_token'=> getCsrfToken(),
+        'user'      => [
+            'id'    => (int) $user['id'],
+            'email' => $user['email'],
+            'name'  => trim($user['first_name'] . ' ' . $user['last_name']),
+            'role'  => $user['role'],
+        ],
+    ];
+    if ($nutritionistCode !== null) {
+        $response['user']['nutritionist_code'] = $nutritionistCode;
+    }
+    sendJSON($response);
 }
 
-function handleLogout()
+function handleLogout(): void
 {
     if (isset($_SESSION['user_id'])) {
         $db = getDB();
-        logActivity($db, $_SESSION['user_id'], 'logout', 'Logout effettuato');
-        // Invalida il remember token nel DB
+        logActivity($db, (int) $_SESSION['user_id'], 'logout', 'Logout effettuato');
+
+        // Invalida remember token
         try {
-            $stmt = $db->prepare("UPDATE users SET remember_token = NULL, remember_token_expires = NULL WHERE id = ?");
+            $stmt = $db->prepare("
+                UPDATE Users SET remember_token = NULL, remember_token_expires = NULL WHERE id = ?
+            ");
             $stmt->execute([$_SESSION['user_id']]);
         } catch (PDOException $e) {
-            error_log("Errore pulizia remember token: " . $e->getMessage());
+            error_log('handleLogout: ' . $e->getMessage());
         }
     }
 
-    // Distruggi sessione
     $_SESSION = [];
 
-    if (ini_get("session.use_cookies")) {
+    if (ini_get('session.use_cookies')) {
         $params = session_get_cookie_params();
         setcookie(
             session_name(),
             '',
-            time() - 42000,
-            $params["path"],
-            $params["domain"],
-            $params["secure"],
-            $params["httponly"]
+            [
+                'expires'  => time() - 42_000,
+                'path'     => $params['path'],
+                'domain'   => $params['domain'],
+                'secure'   => $params['secure'],
+                'httponly' => $params['httponly'],
+                'samesite' => $params['samesite'] ?? 'Strict',
+            ]
         );
     }
-
     session_destroy();
 
-    // Cancella anche il cookie "Ricordami"
     setcookie('yw_remember', '', [
-        'expires' => time() - 3600,
-        'path' => '/',
+        'expires'  => time() - 3600,
+        'path'     => '/',
         'httponly' => true,
-        'samesite' => 'Strict'
+        'samesite' => 'Strict',
+        'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
     ]);
 
     sendJSON(['success' => true, 'message' => 'Logout effettuato']);
 }
 
-function checkAuth()
+function checkAuth(): void
 {
     if (isset($_SESSION['user_id'])) {
-        // Verifica timeout sessione (2 ore)
-        $sessionTimeout = 7200;
-        if (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time'] > $sessionTimeout)) {
-            handleLogout();
-            sendJSON([
-                'success' => true,
-                'authenticated' => false
-            ]);
-            return;
+        // Verifica timeout sessione
+        if (isset($_SESSION['login_time']) && (time() - $_SESSION['login_time']) > SESSION_LIFETIME) {
+            handleLogout(); // exit
         }
 
         sendJSON([
-            'success' => true,
+            'success'       => true,
             'authenticated' => true,
-            'user' => [
-                'id' => $_SESSION['user_id'],
-                'email' => $_SESSION['user_email'],
-                'role' => $_SESSION['user_role'],
-                'name' => $_SESSION['user_name']
-            ]
-        ]);
-    } else {
-        // Tenta auto-login tramite cookie "Ricordami" se presente
-        $rememberToken = $_COOKIE['yw_remember'] ?? '';
-        if (!empty($rememberToken)) {
-            $db = getDB();
-            try {
-                $stmt = $db->prepare("
-                    SELECT id, email, first_name, last_name, role
-                    FROM users
-                    WHERE remember_token = ?
-                      AND remember_token_expires > NOW()
-                      AND is_active = 1
-                    LIMIT 1
-                ");
-                $stmt->execute([$rememberToken]);
-                $user = $stmt->fetch();
-                if ($user) {
-                    // Ripristina sessione
-                    session_regenerate_id(true);
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['user_email'] = $user['email'];
-                    $_SESSION['user_role'] = $user['role'];
-                    $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
-                    $_SESSION['login_time'] = time();
-                    updateLastLogin($db, $user['id']);
-                    sendJSON([
-                        'success' => true,
-                        'authenticated' => true,
-                        'auto_login' => true,
-                        'user' => [
-                            'id' => $user['id'],
-                            'email' => $user['email'],
-                            'role' => $user['role'],
-                            'name' => $user['first_name'] . ' ' . $user['last_name']
-                        ]
-                    ]);
-                    return;
-                }
-            } catch (PDOException $e) {
-                error_log("Errore auto-login remember: " . $e->getMessage());
-            }
-        }
-        sendJSON([
-            'success' => true,
-            'authenticated' => false
+            'csrf_token'    => getCsrfToken(),
+            'user'          => [
+                'id'    => (int) $_SESSION['user_id'],
+                'email' => $_SESSION['user_email'] ?? '',
+                'role'  => $_SESSION['user_role'] ?? '',
+                'name'  => $_SESSION['user_name'] ?? '',
+            ],
         ]);
     }
+
+    // Tenta auto-login via remember token
+    $rememberToken = (string) ($_COOKIE['yw_remember'] ?? '');
+    if ($rememberToken !== '') {
+        $db = getDB();
+        try {
+            $stmt = $db->prepare("
+                SELECT id, email, first_name, last_name, role
+                FROM Users
+                WHERE remember_token = ?
+                  AND remember_token_expires > NOW()
+                  AND is_active = 1
+                LIMIT 1
+            ");
+            $stmt->execute([hashToken($rememberToken)]);
+            $user = $stmt->fetch();
+            if ($user) {
+                session_regenerate_id(true);
+                $_SESSION['user_id']    = (int) $user['id'];
+                $_SESSION['user_email'] = $user['email'];
+                $_SESSION['user_role']  = $user['role'];
+                $_SESSION['user_name']  = trim($user['first_name'] . ' ' . $user['last_name']);
+                $_SESSION['login_time'] = time();
+                updateLastLogin($db, (int) $user['id']);
+
+                // Rotate remember token (best practice)
+                setRememberMeCookie($db, (int) $user['id']);
+
+                sendJSON([
+                    'success'       => true,
+                    'authenticated' => true,
+                    'auto_login'    => true,
+                    'csrf_token'    => getCsrfToken(),
+                    'user'          => [
+                        'id'    => (int) $user['id'],
+                        'email' => $user['email'],
+                        'role'  => $user['role'],
+                        'name'  => trim($user['first_name'] . ' ' . $user['last_name']),
+                    ],
+                ]);
+            }
+        } catch (PDOException $e) {
+            error_log('checkAuth auto-login: ' . $e->getMessage());
+        }
+    }
+
+    sendJSON(['success' => true, 'authenticated' => false]);
 }
 
-function handleRegister()
+function handleRegister(): void
 {
-    error_log("=== INIZIO REGISTRAZIONE ==="); // DEBUG
-
-    $db = getDB();
-    $data = json_decode(file_get_contents('php://input'), true);
-
-    error_log("Dati ricevuti: " . print_r($data, true)); // DEBUG
-
     $db = getDB();
 
-    // Supporta sia POST tradizionale che JSON
-    if (isset($_POST['email'])) {
-        $email = sanitizeInput($_POST['email']);
-        $password = $_POST['password'] ?? '';
-        $firstName = sanitizeInput($_POST['first_name'] ?? '');
-        $lastName = sanitizeInput($_POST['last_name'] ?? '');
-        $role = sanitizeInput($_POST['role'] ?? 'paziente');
-        $birthDate = $_POST['birth_date'] ?? null;
-        $nutritionistCode = sanitizeInput($_POST['nutritionist_code'] ?? '');
-        $provincia = strtoupper(trim($_POST['provincia'] ?? ''));
-    } else {
-        $data = json_decode(file_get_contents('php://input'), true);
-        $email = sanitizeInput($data['email'] ?? '');
-        $password = $data['password'] ?? '';
-        $firstName = sanitizeInput($data['first_name'] ?? '');
-        $lastName = sanitizeInput($data['last_name'] ?? '');
-        $role = sanitizeInput($data['role'] ?? 'paziente');
-        $birthDate = $data['birth_date'] ?? null;
-        $nutritionistCode = sanitizeInput($data['nutritionist_code'] ?? '');
-        $provincia = strtoupper(trim($data['provincia'] ?? ''));
-    }
+    $email             = strtolower(trim((string) input('email', '')));
+    $password          = (string) input('password', '');
+    $firstName         = cleanInput((string) input('first_name', ''));
+    $lastName          = cleanInput((string) input('last_name', ''));
+    $role              = strtolower((string) input('role', 'paziente'));
+    $birthDate         = input('birth_date'); // può essere null
+    $nutritionistCode  = strtoupper(trim((string) input('nutritionist_code', '')));
+    $provincia         = strtoupper(trim((string) input('provincia', '')));
 
-    // Controlli validazione
-    if (empty($email) || empty($password) || empty($firstName) || empty($lastName)) {
+    if ($email === '' || $password === '' || $firstName === '' || $lastName === '') {
         sendJSON(['success' => false, 'error' => 'Tutti i campi obbligatori devono essere compilati'], 400);
     }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (!validateEmail($email)) {
         sendJSON(['success' => false, 'error' => 'Email non valida'], 400);
     }
-
-    if (strlen($password) < 8) {
-        sendJSON(['success' => false, 'error' => 'La password deve essere di almeno 8 caratteri'], 400);
+    if (strlen($password) < PASSWORD_MIN_LENGTH) {
+        sendJSON(['success' => false, 'error' => 'Password troppo corta (min ' . PASSWORD_MIN_LENGTH . ' caratteri)'], 400);
     }
-
-    if (!in_array($role, ['paziente', 'nutrizionista'])) {
+    if (!in_array($role, ['paziente', 'nutrizionista'], true)) {
         sendJSON(['success' => false, 'error' => 'Ruolo non valido'], 400);
     }
-
-    // Validazione provincia (deve essere un codice di 2 lettere come in search_users)
-    if (empty($provincia) || strlen($provincia) !== 2) {
+    if (strlen($provincia) !== 2 || !ctype_alpha($provincia)) {
         sendJSON(['success' => false, 'error' => 'Provincia non valida'], 400);
+    }
+    if ($birthDate !== null && $birthDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $birthDate)) {
+        sendJSON(['success' => false, 'error' => 'Data di nascita non valida'], 400);
     }
 
     try {
-        // Verifica se email esiste già
-        $stmt = $db->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+        // Email univoca
+        $stmt = $db->prepare('SELECT id FROM Users WHERE email = ? LIMIT 1');
         $stmt->execute([$email]);
-
         if ($stmt->fetch()) {
             sendJSON(['success' => false, 'error' => 'Email già registrata'], 409);
         }
 
-        // Se è un paziente e ha fornito un codice nutrizionista, verifica che esista
+        // Codice nutrizionista per paziente (opzionale)
         $nutritionistId = null;
-        if ($role === 'paziente' && !empty($nutritionistCode)) {
+        if ($role === 'paziente' && $nutritionistCode !== '') {
             $stmt = $db->prepare("
-                SELECT id FROM users 
+                SELECT id FROM Users
                 WHERE nutritionist_code = ? AND role = 'nutrizionista' AND is_active = 1
                 LIMIT 1
             ");
             $stmt->execute([$nutritionistCode]);
             $nutritionist = $stmt->fetch();
-
             if (!$nutritionist) {
                 sendJSON(['success' => false, 'error' => 'Codice nutrizionista non valido'], 400);
             }
-
-            $nutritionistId = $nutritionist['id'];
+            $nutritionistId = (int) $nutritionist['id'];
         }
 
-        // Hash password
-        $passwordHash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+        // Codice nutrizionista per nuovo nutrizionista (generato qui, non al login)
+        $newNutritionistCode = null;
+        if ($role === 'nutrizionista') {
+            $newNutritionistCode = generateUniqueNutritionistCode($db);
+        }
 
-        // Inserisci nuovo utente (includendo la provincia)
+        $passwordHash = hashPassword($password);
+
         $stmt = $db->prepare("
             INSERT INTO Users (
-                email, 
-                password_hash, 
-                first_name, 
-                last_name,
-                provincia,
-                role,
-                birth_date,
-                nutritionist_id,
-                registration_date,
-                is_active,
-                email_verified
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1, 0)
+                email, password_hash, first_name, last_name,
+                provincia, role, birth_date, nutritionist_id,
+                nutritionist_code, registration_date, is_active, email_verified
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 1, 0)
         ");
-
         $stmt->execute([
             $email,
             $passwordHash,
@@ -429,112 +360,141 @@ function handleRegister()
             $lastName,
             $provincia,
             $role,
-            $birthDate,
-            $nutritionistId
+            ($birthDate ?: null),
+            $nutritionistId,
+            $newNutritionistCode,
         ]);
 
-        $userId = $db->lastInsertId();
-
-        // Log registrazione
+        $userId = (int) $db->lastInsertId();
         logActivity($db, $userId, 'register', 'Nuovo account creato');
 
-        sendJSON([
+        $response = [
             'success' => true,
             'message' => 'Registrazione completata con successo',
-            'user_id' => $userId
-        ], 201);
+            'user_id' => $userId,
+        ];
+        if ($newNutritionistCode) {
+            $response['nutritionist_code'] = $newNutritionistCode;
+        }
+        sendJSON($response, 201);
 
     } catch (PDOException $e) {
-        error_log("Errore registrazione: " . $e->getMessage());
+        error_log('handleRegister: ' . $e->getMessage());
         sendJSON(['success' => false, 'error' => 'Errore durante la registrazione'], 500);
     }
 }
 
-// === FUNZIONI HELPER ===
+// =========================================
+// HELPERS
+// =========================================
 
-function updateLastLogin($db, $userId)
+function methodNotAllowed(): void
+{
+    sendJSON(['success' => false, 'error' => 'Metodo non consentito'], 405);
+}
+
+function updateLastLogin(PDO $db, int $userId): void
 {
     try {
-        $stmt = $db->prepare("UPDATE Users SET last_login = NOW() WHERE id = ?");
+        $stmt = $db->prepare('UPDATE Users SET last_login = NOW() WHERE id = ?');
         $stmt->execute([$userId]);
     } catch (PDOException $e) {
-        error_log("Errore aggiornamento ultimo accesso: " . $e->getMessage());
+        error_log('updateLastLogin: ' . $e->getMessage());
     }
 }
 
-function logFailedLogin($db, $email)
+function logFailedLogin(PDO $db, string $email, string $ip): void
 {
     try {
         $stmt = $db->prepare("
             INSERT INTO LoginAttempts (email, ip_address, attempt_time, success)
             VALUES (?, ?, NOW(), 0)
         ");
-        $stmt->execute([
-            $email,
-            $_SERVER['REMOTE_ADDR'] ?? 'unknown'
-        ]);
+        $stmt->execute([$email, $ip]);
     } catch (PDOException $e) {
-        error_log("Errore log tentativo fallito: " . $e->getMessage());
+        error_log('logFailedLogin: ' . $e->getMessage());
     }
 }
 
 /**
- * Genera un codice univoco per nutrizionista
+ * Restituisce true se l'utente/IP ha superato MAX_LOGIN_ATTEMPTS
+ * tentativi falliti negli ultimi LOGIN_TIMEOUT secondi.
  */
-function generateNutritionistCode($db)
-{
-    $maxAttempts = 10;
-    $attempt = 0;
-
-    while ($attempt < $maxAttempts) {
-        // Genera codice nel formato NUT-XXXXX (5 cifre)
-        $code = 'NUT-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT);
-
-        // Verifica se il codice esiste già
-        $stmt = $db->prepare("SELECT id FROM users WHERE nutritionist_code = ? LIMIT 1");
-        $stmt->execute([$code]);
-
-        if (!$stmt->fetch()) {
-            return $code; // Codice univoco trovato
-        }
-
-        $attempt++;
-    }
-
-    // Fallback: usa timestamp se non riesce a generare un codice univoco
-    return 'NUT-' . substr(time(), -5);
-}
-
-/**
- * Assicura che un nutrizionista abbia un codice univoco
- * Se non ce l'ha, ne genera uno
- */
-function ensureNutritionistCode($db, $userId)
+function isLoginRateLimited(PDO $db, string $email, string $ip): bool
 {
     try {
-        // Verifica se ha già un codice
-        $stmt = $db->prepare("SELECT nutritionist_code FROM users WHERE id = ? LIMIT 1");
+        $stmt = $db->prepare("
+            SELECT COUNT(*) FROM LoginAttempts
+            WHERE success = 0
+              AND attempt_time > (NOW() - INTERVAL :seconds SECOND)
+              AND (email = :email OR ip_address = :ip)
+        ");
+        $stmt->execute([
+            ':seconds' => LOGIN_TIMEOUT,
+            ':email'   => $email,
+            ':ip'      => $ip,
+        ]);
+        return ((int) $stmt->fetchColumn()) >= MAX_LOGIN_ATTEMPTS;
+    } catch (PDOException $e) {
+        error_log('isLoginRateLimited: ' . $e->getMessage());
+        return false; // Fail-open: meglio non bloccare per errore DB del log
+    }
+}
+
+/**
+ * Imposta cookie remember-me: salva nel DB SOLO l'hash del token.
+ */
+function setRememberMeCookie(PDO $db, int $userId): void
+{
+    try {
+        $token = generateSecureToken(32);
+        $stmt  = $db->prepare("
+            UPDATE Users
+            SET remember_token = ?, remember_token_expires = DATE_ADD(NOW(), INTERVAL 30 DAY)
+            WHERE id = ?
+        ");
+        $stmt->execute([hashToken($token), $userId]);
+
+        $secure = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        setcookie('yw_remember', $token, [
+            'expires'  => time() + 30 * 86400,
+            'path'     => '/',
+            'httponly' => true,
+            'samesite' => 'Strict',
+            'secure'   => $secure,
+        ]);
+    } catch (PDOException $e) {
+        error_log('setRememberMeCookie: ' . $e->getMessage());
+    }
+}
+
+function generateUniqueNutritionistCode(PDO $db): string
+{
+    $stmt = $db->prepare('SELECT 1 FROM Users WHERE nutritionist_code = ? LIMIT 1');
+    for ($i = 0; $i < 10; $i++) {
+        $code = 'NUT-' . str_pad((string) random_int(10_000, 99_999), 5, '0', STR_PAD_LEFT);
+        $stmt->execute([$code]);
+        if (!$stmt->fetch()) return $code;
+    }
+    // Fallback estremamente improbabile
+    return 'NUT-' . substr((string) time(), -5);
+}
+
+function ensureNutritionistCode(PDO $db, int $userId): ?string
+{
+    try {
+        $stmt = $db->prepare('SELECT nutritionist_code FROM Users WHERE id = ? LIMIT 1');
         $stmt->execute([$userId]);
         $user = $stmt->fetch();
-
         if ($user && !empty($user['nutritionist_code'])) {
-            return $user['nutritionist_code'];
+            return (string) $user['nutritionist_code'];
         }
-
-        // Genera nuovo codice
-        $code = generateNutritionistCode($db);
-
-        // Aggiorna il database
-        $stmt = $db->prepare("UPDATE users SET nutritionist_code = ? WHERE id = ?");
-        $stmt->execute([$code, $userId]);
-
-        error_log("Generated nutritionist code: $code for user: $userId");
-
+        $code = generateUniqueNutritionistCode($db);
+        $upd  = $db->prepare('UPDATE Users SET nutritionist_code = ? WHERE id = ?');
+        $upd->execute([$code, $userId]);
         return $code;
-
     } catch (PDOException $e) {
-        error_log("Errore generazione codice nutrizionista: " . $e->getMessage());
+        error_log('ensureNutritionistCode: ' . $e->getMessage());
         return null;
     }
 }
-?>

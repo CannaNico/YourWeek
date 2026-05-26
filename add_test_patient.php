@@ -1,105 +1,74 @@
 <?php
 /**
- * Script to add a test patient without nutritionist
- * This will help test the search functionality
+ * add_test_patient.php – SEEDER PAZIENTE DI TEST
+ * ---------------------------------------------------------------
+ * SECURITY: lo script originale permetteva a chiunque di creare
+ * un utente con password nota, semplicemente visitando l'URL.
+ *
+ * Versione blindata:
+ *   - Eseguibile solo in development.
+ *   - Eseguibile SOLO da CLI (php add_test_patient.php) oppure
+ *     da un nutrizionista loggato.
+ *   - In produzione: 404.
+ * ---------------------------------------------------------------
  */
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+declare(strict_types=1);
 
-require_once 'includes/db_connection.php';
+require_once __DIR__ . '/includes/db_connection.php';
 
-echo "<h1>Add Test Patient</h1>";
+$isCli = (PHP_SAPI === 'cli');
+
+if (!isDevelopment() || (!$isCli && (!isAuthenticated() || !hasRole('nutrizionista')))) {
+    http_response_code(404);
+    exit('Not Found');
+}
+
+$db = getDB();
 
 try {
-    $db = getDB();
-    
-    // Check if test patient already exists
-    $checkStmt = $db->prepare("SELECT id FROM Users WHERE email = ?");
-    $checkStmt->execute(['test.paziente@example.com']);
-    
-    if ($checkStmt->fetch()) {
-        echo "<p style='color: orange;'>Test patient already exists!</p>";
-        
-        // Update to remove nutritionist
-        $updateStmt = $db->prepare("UPDATE Users SET nutritionist_id = NULL, provincia = 'BG' WHERE email = ?");
-        $updateStmt->execute(['test.paziente@example.com']);
-        echo "<p style='color: green;'>Updated test patient: removed nutritionist and set provincia to BG</p>";
+    $check = $db->prepare('SELECT id FROM Users WHERE email = ?');
+    $check->execute(['test.paziente@example.com']);
+
+    if ($check->fetch()) {
+        $upd = $db->prepare("UPDATE Users SET nutritionist_id = NULL, provincia = 'BG' WHERE email = ?");
+        $upd->execute(['test.paziente@example.com']);
+        $message = 'Paziente di test già esistente: aggiornato (rimosso nutrizionista, provincia BG).';
     } else {
-        // Insert new test patient
-        $password = password_hash('password123', PASSWORD_DEFAULT);
-        
-        $insertStmt = $db->prepare("
-            INSERT INTO Users (
-                email, 
-                password_hash, 
-                first_name, 
-                last_name, 
-                role, 
-                provincia,
-                nutritionist_id,
-                is_active, 
-                email_verified
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        $ins = $db->prepare("
+            INSERT INTO Users
+                (email, password_hash, first_name, last_name, role, provincia,
+                 nutritionist_id, is_active, email_verified)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        
-        $insertStmt->execute([
+        $ins->execute([
             'test.paziente@example.com',
-            $password,
+            hashPassword('password123'),
             'Test',
             'Paziente',
             'paziente',
-            'BG',  // Bergamo
-            NULL,  // No nutritionist assigned
-            1,     // is_active
-            1      // email_verified
+            'BG',
+            null,
+            1,
+            1,
         ]);
-        
-        echo "<p style='color: green;'>✅ Test patient created successfully!</p>";
-        echo "<ul>";
-        echo "<li><strong>Email:</strong> test.paziente@example.com</li>";
-        echo "<li><strong>Password:</strong> password123</li>";
-        echo "<li><strong>Provincia:</strong> BG (Bergamo)</li>";
-        echo "<li><strong>Nutritionist:</strong> None (NULL)</li>";
-        echo "</ul>";
+        $message = 'Paziente di test creato (email: test.paziente@example.com / password: password123).';
     }
-    
-    // Show all patients without nutritionist
-    echo "<h2>All Patients WITHOUT Nutritionist</h2>";
-    $stmt = $db->query("
-        SELECT id, email, first_name, last_name, provincia, nutritionist_id 
-        FROM Users 
-        WHERE role = 'paziente' 
-        AND (nutritionist_id IS NULL OR nutritionist_id = 0)
-        ORDER BY provincia, last_name
-    ");
-    
-    echo "<table border='1' cellpadding='5'>";
-    echo "<tr><th>ID</th><th>Email</th><th>Name</th><th>Provincia</th></tr>";
-    
-    $count = 0;
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $count++;
-        echo "<tr>";
-        echo "<td>{$row['id']}</td>";
-        echo "<td>{$row['email']}</td>";
-        echo "<td>{$row['first_name']} {$row['last_name']}</td>";
-        echo "<td>" . ($row['provincia'] ?? '<span style="color:red;">NULL</span>') . "</td>";
-        echo "</tr>";
+
+    if ($isCli) {
+        fwrite(STDOUT, $message . PHP_EOL);
+        exit(0);
     }
-    
-    if ($count === 0) {
-        echo "<tr><td colspan='4' style='color: red;'>No patients without nutritionist found!</td></tr>";
+
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<p>' . htmlspecialchars($message) . '</p>';
+
+} catch (Throwable $e) {
+    error_log('add_test_patient: ' . $e->getMessage());
+    if ($isCli) {
+        fwrite(STDERR, 'Errore: ' . $e->getMessage() . PHP_EOL);
+        exit(1);
     }
-    
-    echo "</table>";
-    echo "<p><strong>Total:</strong> $count patients without nutritionist</p>";
-    
-    echo "<hr>";
-    echo "<p><a href='src/trovaCliente.html'>Go to Trova Clienti page</a></p>";
-    echo "<p><a href='debug_users.php'>View all users</a></p>";
-    
-} catch (Exception $e) {
-    echo "<p style='color: red;'><strong>Error:</strong> " . $e->getMessage() . "</p>";
+    http_response_code(500);
+    echo '<p>Errore interno.</p>';
 }
-?>

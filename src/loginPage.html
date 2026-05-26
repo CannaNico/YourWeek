@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Accedi al tuo account YourWeek - Gestisci la tua alimentazione settimanale">
     <title>Login - YourWeek</title>
+    <link rel="stylesheet" href="shared-styles.css">
     <link rel="stylesheet" href="loginPage.css">
     <link rel="stylesheet" href="cookie-banner.css">
 </head>
@@ -41,15 +43,20 @@
             <form id="loginForm">
                 <div class="input-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" placeholder="Inserisci la tua email" required>
-                    <i class="fas fa-envelope"></i>
+                    <div class="form-input-icon">
+                        <input type="email" id="email" name="email" class="form-input" placeholder="Inserisci la tua email" required autocomplete="email">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <span class="form-hint" id="emailHint"></span>
                 </div>
 
                 <div class="input-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" placeholder="Inserisci la tua password"
-                        required>
-                    <i class="fas fa-lock"></i>
+                    <div class="form-input-icon">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Inserisci la tua password" required autocomplete="current-password">
+                        <i class="fas fa-lock" id="passwordIcon" style="cursor: pointer;" onclick="togglePasswordVisibility()"></i>
+                    </div>
+                    <span class="form-hint" id="passwordHint"></span>
                 </div>
 
                 <div class="remember-forgot">
@@ -60,7 +67,12 @@
                     <a href="#" class="forgot-password">Password dimenticata?</a>
                 </div>
 
-                <button type="submit" class="login-btn">Accedi</button>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span id="btnText">Accedi</span>
+                    <span id="btnLoader" style="display: none;">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </span>
+                </button>
 
                 <button type="button" class="register-btn"
                     onclick="window.location.href='registrati.html'">Registrati</button>
@@ -87,9 +99,70 @@
             </form>
         </div>
     </div>
+    <script src="shared-utils.js"></script>
+    <script src="toast-notifications.js"></script>
     <script>
+        // Verifica che le librerie siano caricate
+        if (typeof Toast === 'undefined') {
+            console.warn('Toast library not loaded');
+        }
+        
         const typeButtons = document.querySelectorAll('.type-btn');
         let selectedUserType = 'cliente';
+        let isSubmitting = false;
+
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const icon = document.getElementById('passwordIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                icon.classList.remove('fa-lock');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-lock');
+            }
+        }
+
+        // Validazione in tempo reale
+        function validateEmail() {
+            const email = document.getElementById('email').value;
+            const hint = document.getElementById('emailHint');
+            const input = document.getElementById('email');
+            
+            if (email && !Utils.isValidEmail(email)) {
+                input.classList.add('error');
+                hint.textContent = 'Inserisci un indirizzo email valido';
+                hint.className = 'form-hint error';
+                return false;
+            } else {
+                input.classList.remove('error');
+                hint.textContent = '';
+                hint.className = 'form-hint';
+                return true;
+            }
+        }
+
+        function validatePassword() {
+            const password = document.getElementById('password').value;
+            const hint = document.getElementById('passwordHint');
+            const input = document.getElementById('password');
+            
+            if (password && password.length < 6) {
+                input.classList.add('error');
+                hint.textContent = 'La password deve contenere almeno 6 caratteri';
+                hint.className = 'form-hint error';
+                return false;
+            } else {
+                input.classList.remove('error');
+                hint.textContent = '';
+                hint.className = 'form-hint';
+                return true;
+            }
+        }
 
         typeButtons.forEach(button => {
             button.addEventListener('click', function () {
@@ -100,16 +173,38 @@
             });
         });
 
+        // Event listeners per validazione in tempo reale
+        document.getElementById('email').addEventListener('blur', validateEmail);
+        document.getElementById('password').addEventListener('blur', validatePassword);
+
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
             e.preventDefault();
+            
+            // Previeni doppio submit
+            if (isSubmitting) return;
+
+            // Validazione
+            const isEmailValid = validateEmail();
+            const isPasswordValid = validatePassword();
+            
+            if (!isEmailValid || !isPasswordValid) {
+                Toast.warning('Correggi gli errori prima di procedere', 3000, { title: 'Attenzione' });
+                return;
+            }
 
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const rememberMe = document.getElementById('remember').checked;
-
-            console.log('Tentativo di login con:', email);
-            console.log('Ruolo selezionato:', selectedUserType);
-            console.log('Ricordami:', rememberMe);
+            
+            // Mostra stato di caricamento
+            isSubmitting = true;
+            const btn = document.getElementById('loginBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoader.style.display = 'inline';
 
             try {
                 const formData = new FormData();
@@ -127,11 +222,10 @@
                 console.log('Response status:', response.status);
 
                 const result = await response.json();
-                console.log('Risultato:', result);
 
                 if (!response.ok && result.error_code !== 'ROLE_MISMATCH') {
                     console.error('Errore dal server:', result);
-                    alert('Errore del server (status ' + response.status + '). Controlla la console.');
+                    Toast.error('Errore del server. Riprova più tardi.', 4000, { title: 'Errore Server' });
                     return;
                 }
 
@@ -141,24 +235,44 @@
                         window.YWCookies.setRememberMe(result.remember_token);
                     }
 
-                    alert('Login effettuato con successo!');
+                    Toast.success('Login effettuato! Reindirizzamento in corso...', 2000, { title: 'Benvenuto!' });
 
-                    if (result.user.role === 'nutrizionista') {
-                        window.location.href = 'nutrizionistaPage.html';
-                    } else {
-                        window.location.href = 'clientePage.html';
-                    }
+                    setTimeout(() => {
+                        if (result.user.role === 'nutrizionista') {
+                            window.location.href = 'nutrizionistaPage.html';
+                        } else {
+                            window.location.href = 'clientePage.html';
+                        }
+                    }, 1500);
                 } else {
                     if (result.error_code === 'ROLE_MISMATCH') {
-                        alert('Hai sbagliato ruolo');
+                        Toast.warning('Hai selezionato il ruolo sbagliato. Verifica se sei Cliente o Nutrizionista.', 4000, { title: 'Ruolo Errato' });
                     } else {
-                        alert('Errore di login: ' + (result.error || 'Credenziali non valide'));
+                        Toast.error(result.error || 'Credenziali non valide', 4000, { title: 'Login Fallito' });
+                        // Shake animation per indicare errore
+                        document.querySelector('.login-box').classList.add('animate-shake');
+                        setTimeout(() => {
+                            document.querySelector('.login-box').classList.remove('animate-shake');
+                        }, 500);
                     }
                 }
             } catch (error) {
                 console.error('Errore completo:', error);
-                alert('Errore di connessione: ' + error.message);
+                Toast.error('Errore di connessione: ' + error.message, 5000, { title: 'Connessione Persa' });
+            } finally {
+                // Ripristina stato bottone
+                isSubmitting = false;
+                btn.disabled = false;
+                btnText.style.display = 'inline';
+                btnLoader.style.display = 'none';
             }
+        });
+
+        // Focus automatico sul campo email all'apertura
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.getElementById('email').focus();
+            }, 500);
         });
     </script>
     <script src="cookie-banner.js"></script>
